@@ -5,7 +5,6 @@
   "manifest.command.extract.title": "Extract Numbers",
   "manifest.command.dedupe.title": "Deduplicate Numbers",
   "manifest.command.sort.title": "Sort Numbers",
-  "manifest.command.analyze.title": "Analyze Numbers",
   "manifest.command.csv.toggle-streaming.title": "Toggle CSV Streaming",
   "manifest.command.settings.title": "Open Settings",
   "manifest.command.settings.export.title": "Export Settings",
