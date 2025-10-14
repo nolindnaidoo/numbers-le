@@ -187,7 +187,7 @@ Numbers-LE is built for speed across all supported formats:
 
 ## 🧩 System Requirements
 
-- **VS Code**: 1.105.0 or higher
+- **VS Code**: 1.70.0 or higher
 - **Node.js**: Not required (extension runs in VS Code's built-in runtime)
 - **Platform**: Windows, macOS, Linux
 - **Memory**: 100MB minimum, 500MB recommended for large datasets
@@ -246,7 +246,7 @@ Interested in helping translate Numbers-LE? [Open an issue](https://github.com/n
 
 **Extension crashes or freezes**
 
-- Check VS Code version compatibility (requires 1.85.0+)
+- Check VS Code version compatibility (requires 1.70.0+)
 - Disable other number-related extensions temporarily
 - Check Output panel → "Numbers-LE" for error messages
 - Consider reducing file size or using streaming mode
