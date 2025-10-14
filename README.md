@@ -33,7 +33,7 @@
 ---
 
 <p align="center">
-  <img src="src/assets/images/preview.gif" alt="Number Extraction Demo" style="max-width: 100%; height: auto;" />
+  <img src="src/assets/images/demo.gif" alt="Number Extraction Demo" style="max-width: 100%; height: auto;" />
 </p>
 
 <p align="center">
