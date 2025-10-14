@@ -5,19 +5,23 @@ All notable changes to the "Numbers-LE" extension will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.3] - 2025-10-14
+## [1.1.0] - 2025-10-14
 
-### Removed
+### Added
 
-- **Analyze command** - Removed `numbers-le.postProcess.analyze` command and all related functionality
-- **Analysis utilities** - Removed statistical analysis utilities (`src/utils/analysis.ts` and tests)
-- **i18n cleanup** - Removed analyze command i18n keys from 2 language files
-- **Command implementation** - Removed `src/commands/analyze.ts` and related tests
+- **Command parity achievement** - Full parity with other LE extraction extensions
+- **Comprehensive documentation** - Added complete command list to README with examples
+- **Documentation updates** - Updated all docs to reflect command parity achievement
 
 ### Changed
 
-- **Command count** - Reduced from 7 to 6 commands (Extract, Dedupe, Sort, CSV Toggle, Settings, Help)
+- **Infrastructure verification** - Verified activation events, command registry, and all infrastructure components
+- **Command count** - Stabilized at 6 commands (Extract, Dedupe, Sort, CSV Toggle, Settings, Help)
 - **Simplified workflow** - Streamlined post-processing to focus on core operations
+
+### Removed
+
+- **Analyze command** - Removed unused `numbers-le.postProcess.analyze` command and statistical analysis utilities
 
 ## [1.0.2] - 2025-10-14
 

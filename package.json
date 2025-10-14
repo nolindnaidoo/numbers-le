@@ -3,7 +3,7 @@
 	"publisher": "nolindnaidoo",
 	"displayName": "Numbers-LE",
 	"description": "Zero Hassle Number Extraction from JSON, YAML, CSV, TOML, INI, and .ENV",
-	"version": "1.0.3",
+	"version": "1.1.0",
 	"license": "MIT",
 	"author": {
 		"name": "Nolin D Naidoo",
