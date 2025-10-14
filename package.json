@@ -315,11 +315,6 @@
 					"default": "ctrl+alt+s",
 					"description": "%manifest.settings.keyboard.sort.shortcut.desc%"
 				},
-				"numbers-le.keyboard.analyzeShortcut": {
-					"type": "string",
-					"default": "ctrl+alt+a",
-					"description": "%manifest.settings.keyboard.analyze.shortcut.desc%"
-				},
 				"numbers-le.presets.enabled": {
 					"type": "boolean",
 					"default": true,
