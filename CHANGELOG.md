@@ -5,6 +5,18 @@ All notable changes to the "Numbers-LE" extension will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Default workflow** - All result-producing commands now open to the side by default for better workflow
+  - Extract: Opens results beside source automatically
+  - Dedupe: Opens deduplicated results beside original
+  - Sort: Opens sorted results beside original
+  - Help: Opens documentation beside code
+- **Settings defaults** - Changed `openResultsSideBySide` and `postProcess.openInNewFile` defaults from `false` to `true`
+- **Documentation** - Updated README to use new demo.gif
+
 ## [1.1.0] - 2025-10-14
 
 ### Added
