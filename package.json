@@ -178,16 +178,16 @@
 					],
 					"description": "%manifest.settings.notifications.level.desc%"
 				},
-				"numbers-le.postProcess.openInNewFile": {
-					"type": "boolean",
-					"default": false,
-					"description": "%manifest.settings.open.new-file.desc%"
-				},
-				"numbers-le.openResultsSideBySide": {
-					"type": "boolean",
-					"default": false,
-					"description": "%manifest.settings.open.side-by-side.desc%"
-				},
+			"numbers-le.postProcess.openInNewFile": {
+				"type": "boolean",
+				"default": true,
+				"description": "%manifest.settings.open.new-file.desc%"
+			},
+			"numbers-le.openResultsSideBySide": {
+				"type": "boolean",
+				"default": true,
+				"description": "%manifest.settings.open.side-by-side.desc%"
+			},
 				"numbers-le.safety.enabled": {
 					"type": "boolean",
 					"default": true,
