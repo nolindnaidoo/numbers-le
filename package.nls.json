@@ -7,6 +7,7 @@
   "manifest.command.sort.title": "Sort Numbers",
   "manifest.command.csv.toggle-streaming.title": "Toggle CSV Streaming",
   "manifest.command.settings.title": "Open Settings",
+  "manifest.command.settings.export.title": "Export Settings",
   "manifest.command.help.title": "Help & Troubleshooting",
   "manifest.settings.title": "Numbers-LE Settings",
   "manifest.settings.copy.clipboard.desc": "Automatically copy extraction results to the clipboard",
