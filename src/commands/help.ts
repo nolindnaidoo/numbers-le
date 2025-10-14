@@ -32,7 +32,7 @@ async function showHelp(): Promise<void> {
 
 	await vscode.window.showTextDocument(doc, {
 		preview: false,
-		viewColumn: vscode.ViewColumn.One,
+		viewColumn: vscode.ViewColumn.Beside,
 	});
 }
 
