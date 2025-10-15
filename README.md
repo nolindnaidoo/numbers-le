@@ -170,12 +170,12 @@ Numbers-LE is built for speed across all supported formats:
 
 | Format   | Throughput        | Best For               | File Size Range | Hardware Tested  |
 | -------- | ----------------- | ---------------------- | --------------- | ---------------- |
-| **ENV**  | 4M+ numbers/sec   | Environment configs    | 1KB - 5MB       | M1 Mac, Intel i7 |
-| **JSON** | 1.8M+ numbers/sec | APIs, large datasets   | 1KB - 200MB     | M1 Mac, Intel i7 |
-| **INI**  | 1.3M+ numbers/sec | Configuration files    | 1KB - 10MB      | M1 Mac, Intel i7 |
-| **TOML** | 530K+ numbers/sec | Modern configs         | 1KB - 25MB      | M1 Mac, Intel i7 |
-| **CSV**  | 440K+ numbers/sec | Tabular data           | 1KB - 500MB     | M1 Mac, Intel i7 |
-| **YAML** | 190K+ numbers/sec | Human-readable configs | 1KB - 50MB      | M1 Mac, Intel i7 |
+| **JSON** | 6.1M numbers/sec  | APIs, large datasets   | 1KB - 200MB     | M1 Mac, Intel i7 |
+| **CSV**  | 5.8M numbers/sec  | Tabular data           | 1KB - 500MB     | M1 Mac, Intel i7 |
+| **YAML** | 1.0M numbers/sec  | Human-readable configs | 1KB - 50MB      | M1 Mac, Intel i7 |
+| **INI**  | 1.1M numbers/sec  | Configuration files    | 1KB - 10MB      | M1 Mac, Intel i7 |
+| **ENV**  | 942K numbers/sec  | Environment configs    | 1KB - 5MB       | M1 Mac, Intel i7 |
+| **TOML** | 0 numbers/sec     | Modern configs         | 1KB - 25MB      | M1 Mac, Intel i7 |
 
 ### Performance Notes
 
@@ -292,7 +292,7 @@ A: Numbers-LE can handle files up to 500MB with CSV streaming enabled. For other
 
 ## 📊 Test Coverage
 
-- 182 passing tests across 14 test suites with 36.58% overall coverage
+- 151 passing tests across 12 test suites with 32.73% overall coverage
 - Core extraction and analysis modules have excellent coverage
 - Contract tests for configuration side-effects and parse-error handling
 - Data-driven fixtures with golden expected outputs per format
