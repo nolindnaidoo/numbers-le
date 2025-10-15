@@ -40,18 +40,16 @@
   <img src="src/assets/images/command-palette.png" alt="Command Palette" style="max-width: 80%; height: auto;" />
 </p>
 
-## 🙏 Thank You!
+## 🙏 Thank You
 
-Thank you for your interest in Numbers-LE! If this extension has been helpful in managing your number extraction needs, please consider leaving a rating on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.numbers-le) and [Open VSX](https://open-vsx.org/extension/nolindnaidoo/numbers-le). Your feedback helps other developers discover this tool and motivates continued development.
+If Numbers-LE saves you time, a quick rating helps other developers discover it:  
+⭐ [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.numbers-le) • [Open VSX](https://open-vsx.org/extension/nolindnaidoo/numbers-le)
 
-⭐ **Star this repository** to get notified about updates and new features!
+## ✅ Why Numbers-LE?
 
-## ✅ Why Numbers-LE
+Extract numbers from **any file format** — JSON, CSV, YAML, ENV, TOML, INI — in one click. No regex. No scripts. Just results.
 
-**Modern projects contain numeric data everywhere** — APIs, configs, CSVs, and data files across both native and web. Extracting and analyzing those numbers is still a slow, manual process.
-
-**Numbers-LE makes number extraction effortless.**  
-It smartly pulls out only the **true numeric values** (integers, floats, percentages, currencies) and gives you clean, ordered data ready for analysis.
+Numbers-LE intelligently identifies **true numeric values** (integers, floats, percentages, currencies) while filtering out IDs, version numbers, and non-data noise. Get clean, ordered data ready for analysis.
 
 - **Data analysis without the hassle**  
   Instantly extract and analyze numeric data from any structured file. Get statistical insights, trends, and patterns in seconds.
@@ -78,74 +76,20 @@ It smartly pulls out only the **true numeric values** (integers, floats, percent
 
 ## 🚀 More from the LE Family
 
-**Numbers-LE** is part of a growing family of developer tools designed to make your workflow effortless:
+- **[String-LE](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.string-le)** - Extract user-visible strings for i18n and validation • [Open VSX](https://open-vsx.org/extension/nolindnaidoo/string-le)
+- **[EnvSync-LE](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.envsync-le)** - Keep .env files in sync with visual diffs • [Open VSX](https://open-vsx.org/extension/nolindnaidoo/envsync-le)
+- **[Paths-LE](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.paths-le)** - Extract file paths from imports and dependencies • [Open VSX](https://open-vsx.org/extension/nolindnaidoo/paths-le)
+- **[URLs-LE](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.urls-le)** - Audit API endpoints and external resources • [Open VSX](https://open-vsx.org/extension/nolindnaidoo/urls-le)
+- **[Scrape-LE](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.scrape-le)** - Validate scraper targets before debugging • [Open VSX](https://open-vsx.org/extension/nolindnaidoo/scrape-le)
+- **[Colors-LE](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.colors-le)** - Extract and analyze colors from stylesheets • [Open VSX](https://open-vsx.org/extension/nolindnaidoo/colors-le)
+- **[Dates-LE](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.dates-le)** - Extract temporal data from logs and APIs • [Open VSX](https://open-vsx.org/extension/nolindnaidoo/dates-le)
 
-- **Strings-LE** - Extract every user-visible string from JSON, YAML, CSV, TOML, INI, and .env files with zero hassle  
-  [[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.string-le)] [[Open VSX](https://open-vsx.org/extension/nolindnaidoo/string-le)]
+## 💡 Use Cases
 
-- **EnvSync-LE** - Effortlessly detect, compare, and synchronize .env files across your workspace with visual diffs  
-  [[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.envsync-le)] [[Open VSX](https://open-vsx.org/extension/nolindnaidoo/envsync-le)]
-
-- **Colors-LE** - Extract and analyze colors from CSS, HTML, JavaScript, and more  
-  [[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.colors-le)] [[Open VSX](https://open-vsx.org/extension/nolindnaidoo/colors-le)]
-
-- **Dates-LE** - Extract and analyze dates from logs, APIs, and temporal data  
-  [[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.dates-le)] [[Open VSX](https://open-vsx.org/extension/nolindnaidoo/dates-le)]
-
-- **Paths-LE** - Extract and analyze file paths from imports, configs, and dependencies  
-  [[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.paths-le)] [[Open VSX](https://open-vsx.org/extension/nolindnaidoo/paths-le)]
-
-- **URLs-LE** - Extract and analyze URLs from web content, APIs, and resources  
-  [[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.urls-le)] [[Open VSX](https://open-vsx.org/extension/nolindnaidoo/urls-le)]
-
-Each tool follows the same philosophy: **Zero Hassle, Maximum Productivity**.
-
-## 💡 Use Cases & Examples
-
-### Financial Data Analysis
-
-Extract and analyze financial metrics from API responses:
-
-```json
-// Extract from financial-data.json
-{
-  "revenue": 1250000.5,
-  "profit": 250000.75,
-  "margin": 20.0,
-  "growth_rate": 15.5
-}
-```
-
-### Configuration Validation
-
-Validate numeric settings across configuration files:
-
-```yaml
-# Extract from config.yaml
-database:
-  max_connections: 100
-  timeout: 30
-  retry_attempts: 3
-
-cache:
-  ttl: 3600
-  max_size: 1000
-```
-
-### Performance Metrics Analysis
-
-Extract performance data from monitoring systems:
-
-```csv
-// Extract from metrics.csv
-timestamp,cpu_usage,memory_usage,response_time
-2023-12-25T10:00:00Z,45.2,78.5,120.3
-2023-12-25T10:01:00Z,52.1,82.3,135.7
-```
-
-### Statistical Analysis
-
-Perform statistical analysis on extracted numbers to identify trends, outliers, and patterns in your data.
+- **Financial Analysis** - Extract revenue, profit, and growth metrics from JSON/CSV for quick validation
+- **Config Validation** - Pull timeouts, limits, and thresholds from YAML/TOML/INI for auditing
+- **Performance Monitoring** - Analyze CPU, memory, and response times from logs and metrics files
+- **Data QA** - Get instant statistics (avg, median, outliers) on numeric datasets
 
 ## 🚀 Quick Start
 
@@ -166,139 +110,68 @@ Perform statistical analysis on extracted numbers to identify trends, outliers, 
 
 ## ⚡ Performance
 
-Numbers-LE is built for speed across all supported formats:
+<!-- PERFORMANCE_START -->
 
-| Format   | Throughput       | Best For               | File Size Range | Hardware Tested  |
-| -------- | ---------------- | ---------------------- | --------------- | ---------------- |
-| **JSON** | 6.1M numbers/sec | APIs, large datasets   | 1KB - 200MB     | M1 Mac, Intel i7 |
-| **CSV**  | 5.8M numbers/sec | Tabular data           | 1KB - 500MB     | M1 Mac, Intel i7 |
-| **YAML** | 1.0M numbers/sec | Human-readable configs | 1KB - 50MB      | M1 Mac, Intel i7 |
-| **INI**  | 1.1M numbers/sec | Configuration files    | 1KB - 10MB      | M1 Mac, Intel i7 |
-| **ENV**  | 942K numbers/sec | Environment configs    | 1KB - 5MB       | M1 Mac, Intel i7 |
-| **TOML** | 0 numbers/sec    | Modern configs         | 1KB - 25MB      | M1 Mac, Intel i7 |
+Numbers-LE is built for speed and handles files from 100KB to 30MB+. See [detailed benchmarks](docs/PERFORMANCE.md).
 
-### Performance Notes
+| Format   | File Size | Throughput | Duration | Memory | Tested On     |
+| -------- | --------- | ---------- | -------- | ------ | ------------- |
+| **JSON** | 0.13MB    | 1218182    | ~1.1     | < 1MB  | Apple Silicon |
+| **JSON** | 1.31MB    | 1593824    | ~8.42    | < 1MB  | Apple Silicon |
+| **JSON** | 6.55MB    | 1356652    | ~49.46   | < 1MB  | Apple Silicon |
+| **CSV**  | 0.5MB     | 1232136    | ~15.87   | < 1MB  | Apple Silicon |
+| **CSV**  | 3MB       | 1548819    | ~75.77   | ~13MB  | Apple Silicon |
+| **CSV**  | 10MB      | 1204916    | ~324.64  | < 1MB  | Apple Silicon |
+| **ENV**  | 5K lines  | 1,561,687  | ~19.21   | < 1MB  | Apple Silicon |
 
-- **Memory Usage**: ~100MB base + 3MB per 1000 numbers processed
-- **Large Files**: Files over 100MB may show reduced throughput (100K-500K numbers/sec)
-- **CSV Streaming**: Enables processing of files up to 500MB without memory issues
-- **Statistical Analysis**: Adds 30-50% processing time when enabled
-- **Hardware Requirements**: Minimum 4GB RAM, recommended 8GB+ for large datasets
+**Real-World Performance**: Tested with actual data up to 30MB (practical limit: 1MB warning, 10MB error threshold)  
+**Performance Monitoring**: Built-in real-time tracking with configurable thresholds  
+**Full Metrics**: [docs/PERFORMANCE.md](docs/PERFORMANCE.md) • Test Environment: macOS, Bun 1.2.22, Node 22.x
+
+<!-- PERFORMANCE_END -->
 
 ## 🧩 System Requirements
 
-- **VS Code**: 1.70.0 or higher
-- **Node.js**: Not required (extension runs in VS Code's built-in runtime)
-- **Platform**: Windows, macOS, Linux
-- **Memory**: 100MB minimum, 500MB recommended for large datasets
-- **Storage**: 20MB for extension files
+**VS Code** 1.70.0+ • **Platform** Windows, macOS, Linux  
+**Memory** 500MB recommended for large files
 
-## 🔒 Privacy & Telemetry
+## 🔒 Privacy
 
-- Runs entirely locally; no data is sent off your machine.
-- Optional local-only logs can be enabled with `numbers-le.telemetryEnabled`.
-- Logs appear in Output panel → "Numbers-LE".
+100% local processing. No data leaves your machine. Optional logging: `numbers-le.telemetryEnabled`
 
 ## 🌍 Language Support
 
-**13 languages supported** with full localization:
-
-- 🇺🇸 **English** (en) - Default language
-- 🇩🇪 **German** (de) - Deutsche Lokalisierung
-- 🇪🇸 **Spanish** (es) - Localización en español
-- 🇫🇷 **French** (fr) - Localisation française
-- 🇮🇩 **Indonesian** (id) - Lokalisasi bahasa Indonesia
-- 🇮🇹 **Italian** (it) - Localizzazione italiana
-- 🇯🇵 **Japanese** (ja) - 日本語サポート
-- 🇰🇷 **Korean** (ko) - 한국어 지원
-- 🇧🇷 **Portuguese (Brazil)** (pt-br) - Localização em português brasileiro
-- 🇷🇺 **Russian** (ru) - Русская локализация
-- 🇺🇦 **Ukrainian** (uk) - Українська локалізація
-- 🇻🇳 **Vietnamese** (vi) - Hỗ trợ tiếng Việt
-- 🇨🇳 **Chinese Simplified** (zh-cn) - 简体中文支持
-
-All commands, settings, notifications, and help content automatically adapt to your VS Code language preference.
+**13 languages**: English, German, Spanish, French, Indonesian, Italian, Japanese, Korean, Portuguese (Brazil), Russian, Ukrainian, Vietnamese, Chinese (Simplified)
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+**Not detecting numbers?**  
+Ensure file is saved with supported extension (.json, .yaml, .csv, .toml, .ini, .env)
 
-**Extension not detecting numbers**
+**Large files slow?**  
+Enable CSV streaming: `numbers-le.csv.streamingEnabled: true`
 
-- Ensure file is saved and has a supported extension (.json, .yaml, .csv, .toml, .ini, .env)
-- Check that `numbers-le.analysis.enabled` is set to `true` in settings
-- Try reloading VS Code window (`Ctrl/Cmd + Shift + P` → "Developer: Reload Window")
-
-**Performance issues with large files**
-
-- Files over 50MB may take longer to process
-- Enable `numbers-le.csv.streamingEnabled: true` for CSV files
-- Consider using `numbers-le.dedupeEnabled: false` to reduce processing time
-- Disable `numbers-le.analysis.includeStats: false` for faster extraction
-
-**Numbers not appearing in results**
-
-- Verify the number format is supported (integers, floats, percentages, currencies)
-- Check if numbers are inside strings or comments
-- Ensure numbers are not part of identifiers or variable names
-- Check for proper number formatting (e.g., "1,000" vs "1000")
-
-**CSV streaming issues**
-
-- Ensure CSV has proper headers for column selection
-- Check that `numbers-le.csv.streamingEnabled` is enabled
-- Verify CSV delimiter is standard (comma, semicolon, tab)
-- Large CSV files may require streaming to avoid memory issues
-
-**Statistical analysis problems**
-
-- Enable `numbers-le.analysis.enabled: true` for statistical insights
-- Check that `numbers-le.analysis.includeStats: true` is set
-- Some statistical calculations may fail with insufficient data
-- Outlier detection requires minimum data points
-
-**Extension crashes or freezes**
-
-- Check VS Code version compatibility (requires 1.70.0+)
-- Disable other number-related extensions temporarily
-- Check Output panel → "Numbers-LE" for error messages
-- Consider reducing file size or using streaming mode
-
-### Getting Help
-
-- Check the [Issues](https://github.com/nolindnaidoo/numbers-le/issues) page for known problems
-- Enable telemetry logging: `numbers-le.telemetryEnabled: true`
-- Review logs in Output panel → "Numbers-LE"
+**Need help?**  
+Check [Issues](https://github.com/nolindnaidoo/numbers-le/issues) or enable logging: `numbers-le.telemetryEnabled: true`
 
 ## ❓ FAQ
 
-**Q: What types of numbers are extracted?**
-A: Numbers-LE extracts integers, floats, percentages, currencies, and other numeric values while excluding numbers that are part of identifiers or variable names.
+**What numbers are extracted?**  
+Integers, floats, percentages, currencies (excludes IDs, version numbers)
 
-**Q: Can I get statistical analysis of the numbers?**
-A: Yes, enable `numbers-le.analysis.enabled: true` to get basic stats (count, sum, average, min, max) and advanced analysis (variance, standard deviation, outliers).
+**Can I get statistics?**  
+Yes, enable `numbers-le.analysis.enabled: true` for avg, median, std dev, outliers
 
-**Q: How does CSV streaming work?**
-A: When `numbers-le.csv.streamingEnabled: true` is enabled, large CSV files are processed in chunks to avoid memory issues. You can select specific columns for extraction.
+**Max file size?**  
+Up to 500MB with CSV streaming. Practical limit: 10MB for other formats
 
-**Q: Can I automatically deduplicate numbers?**
-A: Yes, enable `numbers-le.dedupeEnabled: true` to automatically remove duplicate numbers from the results.
+**CSV streaming?**  
+Enable `numbers-le.csv.streamingEnabled: true` to process large CSVs in chunks
 
-**Q: How does sorting work?**
-A: Enable `numbers-le.sortEnabled: true` to automatically sort numbers in ascending order. This helps with analysis and review processes.
+## 📊 Testing
 
-**Q: What's the largest file size supported?**
-A: Numbers-LE can handle files up to 500MB with CSV streaming enabled. For other formats, the limit is around 200MB for optimal performance.
-
-## 📊 Test Coverage
-
-- 151 passing tests across 12 test suites with 32.73% overall coverage
-- Core extraction and analysis modules have excellent coverage
-- Contract tests for configuration side-effects and parse-error handling
-- Data-driven fixtures with golden expected outputs per format
-- Tests powered by Vitest with V8 coverage
-- Runs quickly and locally: `bun run test` or `bun run test:coverage`
-- Coverage reports output to `coverage/` (HTML summary at `coverage/index.html`)
+**129 unit tests** • **95% function coverage, 80% line coverage**  
+Powered by Vitest • Run with `bun test --coverage`
 
 ---
 

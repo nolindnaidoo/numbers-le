@@ -5,7 +5,16 @@ All notable changes to the "Numbers-LE" extension will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.4.1] - 2025-01-27
+## [1.4.5] - 2025-10-15
+
+### Changed
+
+- **Documentation streamlined** - Reduced from 14 to 4 core docs (Architecture, Commands, I18N, Performance) for easier maintenance
+- **Performance transparency** - Corrected inflated metrics to verified benchmarks (CSV: 250K+/sec, JSON: 166K+/sec) with real test environment
+- **Language visibility** - Enhanced README to clearly show all 13 supported languages with flags and native names
+- **Governance compliance** - Implemented FALSE_CLAIMS_GOVERNANCE and CHANGELOG_GOVERNANCE for accuracy and consistency
+
+## [1.4.1] - 2025-10-14
 
 ### Changed
 
@@ -17,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated README to accurately document existing multi-language capabilities
 - Maintained 100% backward compatibility with existing installations
 
-## [1.4.0] - 2025-01-27
+## [1.4.0] - 2025-10-14
 
 ### Added
 

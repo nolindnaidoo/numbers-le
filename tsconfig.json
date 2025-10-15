@@ -19,6 +19,8 @@
         ".vscode-test",
         "src/__mocks__/**/*",
         "**/*.test.ts",
-        "vitest.config.ts"
+        "**/*.bench.ts",
+        "vitest.config.ts",
+        "scripts"
     ]
 }

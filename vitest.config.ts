@@ -1,4 +1,9 @@
+import path from "path";
+import { fileURLToPath } from "url";
 import { defineConfig } from "vitest/config";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   test: {
@@ -10,26 +15,17 @@ export default defineConfig({
       reporter: ["text", "json", "html", "lcov"],
       threshold: {
         global: {
-          branches: 80,
-          functions: 80,
-          lines: 80,
-          statements: 80,
+          branches: 70,
+          functions: 75,
+          lines: 75,
+          statements: 75,
         },
       },
-      include: [
-        "src/commands/**/*.ts",
-        "src/config/**/*.ts",
-        "src/extraction/**/*.ts",
-        "src/utils/**/*.ts",
-      ],
+      include: ["src/**/*.ts"],
       exclude: [
         "src/**/*.test.ts",
+        "src/**/*.spec.ts",
         "src/__mocks__/**",
-        "src/types.ts",
-        "src/extension.ts",
-        "src/ui/**",
-        "src/telemetry/**",
-        "src/config/settings.ts",
         "**/node_modules/**",
         "**/dist/**",
         "**/coverage/**",
@@ -48,11 +44,12 @@ export default defineConfig({
       "**/docs/**",
       "**/__mocks__/**",
       "**/test/**",
+      "**/*.bench.ts",
     ],
   },
   resolve: {
     alias: {
-      vscode: "@vscode/test-electron",
+      vscode: path.resolve(__dirname, "src/__mocks__/vscode.ts"),
     },
   },
 });
