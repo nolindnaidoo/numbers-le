@@ -13,7 +13,7 @@ export function createStatusBar(context: vscode.ExtensionContext): StatusBar {
 		vscode.StatusBarAlignment.Left,
 		100,
 	);
-	item.text = '$(symbol-number) Numbers-LE';
+	item.text = localize('runtime.statusbar.text', '$(symbol-number) Numbers-LE');
 	item.tooltip = localize('runtime.status.tooltip', 'Run Numbers-LE: Extract');
 	item.command = 'numbers-le.extractNumbers';
 	context.subscriptions.push(item);
@@ -25,8 +25,11 @@ export function createStatusBar(context: vscode.ExtensionContext): StatusBar {
 
 		const csvStreaming = readConfig().csvStreamingEnabled;
 		item.text = csvStreaming
-			? '$(symbol-number) Numbers-LE (CSV Streaming)'
-			: '$(symbol-number) Numbers-LE';
+			? localize(
+					'runtime.statusbar.text.csv-streaming',
+					'$(symbol-number) Numbers-LE (CSV Streaming)',
+				)
+			: localize('runtime.statusbar.text', '$(symbol-number) Numbers-LE');
 	}
 
 	updateVisibility();
@@ -57,7 +60,11 @@ export function createStatusBar(context: vscode.ExtensionContext): StatusBar {
 		flash(text: string): void {
 			// Flash a short-lived status text without spamming notifications
 			if (!readConfig().statusBarEnabled) return;
-			item.text = `$(symbol-number) ${text}`;
+			item.text = localize(
+				'runtime.statusbar.text.flash',
+				'$(symbol-number) {0}',
+				text,
+			);
 			if (hideTimer) {
 				clearTimeout(hideTimer);
 				hideTimer = undefined;
@@ -65,8 +72,11 @@ export function createStatusBar(context: vscode.ExtensionContext): StatusBar {
 			hideTimer = setTimeout(() => {
 				const csvStreaming = readConfig().csvStreamingEnabled;
 				item.text = csvStreaming
-					? '$(symbol-number) Numbers-LE (CSV Streaming)'
-					: '$(symbol-number) Numbers-LE';
+					? localize(
+							'runtime.statusbar.text.csv-streaming',
+							'$(symbol-number) Numbers-LE (CSV Streaming)',
+						)
+					: localize('runtime.statusbar.text', '$(symbol-number) Numbers-LE');
 				hideTimer = undefined;
 			}, 2000);
 		},

@@ -1,7 +1,10 @@
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
 import { detectFileType, extractNumbers } from '../extraction/extract';
 import { type SortMode, sortNumbers as sortNumbersUtil } from '../utils/sort';
 import type { CommandDependencies } from './index';
+
+const localize = nls.config({ messageFormat: nls.MessageFormat.file })();
 
 export async function sortNumbers(deps: CommandDependencies): Promise<void> {
 	const tracker = deps.performanceMonitor.startOperation('sort');
@@ -62,14 +65,35 @@ export async function sortNumbers(deps: CommandDependencies): Promise<void> {
 
 		// Show sorting options
 		const sortOptions = [
-			{ label: 'Numeric Ascending', value: 'numeric-asc' },
-			{ label: 'Numeric Descending', value: 'numeric-desc' },
-			{ label: 'Magnitude Ascending', value: 'magnitude-asc' },
-			{ label: 'Magnitude Descending', value: 'magnitude-desc' },
+			{
+				label: localize('runtime.sort.pick.numeric-asc', 'Numeric Ascending'),
+				value: 'numeric-asc',
+			},
+			{
+				label: localize('runtime.sort.pick.numeric-desc', 'Numeric Descending'),
+				value: 'numeric-desc',
+			},
+			{
+				label: localize(
+					'runtime.sort.pick.magnitude-asc',
+					'Magnitude Ascending',
+				),
+				value: 'magnitude-asc',
+			},
+			{
+				label: localize(
+					'runtime.sort.pick.magnitude-desc',
+					'Magnitude Descending',
+				),
+				value: 'magnitude-desc',
+			},
 		];
 
 		const selected = await vscode.window.showQuickPick(sortOptions, {
-			placeHolder: 'Select sorting method',
+			placeHolder: localize(
+				'runtime.sort.pick.placeholder',
+				'Select sorting method',
+			),
 		});
 
 		if (!selected) return;

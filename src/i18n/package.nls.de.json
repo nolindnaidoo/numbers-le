@@ -52,5 +52,21 @@
   "manifest.settings.presets.default.option.comprehensive": "Comprehensive (most thorough)",
   "manifest.settings.presets.default.option.performance": "Performance (optimized)",
   "manifest.settings.presets.default.option.csv": "CSV-focused",
-  "manifest.capability.untrusted-workspaces.desc": "Limited functionality in untrusted workspaces"
+  "manifest.capability.untrusted-workspaces.desc": "Limited functionality in untrusted workspaces",
+  "runtime.statusbar.text": "$(symbol-number) Numbers-LE",
+  "runtime.statusbar.text.csv-streaming": "$(symbol-number) Numbers-LE (CSV Streaming)",
+  "runtime.statusbar.text.flash": "$(symbol-number) {0}",
+  "runtime.sort.pick.placeholder": "Select sorting method",
+  "runtime.sort.pick.numeric-asc": "Numeric Ascending",
+  "runtime.sort.pick.numeric-desc": "Numeric Descending",
+  "runtime.sort.pick.magnitude-asc": "Magnitude Ascending",
+  "runtime.sort.pick.magnitude-desc": "Magnitude Descending",
+
+  "runtime.help.title": "Numbers-LE Help",
+  "runtime.help.quick-start": "1. Open a JSON, YAML, CSV, TOML, INI, or .ENV file\n2. Run \"Numbers-LE: Extract Numbers\"\n3. View extracted numbers in results",
+  "runtime.help.commands": "**Extract Numbers**: Extract from current document\n**Sort Numbers**: Sort numerically or by magnitude\n**Deduplicate Numbers**: Remove duplicate numbers\n**Toggle CSV Streaming**: Enable for large CSV files\n**Settings**: Configure options",
+  "runtime.help.formats": "**Supported**: JSON, YAML, CSV, TOML, INI, .ENV\n**Number Types**: Integers, floats, percentages, scientific notation\n**CSV Features**: Column selection, streaming for large files",
+  "runtime.help.troubleshooting": "**No numbers found?** Check file format and number syntax\n**Performance issues?** Enable CSV streaming for large files\n**Need help?** Check Output panel for details",
+  "runtime.help.settings": "Access via Command Palette: \"Numbers-LE: Open Settings\"\nKey settings: Copy to clipboard, CSV streaming, deduplication, sorting, analysis",
+  "runtime.help.support": "GitHub Issues: https://github.com/nolindnaidoo/numbers-le/issues"
 }
