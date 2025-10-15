@@ -168,14 +168,14 @@ Perform statistical analysis on extracted numbers to identify trends, outliers, 
 
 Numbers-LE is built for speed across all supported formats:
 
-| Format   | Throughput        | Best For               | File Size Range | Hardware Tested  |
-| -------- | ----------------- | ---------------------- | --------------- | ---------------- |
-| **JSON** | 6.1M numbers/sec  | APIs, large datasets   | 1KB - 200MB     | M1 Mac, Intel i7 |
-| **CSV**  | 5.8M numbers/sec  | Tabular data           | 1KB - 500MB     | M1 Mac, Intel i7 |
-| **YAML** | 1.0M numbers/sec  | Human-readable configs | 1KB - 50MB      | M1 Mac, Intel i7 |
-| **INI**  | 1.1M numbers/sec  | Configuration files    | 1KB - 10MB      | M1 Mac, Intel i7 |
-| **ENV**  | 942K numbers/sec  | Environment configs    | 1KB - 5MB       | M1 Mac, Intel i7 |
-| **TOML** | 0 numbers/sec     | Modern configs         | 1KB - 25MB      | M1 Mac, Intel i7 |
+| Format   | Throughput       | Best For               | File Size Range | Hardware Tested  |
+| -------- | ---------------- | ---------------------- | --------------- | ---------------- |
+| **JSON** | 6.1M numbers/sec | APIs, large datasets   | 1KB - 200MB     | M1 Mac, Intel i7 |
+| **CSV**  | 5.8M numbers/sec | Tabular data           | 1KB - 500MB     | M1 Mac, Intel i7 |
+| **YAML** | 1.0M numbers/sec | Human-readable configs | 1KB - 50MB      | M1 Mac, Intel i7 |
+| **INI**  | 1.1M numbers/sec | Configuration files    | 1KB - 10MB      | M1 Mac, Intel i7 |
+| **ENV**  | 942K numbers/sec | Environment configs    | 1KB - 5MB       | M1 Mac, Intel i7 |
+| **TOML** | 0 numbers/sec    | Modern configs         | 1KB - 25MB      | M1 Mac, Intel i7 |
 
 ### Performance Notes
 
