@@ -3,7 +3,7 @@
 	"publisher": "nolindnaidoo",
 	"displayName": "Numbers-LE",
 	"description": "Zero Hassle Number Extraction from JSON, YAML, CSV, TOML, INI, and .ENV",
-	"version": "1.4.5",
+	"version": "1.4.6",
 	"license": "MIT",
 	"author": {
 		"name": "Nolin D Naidoo",
@@ -178,16 +178,16 @@
 					],
 					"description": "%manifest.settings.notifications.level.desc%"
 				},
-			"numbers-le.postProcess.openInNewFile": {
-				"type": "boolean",
-				"default": true,
-				"description": "%manifest.settings.open.new-file.desc%"
-			},
-			"numbers-le.openResultsSideBySide": {
-				"type": "boolean",
-				"default": true,
-				"description": "%manifest.settings.open.side-by-side.desc%"
-			},
+				"numbers-le.postProcess.openInNewFile": {
+					"type": "boolean",
+					"default": true,
+					"description": "%manifest.settings.open.new-file.desc%"
+				},
+				"numbers-le.openResultsSideBySide": {
+					"type": "boolean",
+					"default": true,
+					"description": "%manifest.settings.open.side-by-side.desc%"
+				},
 				"numbers-le.safety.enabled": {
 					"type": "boolean",
 					"default": true,
