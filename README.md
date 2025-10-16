@@ -170,7 +170,7 @@ Enable `numbers-le.csv.streamingEnabled: true` to process large CSVs in chunks
 
 ## 📊 Testing
 
-**129 unit tests** • **95% function coverage, 80% line coverage**  
+**129 unit tests** • **47.22% function coverage, 9.19% line coverage**  
 Powered by Vitest • Run with `bun test --coverage`
 
 ---
