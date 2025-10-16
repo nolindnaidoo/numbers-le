@@ -1,62 +1,46 @@
-# Source TypeScript files  
-src/**/*
+# Security: Exclude coverage files that expose development paths
+coverage/
+*.lcov
+lcov-report/
 
-# Assets (exclude all except required icon)
-src/assets/**/*
-!src/assets/images/icon.png
-!src/assets/images/preview.gif
-!src/assets/images/coverage-report-text.png
-
-# TypeScript config
-tsconfig.json
-
-# Development tools
-.biomeignore
+# Build artifacts and development files
+.vscodeignore
+.gitignore
+.gitattributes
+.cursorignore
 .cursorrules
 biome.json
-.vscode/
-.gitignore
-
-# Test files
-**/*.test.ts
-**/*.test.js
-**/__tests__/**
-**/__data__/**
-test-files/**
-
-
-# Backup files
-*.backup
-*-original.*
-
-# Exclude all node_modules except runtime dependencies
-node_modules/**
-!node_modules/csv-parse/package.json
-!node_modules/csv-parse/LICENSE
-!node_modules/csv-parse/dist/cjs/**
-!node_modules/csv-parse/lib/**
-!node_modules/ini/**
-!node_modules/js-yaml/package.json
-!node_modules/js-yaml/LICENSE
-!node_modules/js-yaml/index.js
-!node_modules/js-yaml/lib/**
-!node_modules/toml/**
-!node_modules/vscode-nls/**
-!node_modules/@types/js-yaml/**
-
-# Coverage and logs
-coverage/
-*.log
-.nyc_output/
-
-# Documentation that's not needed in the package
-*.md
-!README.md
-!CHANGELOG.md
-
-# CI and repository metadata
-.github/**
-.vscodeignore
-
-# Package lock
+codecov.yml
 package-lock.json
+bun.lock
+tsconfig.json
+vitest.config.ts
+
+# Development directories
+.github/
+docs/
+test/
+scripts/
+
+# Source files (only include compiled dist/)
+src/
+!src/assets/images/preview.gif
+!src/assets/images/icon.png
+src/**/*.test.ts
+src/**/*.bench.ts
+
+# Build artifacts
+dist/**/*.js.map
+dist/__mocks__/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Sample/demo files
+sample/
+README-STRINGLE.md
+
+# Node modules (will be bundled)
+node_modules/
