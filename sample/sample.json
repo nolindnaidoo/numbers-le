@@ -1,0 +1,22 @@
+{
+  "price": 99.99,
+  "quantity": 42,
+  "discount": 0.15,
+  "negative": -25.5,
+  "scientific": 1.23e-4,
+  "percentage": 85,
+  "nested": {
+    "temperature": -273.15,
+    "count": 1000000,
+    "ratio": 0.618
+  },
+  "array": [1, 2, 3, 5, 8, 13, 21],
+  "mixed": {
+    "version": "1.2.3",
+    "port": 8080,
+    "timeout": 30.5,
+    "enabled": true,
+    "retries": 3
+  }
+}
+

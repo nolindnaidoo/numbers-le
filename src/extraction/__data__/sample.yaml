@@ -1,0 +1,25 @@
+users:
+  - id: 1
+    age: 25
+    score: 85.5
+    rating: 4.2
+  - id: 2
+    age: 30
+    score: 92.0
+    rating: 4.8
+  - id: 3
+    age: 28
+    score: 78.3
+    rating: 3.9
+
+stats:
+  total_users: 3
+  average_age: 27.67
+  total_score: 255.8
+  max_rating: 4.8
+  min_rating: 3.9
+
+config:
+  timeout: 5000
+  retries: 3
+  threshold: 0.75
