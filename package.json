@@ -1,6 +1,6 @@
 {
 	"name": "numbers-le",
-	"publisher": "nolindnaidoo",
+	"publisher": "OffensiveEdge",
 	"displayName": "Numbers-LE",
 	"description": "Zero Hassle Number Extraction from JSON, YAML, CSV, TOML, INI, and .ENV",
 	"version": "1.8.1",
