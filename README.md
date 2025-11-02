@@ -143,6 +143,8 @@ Numbers-LE is built for speed and handles files from 100KB to 30MB+. See [detail
 **Performance Monitoring**: Built-in real-time tracking with configurable thresholds  
 **Full Metrics**: [docs/PERFORMANCE.md](docs/PERFORMANCE.md) • Test Environment: macOS, Bun 1.2.22, Node 22.x
 
+For detailed information, see [Performance Monitoring](docs/PERFORMANCE.md).
+
 <!-- PERFORMANCE_END -->
 
 ## 🧩 System Requirements
@@ -186,13 +188,19 @@ Enable `numbers-le.csv.streamingEnabled: true` to process large CSVs in chunks
 ## 📊 Testing
 
 **171 unit tests** • **95% function coverage, 80% line coverage**  
-Powered by Vitest • Run with `bun test --coverage`
+Powered by Vitest • Run with `bun run test:coverage`
+
+### Core Principle
+
+**No broken or failed tests are allowed in commits.** All tests must pass before code can be committed or merged.
 
 ### Test Suite Highlights
 
 - **42 security tests** for CSV/ENV/INI injection prevention
 - **Comprehensive coverage** of JSON, YAML, CSV, TOML, INI, ENV formats
 - **Statistical analysis** validation and edge case handling
+
+For detailed testing guidelines, see [Testing Guidelines](docs/TESTING.md).
 
 ---
 

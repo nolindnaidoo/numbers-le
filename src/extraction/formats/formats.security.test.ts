@@ -127,6 +127,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 		});
 
 		test('should handle ENV with variable expansion', () => {
+			// biome-ignore lint/suspicious/noTemplateCurlyInString: testing literal env var syntax
 			const env = 'HOME=${HOME}\nUSER=${USER}\nPORT=8080';
 			const result = extractFromEnv(env, 'test.env');
 
