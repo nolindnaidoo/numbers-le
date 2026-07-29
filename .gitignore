@@ -110,3 +110,4 @@ dist/
 
 # Release packages
 release/
+out-test/
