@@ -1,0 +1,14 @@
+int = 42
+float = -3.14
+exp = 5e3
+positiveInfinity = inf
+notANumber = nan
+date = 1979-05-27T07:32:00Z
+
+[table]
+value = 100
+array = [1, 2, 3]
+floats = [2.5, -0.5]
+
+[[products]]
+sku = 12345

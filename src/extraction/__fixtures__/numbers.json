@@ -1,0 +1,15 @@
+{
+	"revenue": 1250000,
+	"profit": -340.5,
+	"growth": 1.5e3,
+	"zero": 0,
+	"numericString": "42",
+	"version": "1.2.3",
+	"bigBeyondSafe": 9007199254740993,
+	"nested": {
+		"values": [1, 2.5, -3],
+		"flag": true,
+		"nothing": null,
+		"deeper": { "x": 0.001 }
+	}
+}

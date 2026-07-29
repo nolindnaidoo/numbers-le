@@ -1,0 +1,7 @@
+id,price,note
+1,19.99,"has, comma"
+2,-3.5,"quote ""x"" here"
+3,12abc,plain
+4,"42",quoted number
+,,
+100,0.5,

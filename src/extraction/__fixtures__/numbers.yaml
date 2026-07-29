@@ -1,0 +1,14 @@
+count: 42
+price: -19.99
+scientific: 6.02e23
+hex: 0x1A
+quotedNumber: "77"
+unquotedString: hello
+infinity: .inf
+notANumber: .nan
+list:
+  - 1
+  - 2.5
+  - three
+nested:
+  a: 10
