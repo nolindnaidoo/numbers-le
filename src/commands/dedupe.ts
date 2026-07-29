@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { readConfig } from '../config/config';
 import { detectFileType, extractNumber } from '../extraction/extract';
 import { dedupeNumber } from '../utils/sort';
 import type { CommandDependencies } from './index';
@@ -65,21 +66,38 @@ export async function dedupeNumbers(deps: CommandDependencies): Promise<void> {
 		}
 
 		const output = dedupedNumbers.join('\n');
+		const config = readConfig();
 
-		const success = await editor.edit((editBuilder) => {
-			const fullRange = new vscode.Range(
-				editor.document.positionAt(0),
-				editor.document.positionAt(editor.document.getText().length),
-			);
-			editBuilder.replace(fullRange, output);
-		});
-
-		if (success) {
+		if (config.postProcessOpenInNewFile) {
+			const doc = await vscode.workspace.openTextDocument({
+				content: output,
+				language: 'plaintext',
+			});
+			await vscode.window.showTextDocument(doc, {
+				preview: false,
+				...(config.openResultsSideBySide
+					? { viewColumn: vscode.ViewColumn.Beside }
+					: {}),
+			});
 			deps.notifier.info(
-				`Removed ${duplicatesRemoved} duplicates (${dedupedNumbers.length} unique numbers remaining) in current editor`,
+				`Removed ${duplicatesRemoved} duplicates (${dedupedNumbers.length} unique numbers remaining)`,
 			);
 		} else {
-			deps.notifier.error('Failed to update the editor content');
+			const success = await editor.edit((editBuilder) => {
+				const fullRange = new vscode.Range(
+					editor.document.positionAt(0),
+					editor.document.positionAt(editor.document.getText().length),
+				);
+				editBuilder.replace(fullRange, output);
+			});
+
+			if (success) {
+				deps.notifier.info(
+					`Removed ${duplicatesRemoved} duplicates (${dedupedNumbers.length} unique numbers remaining) in current editor`,
+				);
+			} else {
+				deps.notifier.error('Failed to update the editor content');
+			}
 		}
 
 		deps.telemetry.event('numbers.deduped', {

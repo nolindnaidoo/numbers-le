@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { readConfig } from '../config/config';
 import { detectFileType, extractNumber } from '../extraction/extract';
 import { type SortMode, sortNumber } from '../utils/sort';
 import type { CommandDependencies } from './index';
@@ -83,21 +84,38 @@ export async function sortNumbers(deps: CommandDependencies): Promise<void> {
 
 		const sortedNumbers = sortNumber(numbers, selected.value as SortMode);
 		const output = sortedNumbers.join('\n');
+		const config = readConfig();
 
-		const success = await editor.edit((editBuilder) => {
-			const fullRange = new vscode.Range(
-				editor.document.positionAt(0),
-				editor.document.positionAt(editor.document.getText().length),
-			);
-			editBuilder.replace(fullRange, output);
-		});
-
-		if (success) {
+		if (config.postProcessOpenInNewFile) {
+			const doc = await vscode.workspace.openTextDocument({
+				content: output,
+				language: 'plaintext',
+			});
+			await vscode.window.showTextDocument(doc, {
+				preview: false,
+				...(config.openResultsSideBySide
+					? { viewColumn: vscode.ViewColumn.Beside }
+					: {}),
+			});
 			deps.notifier.info(
-				`Sorted ${numbers.length} numbers (${selected.label}) in current editor`,
+				`Sorted ${numbers.length} numbers (${selected.label})`,
 			);
 		} else {
-			deps.notifier.error('Failed to update the editor content');
+			const success = await editor.edit((editBuilder) => {
+				const fullRange = new vscode.Range(
+					editor.document.positionAt(0),
+					editor.document.positionAt(editor.document.getText().length),
+				);
+				editBuilder.replace(fullRange, output);
+			});
+
+			if (success) {
+				deps.notifier.info(
+					`Sorted ${numbers.length} numbers (${selected.label}) in current editor`,
+				);
+			} else {
+				deps.notifier.error('Failed to update the editor content');
+			}
 		}
 
 		deps.telemetry.event('numbers.sorted', {
