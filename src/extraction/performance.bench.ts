@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { describe, it } from 'vitest';
+import type { FileType } from '../types';
 import { extractNumber } from './extract';
 
 interface PerformanceMetrics {
@@ -63,7 +64,7 @@ function getFileStats(filePath: string): { size: number; lineCount: number } {
 
 function runSinglePerformanceTest(
 	fileName: string,
-	format: string,
+	format: FileType,
 ): PerformanceMetrics {
 	const filePath = join(__dirname, '__performance__', fileName);
 	const content = readFileSync(filePath, 'utf-8');
