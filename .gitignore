@@ -30,9 +30,8 @@ lerna-debug.log*
 # Coverage directory used by tools like istanbul
 *.lcov
 
-# Coverage - ignore all except main summary
-coverage/*
-!coverage/index.html
+# Coverage
+coverage/
 
 # Dependency directories
 node_modules/

@@ -45,7 +45,7 @@ function generateHelpContent(): string {
 	lines.push('# Numbers-LE Help & Documentation');
 	lines.push('');
 	lines.push(
-		'**Version:** 1.0.0 | **Zero Hassle Number Extraction from JSON, YAML, CSV, TOML, INI, and .ENV**',
+		'**Zero Hassle Number Extraction from JSON, YAML, CSV, TOML, INI, and .ENV**',
 	);
 	lines.push('');
 	lines.push('---');
@@ -77,9 +77,7 @@ function generateHelpContent(): string {
 	);
 	lines.push('');
 	lines.push('- **Supported formats:** JSON, YAML, CSV, TOML, INI, .ENV');
-	lines.push(
-		'- **Number types:** Integers, floats, percentages, scientific notation',
-	);
+	lines.push('- **Number types:** Integers, floats, scientific notation');
 	lines.push('- **CSV mode:** Stream large files or select specific columns');
 	lines.push('');
 
@@ -100,18 +98,6 @@ function generateHelpContent(): string {
 	lines.push(
 		'- **Magnitude Descending**: -20, -10, 3, 2, 1 (by absolute value)',
 	);
-	lines.push('');
-
-	lines.push('### Post-Process: Analyze');
-	lines.push('Performs comprehensive statistical analysis:');
-	lines.push('');
-	lines.push(
-		'- **Basic stats:** count, sum, average, min, max, median, mode, range',
-	);
-	lines.push(
-		'- **Advanced stats:** standard deviation, variance, outlier detection',
-	);
-	lines.push('- Results copied to clipboard for easy sharing');
 	lines.push('');
 
 	lines.push('### Toggle CSV Streaming');
@@ -151,9 +137,6 @@ function generateHelpContent(): string {
 	lines.push(
 		'- **`numbers-le.sortMode`** - Sort method: `numeric-asc`, `numeric-desc`, etc. (default: `"off"`)',
 	);
-	lines.push(
-		'- **`numbers-le.analysis.enabled`** - Automatically analyze results (default: `true`)',
-	);
 	lines.push('');
 
 	lines.push('### Safety & Performance');
@@ -166,9 +149,6 @@ function generateHelpContent(): string {
 	);
 	lines.push(
 		'- **`numbers-le.safety.largeOutputLinesThreshold`** - Warn before opening large results (default: `50000`)',
-	);
-	lines.push(
-		'- **`numbers-le.performance.maxDuration`** - Max operation duration in ms (default: `5000`)',
 	);
 	lines.push('');
 
@@ -193,9 +173,7 @@ function generateHelpContent(): string {
 	lines.push('');
 
 	lines.push('2. **Disable Automatic Processing**');
-	lines.push(
-		'   - Turn off auto-dedupe, sort, and analysis for faster extraction',
-	);
+	lines.push('   - Turn off auto-dedupe and sort for faster extraction');
 	lines.push('   - Process results manually with post-process commands');
 	lines.push('');
 
@@ -230,10 +208,7 @@ function generateHelpContent(): string {
 	lines.push('');
 	lines.push('- **Large files:** Enable CSV streaming or reduce file size');
 	lines.push(
-		'- **Slow analysis:** Disable automatic analysis and run manually',
-	);
-	lines.push(
-		'- **High memory:** Check Output panel → "Numbers-LE" for performance metrics',
+		'- **Slow post-processing:** Disable automatic dedupe/sort and run manually',
 	);
 	lines.push('');
 
@@ -254,13 +229,10 @@ function generateHelpContent(): string {
 	lines.push('## Additional Resources');
 	lines.push('');
 	lines.push(
-		'- **Documentation:** [GitHub Repository](https://github.com/OffensiveEdge/numbers-le)',
+		'- **Documentation:** [GitHub Repository](https://github.com/nolindnaidoo/numbers-le)',
 	);
 	lines.push(
-		'- **Report Issues:** [GitHub Issues](https://github.com/OffensiveEdge/numbers-le/issues)',
-	);
-	lines.push(
-		'- **VS Code Marketplace:** [Extension Page](https://marketplace.visualstudio.com/items?itemName=OffensiveEdge.numbers-le)',
+		'- **Report Issues:** [GitHub Issues](https://github.com/nolindnaidoo/numbers-le/issues)',
 	);
 	lines.push('');
 
