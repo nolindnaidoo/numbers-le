@@ -21,15 +21,12 @@ exports[`extraction characterization > mixed-array.toml as toml 1`] = `
 
 exports[`extraction characterization > multi-doc.yaml as yaml 1`] = `
 {
-  "errors": [
-    {
-      "filepath": "multi-doc.yaml",
-      "message": "Failed to parse YAML: expected a single document in the stream, but found more",
-      "type": "parse-error",
-    },
+  "errors": [],
+  "numbers": [
+    1,
+    2,
   ],
-  "numbers": [],
-  "success": false,
+  "success": true,
 }
 `;
 
@@ -42,7 +39,6 @@ exports[`extraction characterization > numbers.csv as csv 1`] = `
     2,
     -3.5,
     3,
-    12,
     4,
     42,
     100,
@@ -61,7 +57,6 @@ exports[`extraction characterization > numbers.csv via streaming parser 1`] = `
     2,
     -3.5,
     3,
-    12,
     4,
     42,
     100,
@@ -77,10 +72,8 @@ exports[`extraction characterization > numbers.env as env 1`] = `
   "numbers": [
     3000,
     45.5,
-    1.2,
     -7,
     99,
-    8080,
   ],
   "success": true,
 }
@@ -92,7 +85,6 @@ exports[`extraction characterization > numbers.ini as ini 1`] = `
   "numbers": [
     8080,
     30.5,
-    12,
     -42,
     0.5,
   ],
@@ -125,7 +117,6 @@ exports[`extraction characterization > numbers.toml as toml 1`] = `
     42,
     -3.14,
     5000,
-    Infinity,
     100,
     1,
     2,
@@ -146,7 +137,6 @@ exports[`extraction characterization > numbers.yaml as yaml 1`] = `
     -19.99,
     6.02e+23,
     26,
-    Infinity,
     1,
     2.5,
     10,
@@ -170,14 +160,16 @@ exports[`extraction characterization > numeric-header.csv as csv 1`] = `
 }
 `;
 
-exports[`extraction characterization > numeric-header.csv via streaming parser (header skipped, diverges from sync) 1`] = `
+exports[`extraction characterization > numeric-header.csv via streaming parser (agrees with sync) 1`] = `
 {
   "errors": [],
   "numbers": [
-    19.99,
+    2024,
+    7,
     1,
-    -3.5,
+    19.99,
     2,
+    -3.5,
   ],
   "success": true,
 }
@@ -189,10 +181,10 @@ exports[`extraction characterization > unknown file type falls back to regex sca
   "numbers": [
     123,
     1.2,
-    3,
+    0.3,
     -5,
     3.14,
-    15,
+    0.15,
     12,
     0,
   ],

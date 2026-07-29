@@ -1,5 +1,6 @@
 import * as ini from 'ini';
 import type { ExtractionResult } from '../../types';
+import { collectNumbers } from '../heuristics';
 
 export function extractFromIni(
 	text: string,
@@ -7,11 +8,11 @@ export function extractFromIni(
 ): ExtractionResult {
 	try {
 		const parsed = ini.parse(text);
-		const numbers = collectNumber(parsed);
-
 		return {
 			success: true,
-			numbers: Object.freeze(numbers),
+			// INI values are inherently strings; numeric-looking values
+			// are numbers here, unlike in JSON/YAML/TOML.
+			numbers: collectNumbers(parsed, { coerceStrings: true }),
 			errors: Object.freeze([]),
 		};
 	} catch (error) {
@@ -27,36 +28,4 @@ export function extractFromIni(
 			]),
 		};
 	}
-}
-
-function collectNumber(value: unknown): readonly number[] {
-	if (typeof value === 'number' && !Number.isNaN(value)) {
-		return [value];
-	}
-
-	if (typeof value === 'string') {
-		const num = parseFloat(value);
-		if (!Number.isNaN(num) && Number.isFinite(num)) {
-			return [num];
-		}
-		return [];
-	}
-
-	if (Array.isArray(value)) {
-		const numbers: number[] = [];
-		for (const item of value) {
-			numbers.push(...collectNumber(item));
-		}
-		return numbers;
-	}
-
-	if (value && typeof value === 'object') {
-		const numbers: number[] = [];
-		for (const prop of Object.values(value)) {
-			numbers.push(...collectNumber(prop));
-		}
-		return numbers;
-	}
-
-	return [];
 }

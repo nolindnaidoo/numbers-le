@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { readConfig } from '../config/config';
 import { detectFileType, extractNumber } from '../extraction/extract';
 import { parseCsvLine } from '../extraction/formats/csv';
+import { parseStrictNumber } from '../extraction/heuristics';
 import type { FileType } from '../types';
 import {
 	chooseLargeOutputAction,
@@ -248,10 +249,10 @@ function extractColumnNumbers(
 		if (!line) continue;
 		const cells = parseCsvLine(line);
 		if (columnIndex < cells.length) {
-			const cellValue = cells[columnIndex]?.trim();
+			const cellValue = cells[columnIndex];
 			if (cellValue) {
-				const num = parseFloat(cellValue);
-				if (!Number.isNaN(num) && Number.isFinite(num)) {
+				const num = parseStrictNumber(cellValue);
+				if (num !== undefined) {
 					numbers.push(num);
 				}
 			}

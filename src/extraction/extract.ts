@@ -5,6 +5,7 @@ import { extractFromIni } from './formats/ini';
 import { extractFromJson } from './formats/json';
 import { extractFromToml } from './formats/toml';
 import { extractFromYaml } from './formats/yaml';
+import { scanTextForNumbers } from './heuristics';
 
 export function extractNumber(
 	text: string,
@@ -36,15 +37,9 @@ function extractFromFallback(
 	text: string,
 	_filepath: string,
 ): ExtractionResult {
-	const numberRegex = /-?\d+\.?\d*/g;
-	const matches = text.match(numberRegex);
-	const numbers = matches
-		? matches.map(Number).filter((n) => !Number.isNaN(n) && Number.isFinite(n))
-		: [];
-
 	return {
 		success: true,
-		numbers: Object.freeze(numbers),
+		numbers: scanTextForNumbers(text),
 		errors: Object.freeze([]),
 	};
 }

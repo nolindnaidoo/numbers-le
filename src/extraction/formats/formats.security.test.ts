@@ -28,8 +28,8 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			// Should extract the leading number from first cell
-			expect(result.numbers).toContain(1);
+			// No cell is numeric in full; nothing is extracted.
+			expect(result.numbers).toEqual([]);
 		});
 
 		test('should handle CSV with XSS attempts', () => {
@@ -83,8 +83,8 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			// Should handle nested quotes
-			expect(result.numbers.length).toBeGreaterThan(0);
+			// The cell value is literally "1" (with quotes) — not a number.
+			expect(result.numbers).toEqual([]);
 		});
 
 		test('should handle CSV with mixed encodings', () => {

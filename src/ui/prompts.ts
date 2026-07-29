@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { parseCsvLine } from '../extraction/formats/csv';
 
 // Helper to handle CSV header-based column selection
 async function handleCsvHeaderBasedSelection(
@@ -98,7 +99,7 @@ async function handleCsvIndexBasedSelection(
 	const firstRowLine = lines[0];
 	if (!firstRowLine) return Object.freeze({});
 
-	const firstRow = splitCsvLine(firstRowLine);
+	const firstRow = parseCsvLine(firstRowLine);
 	const inRange = indices.filter((idx) => idx >= 0 && idx < firstRow.length);
 
 	if (inRange.length === 0) {
@@ -116,29 +117,6 @@ async function handleCsvIndexBasedSelection(
 	}
 
 	return Object.freeze({ csvHasHeader: false, csvColumnIndexes: inRange });
-}
-
-// Simple CSV line splitter (basic implementation)
-function splitCsvLine(line: string): string[] {
-	const result: string[] = [];
-	let current = '';
-	let inQuotes = false;
-
-	for (let i = 0; i < line.length; i++) {
-		const char = line[i];
-
-		if (char === '"') {
-			inQuotes = !inQuotes;
-		} else if (char === ',' && !inQuotes) {
-			result.push(current.trim());
-			current = '';
-		} else {
-			current += char;
-		}
-	}
-
-	result.push(current.trim());
-	return result;
 }
 
 // UI prompts for selecting file type and CSV extraction options
@@ -200,7 +178,7 @@ export async function promptCsvOptionsIfNeeded(
 	const firstLine = lines[0];
 	if (!firstLine) return Object.freeze({});
 
-	const headerCells = splitCsvLine(firstLine);
+	const headerCells = parseCsvLine(firstLine);
 	const looksLikeHeader = headerCells.some((cell) => /[A-Za-z]/.test(cell));
 
 	if (looksLikeHeader) {

@@ -190,23 +190,21 @@ describe('CSV Number Extraction', () => {
 			expect(result.numbers.length).toBe(9);
 		});
 
-		test('should handle CSV with numbers in text', () => {
+		test('rejects cells where the number is embedded in text', () => {
 			const csv = 'item123,45 items,price $67.89';
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBeGreaterThan(0);
+			// Strict policy: the whole cell must be numeric.
+			expect(result.numbers.length).toBe(0);
 		});
 
-		test('should handle CSV with percentages', () => {
+		test('rejects percentages (cell is not numeric in full)', () => {
 			const csv = '50%,75%,100%';
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			// Should extract the numeric part
-			expect(result.numbers).toContain(50);
-			expect(result.numbers).toContain(75);
-			expect(result.numbers).toContain(100);
+			expect(result.numbers).toEqual([]);
 		});
 
 		test('should handle CSV with currency symbols', () => {
@@ -219,13 +217,13 @@ describe('CSV Number Extraction', () => {
 			expect(result.numbers.length).toBe(0);
 		});
 
-		test('should handle CSV with commas in quoted numbers', () => {
+		test('rejects thousands-separated quoted numbers', () => {
 			const csv = '"1,000","2,500","3,750"';
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			// parseFloat will handle this
-			expect(result.numbers.length).toBeGreaterThan(0);
+			// "1,000" is not numeric in full (v1.x parseFloat read it as 1).
+			expect(result.numbers).toEqual([]);
 		});
 
 		test('should handle CSV with NaN-producing values', () => {

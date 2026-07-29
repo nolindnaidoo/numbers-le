@@ -1,5 +1,6 @@
 import { parse } from 'dotenv';
 import type { ExtractionResult } from '../../types';
+import { collectNumbers } from '../heuristics';
 
 export function extractFromEnv(
 	text: string,
@@ -7,22 +8,11 @@ export function extractFromEnv(
 ): ExtractionResult {
 	try {
 		const parsed = parse(text);
-		const numbers: number[] = [];
-
-		for (const value of Object.values(parsed)) {
-			if (typeof value === 'string') {
-				const num = parseFloat(value);
-				if (!Number.isNaN(num) && Number.isFinite(num)) {
-					numbers.push(num);
-				}
-			} else if (typeof value === 'number' && !Number.isNaN(value)) {
-				numbers.push(value);
-			}
-		}
-
 		return {
 			success: true,
-			numbers: Object.freeze(numbers),
+			// .env values are inherently strings; numeric-looking values
+			// are numbers here, unlike in JSON/YAML/TOML.
+			numbers: collectNumbers(parsed, { coerceStrings: true }),
 			errors: Object.freeze([]),
 		};
 	} catch (error) {

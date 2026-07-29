@@ -1,20 +1,36 @@
 import { parse } from 'csv-parse';
+import { parse as parseSync } from 'csv-parse/sync';
 import type { ExtractionResult, ParseError } from '../../types';
+import { parseStrictNumber } from '../heuristics';
+
+/**
+ * All CSV handling goes through csv-parse. v1.x had three hand-rolled
+ * splitters (two in this module, one in ui/prompts.ts) that mishandled
+ * escaped quotes ("") and disagreed with the streaming path, which
+ * silently consumed the first row as a header. Sync and streaming now
+ * produce identical results: every row is data, no header inference.
+ */
+const PARSE_OPTIONS = Object.freeze({
+	bom: true,
+	columns: false,
+	relax_column_count: true,
+	relax_quotes: true,
+	skip_empty_lines: true,
+	trim: true,
+});
 
 export function extractFromCsv(
 	text: string,
 	filepath: string,
 ): ExtractionResult {
 	try {
-		const records = parseCsvRecord(text);
+		const records = parseSync(text, PARSE_OPTIONS) as string[][];
 		const numbers: number[] = [];
 
 		for (const record of records) {
 			for (const value of record) {
-				const num = parseFloat(value);
-				if (!Number.isNaN(num) && Number.isFinite(num)) {
-					numbers.push(num);
-				}
+				const num = parseStrictNumber(value);
+				if (num !== undefined) numbers.push(num);
 			}
 		}
 
@@ -46,24 +62,16 @@ export function extractFromCsvAsync(
 		const numbers: number[] = [];
 		const errors: ParseError[] = [];
 
-		const parser = parse({
-			columns: true,
-			skip_empty_lines: true,
-			trim: true,
-		});
+		const parser = parse(PARSE_OPTIONS);
 
 		parser.on('readable', () => {
 			let record: unknown = parser.read();
 			while (record !== null) {
-				if (typeof record === 'object' && record !== null) {
-					for (const value of Object.values(record)) {
+				if (Array.isArray(record)) {
+					for (const value of record) {
 						if (typeof value === 'string') {
-							const num = parseFloat(value);
-							if (!Number.isNaN(num) && Number.isFinite(num)) {
-								numbers.push(num);
-							}
-						} else if (typeof value === 'number' && !Number.isNaN(value)) {
-							numbers.push(value);
+							const num = parseStrictNumber(value);
+							if (num !== undefined) numbers.push(num);
 						}
 					}
 				}
@@ -92,58 +100,12 @@ export function extractFromCsvAsync(
 	});
 }
 
-function parseCsvRecord(text: string): readonly (readonly string[])[] {
-	const records: string[][] = [];
-	let currentRecord: string[] = [];
-	let currentField = '';
-	let inQuotes = false;
-
-	for (let i = 0; i < text.length; i++) {
-		const char = text[i];
-
-		if (char === '"') {
-			inQuotes = !inQuotes;
-		} else if (char === ',' && !inQuotes) {
-			currentRecord.push(currentField.trim());
-			currentField = '';
-		} else if (char === '\n' && !inQuotes) {
-			currentRecord.push(currentField.trim());
-			if (currentRecord.some((field) => field.length > 0)) {
-				records.push(currentRecord);
-			}
-			currentRecord = [];
-			currentField = '';
-		} else {
-			currentField += char;
-		}
-	}
-
-	currentRecord.push(currentField.trim());
-	if (currentRecord.some((field) => field.length > 0)) {
-		records.push(currentRecord);
-	}
-
-	return records;
-}
-
+/** Split a single CSV line into cells with the same parser and options. */
 export function parseCsvLine(line: string): readonly string[] {
-	const result: string[] = [];
-	let current = '';
-	let inQuotes = false;
-
-	for (let i = 0; i < line.length; i++) {
-		const char = line[i];
-
-		if (char === '"') {
-			inQuotes = !inQuotes;
-		} else if (char === ',' && !inQuotes) {
-			result.push(current.trim());
-			current = '';
-		} else {
-			current += char;
-		}
+	try {
+		const records = parseSync(line, PARSE_OPTIONS) as string[][];
+		return Object.freeze(records[0] ?? []);
+	} catch {
+		return Object.freeze([]);
 	}
-
-	result.push(current.trim());
-	return result;
 }

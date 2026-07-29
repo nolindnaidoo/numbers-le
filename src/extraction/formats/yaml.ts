@@ -1,14 +1,18 @@
 import * as yaml from 'js-yaml';
 import type { ExtractionResult } from '../../types';
+import { collectNumbers } from '../heuristics';
 
 export function extractFromYaml(
 	text: string,
 	filepath: string,
 ): ExtractionResult {
 	try {
-		const parsed = yaml.load(text);
-		const numbers = collectNumber(parsed);
-
+		const numbers: number[] = [];
+		// loadAll handles both single documents and `---`-separated
+		// multi-document streams (load() rejects the latter outright).
+		for (const doc of yaml.loadAll(text)) {
+			numbers.push(...collectNumbers(doc, { coerceStrings: false }));
+		}
 		return {
 			success: true,
 			numbers: Object.freeze(numbers),
@@ -27,28 +31,4 @@ export function extractFromYaml(
 			]),
 		};
 	}
-}
-
-function collectNumber(value: unknown): readonly number[] {
-	if (typeof value === 'number' && !Number.isNaN(value)) {
-		return [value];
-	}
-
-	if (Array.isArray(value)) {
-		const numbers: number[] = [];
-		for (const item of value) {
-			numbers.push(...collectNumber(item));
-		}
-		return numbers;
-	}
-
-	if (value && typeof value === 'object') {
-		const numbers: number[] = [];
-		for (const prop of Object.values(value)) {
-			numbers.push(...collectNumber(prop));
-		}
-		return numbers;
-	}
-
-	return [];
 }

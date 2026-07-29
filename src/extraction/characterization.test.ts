@@ -6,14 +6,15 @@ import { extractNumber } from './extract';
 import { extractFromCsvAsync } from './formats/csv';
 
 /**
- * Characterization tests: pin the CURRENT extraction output per format,
- * including known bugs (collectNumber duplicated per format with divergent
- * string coercion — INI parseFloats strings while JSON/YAML/TOML do not;
- * parseFloat accepting leading-garbage like "12abc"; Infinity passing the
- * NaN-only guard in JSON/YAML/TOML/INI collectors; CSV sync parser
- * including the header row while the streaming parser skips it; js-yaml
- * rejecting multi-document streams). Behavior changes must update these
- * snapshots in the same commit, so every output diff is explicit.
+ * Characterization tests: pin the extraction output per format.
+ * Behavior changes must update these snapshots in the same commit, so
+ * every output diff is explicit.
+ *
+ * The 2.0 policy pinned here (see extraction/heuristics.ts): finite
+ * numbers only; string coercion only in INI/.env/CSV and only when the
+ * whole string is numeric ("12abc" and "1.2.3" extract nothing); CSV
+ * sync and streaming agree, with no header inference; multi-document
+ * YAML extracts from every document.
  */
 
 const FIXTURES: ReadonlyArray<{ fixture: string; fileType: FileType }> = [
@@ -48,7 +49,7 @@ describe('extraction characterization', () => {
 		expect(result).toMatchSnapshot();
 	});
 
-	it('numeric-header.csv via streaming parser (header skipped, diverges from sync)', async () => {
+	it('numeric-header.csv via streaming parser (agrees with sync)', async () => {
 		const result = await extractFromCsvAsync(
 			readFixture('numeric-header.csv'),
 			'numeric-header.csv',
