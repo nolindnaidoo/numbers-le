@@ -432,67 +432,56 @@ async function processAndOutputResults(
 export async function extractNumbers(deps: CommandDependencies): Promise<void> {
 	deps.telemetry.event('command', { name: 'extractNumbers' });
 
-	// Start performance tracking
-	const tracker = deps.performanceMonitor.startOperation('extract');
-	let fileSize = 0;
+	// Step 1: Validate and prepare
+	const prepared = await validateAndPrepareExtraction(deps);
+	if (!prepared) return;
 
-	try {
-		// Step 1: Validate and prepare
-		const prepared = await validateAndPrepareExtraction(deps);
-		if (!prepared) return;
+	const { document, text, fileType } = prepared;
+	const csvOptions = await promptCsvOptionsIfNeeded(fileType, text);
 
-		const { document, text, fileType } = prepared;
-		fileSize = text.length;
-		const csvOptions = await promptCsvOptionsIfNeeded(fileType, text);
+	await vscode.window.withProgress(
+		{
+			location: vscode.ProgressLocation.Notification,
+			title: 'Extracting numbers...',
+			cancellable: true,
+		},
+		async (_progress, token): Promise<void> => {
+			if (token.isCancellationRequested) return;
 
-		await vscode.window.withProgress(
-			{
-				location: vscode.ProgressLocation.Notification,
-				title: 'Extracting numbers...',
-				cancellable: true,
-			},
-			async (_progress, token): Promise<void> => {
-				if (token.isCancellationRequested) return;
+			// Read config once for consistency
+			const config = readConfig();
 
-				// Read config once for consistency
-				const config = readConfig();
-
-				// Warn for large files
-				try {
-					const stat = await vscode.workspace.fs.stat(document.uri);
-					if (
-						config.safetyEnabled &&
-						stat.size > config.safetyFileSizeWarnBytes
-					) {
-						deps.notifier.warn(
-							`Large file detected (${stat.size} bytes). Extraction may take longer.`,
-						);
-					}
-				} catch {
-					// ignore
+			// Warn for large files
+			try {
+				const stat = await vscode.workspace.fs.stat(document.uri);
+				if (
+					config.safetyEnabled &&
+					stat.size > config.safetyFileSizeWarnBytes
+				) {
+					deps.notifier.warn(
+						`Large file detected (${stat.size} bytes). Extraction may take longer.`,
+					);
 				}
+			} catch {
+				// ignore
+			}
 
-				if (token.isCancellationRequested) return;
+			if (token.isCancellationRequested) return;
 
-				// Create extraction context
-				const context: ExtractionContext = {
-					document,
-					text,
-					fileType,
-					csvOptions,
-					config,
-					deps,
-				};
+			// Create extraction context
+			const context: ExtractionContext = {
+				document,
+				text,
+				fileType,
+				csvOptions,
+				config,
+				deps,
+			};
 
-				// Step 3: Route to appropriate handler
-				if (await handleCsvMultiColumnExtraction(context, token)) return;
-				if (await handleCsvStreamingExtraction(context, token)) return;
-				await handleNormalExtraction(context, token);
-			},
-		);
-	} finally {
-		// Record performance metrics
-		const metrics = tracker.end(0, fileSize);
-		deps.performanceMonitor.recordMetrics(metrics);
-	}
+			// Step 3: Route to appropriate handler
+			if (await handleCsvMultiColumnExtraction(context, token)) return;
+			if (await handleCsvStreamingExtraction(context, token)) return;
+			await handleNormalExtraction(context, token);
+		},
+	);
 }

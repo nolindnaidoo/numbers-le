@@ -10,21 +10,9 @@ export interface ParseError {
 	filepath?: string;
 }
 
-export interface AnalysisResult {
-	count: number;
-	sum: number;
-	average: number;
-	min: number;
-	max: number;
-	median: number;
-	mode?: number | undefined;
-	range: number;
-}
-
 export type FileType =
 	| 'json'
 	| 'yaml'
-	| 'yml'
 	| 'csv'
 	| 'toml'
 	| 'ini'
@@ -54,80 +42,4 @@ export interface Configuration {
 	readonly sortMode: SortMode;
 	readonly statusBarEnabled: boolean;
 	readonly telemetryEnabled: boolean;
-}
-
-// Error handling types
-export type ErrorCategory =
-	| 'parse'
-	| 'validation'
-	| 'safety'
-	| 'operational'
-	| 'file-system'
-	| 'analysis'
-	| 'configuration';
-
-export interface EnhancedError {
-	readonly category: ErrorCategory;
-	readonly type: string;
-	readonly message: string;
-	readonly filepath: string;
-	readonly line?: number;
-	readonly column?: number;
-	readonly context: Record<string, unknown>;
-	readonly recoverable: boolean;
-	readonly userMessage: string;
-	readonly suggestion: string;
-}
-
-export interface ErrorRecoveryOptions {
-	readonly retryable: boolean;
-	readonly maxRetries: number;
-	readonly retryDelay: number;
-	readonly fallbackAction?: () => Promise<void>;
-}
-
-// Performance monitoring types
-export interface PerformanceMetrics {
-	readonly operation: string;
-	readonly startTime: number;
-	readonly endTime: number;
-	readonly duration: number;
-	readonly numberCount: number;
-	readonly fileSize: number;
-	readonly memoryUsage: number;
-	readonly cpuUsage: number;
-	readonly throughput: number;
-	readonly cacheHits: number;
-	readonly cacheMisses: number;
-}
-
-export interface PerformanceReport {
-	readonly metrics: PerformanceMetrics;
-	readonly recommendations: readonly string[];
-	readonly warnings: readonly string[];
-	readonly optimizations: readonly string[];
-}
-
-export interface PerformanceThresholds {
-	readonly maxDuration: number;
-	readonly maxMemoryUsage: number;
-	readonly maxCpuUsage: number;
-	readonly minThroughput: number;
-}
-
-// Safety check types
-export interface SafetyMetrics {
-	readonly fileSize: number;
-	readonly numberCount: number;
-	readonly estimatedProcessingTime: number;
-	readonly memoryUsage: number;
-	readonly outputLines: number;
-}
-
-export interface SafetyCheckResult {
-	readonly safe: boolean;
-	readonly warnings: readonly string[];
-	readonly errors: readonly string[];
-	readonly metrics: SafetyMetrics;
-	readonly recommendations: readonly string[];
 }

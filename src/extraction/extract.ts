@@ -16,7 +16,6 @@ export function extractNumber(
 		case 'json':
 			return extractFromJson(text, filepath);
 		case 'yaml':
-		case 'yml':
 			return extractFromYaml(text, filepath);
 		case 'csv':
 			return extractFromCsv(text, filepath);

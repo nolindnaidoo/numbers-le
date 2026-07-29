@@ -1,67 +1,35 @@
 import * as vscode from 'vscode';
 import { readConfig } from '../config/config';
+import { sanitizeErrorMessage } from '../utils/errors';
 
+/**
+ * All user notifications route through here so notificationsLevel
+ * actually governs them: 'all' shows everything, 'important' shows
+ * warnings and errors, 'silent' shows errors only. Every message is
+ * sanitized before display.
+ */
 export interface Notifier {
 	info(message: string): void;
 	warn(message: string): void;
 	error(message: string): void;
-	showMultilineRisk(count: number): void;
-	showCsvNoCopy(): void;
-	showPostProcessInfo(): void;
 }
 
 export function createNotifier(): Notifier {
-	function level(): 'all' | 'important' | 'silent' {
-		return readConfig().notificationsLevel;
-	}
-
 	return Object.freeze({
 		info(message: string): void {
-			const lv = level();
-			if (lv === 'silent') return;
-			if (lv === 'all') vscode.window.showInformationMessage(message);
+			if (readConfig().notificationsLevel === 'all') {
+				vscode.window.showInformationMessage(sanitizeErrorMessage(message));
+			}
 		},
 
 		warn(message: string): void {
-			const lv = level();
-			if (lv === 'silent') return;
-			vscode.window.showWarningMessage(message);
+			if (readConfig().notificationsLevel !== 'silent') {
+				vscode.window.showWarningMessage(sanitizeErrorMessage(message));
+			}
 		},
 
 		error(message: string): void {
-			const lv = level();
-			if (lv === 'silent') return;
-			vscode.window.showErrorMessage(message);
-		},
-
-		showMultilineRisk(_count: number): void {
-			const lv = level();
-			if (lv === 'silent') return;
-			if (lv === 'all') {
-				vscode.window.showInformationMessage(
-					'Detected multi‑line numbers. Rendering may vary by format. Prefer single‑line numbers for stable results.',
-				);
-			}
-		},
-
-		showCsvNoCopy(): void {
-			const lv = level();
-			if (lv === 'silent') return;
-			if (lv === 'all') {
-				vscode.window.showInformationMessage(
-					"CSV results aren't auto‑copied when streaming or extracting all columns. Use the editor output or Copy manually.",
-				);
-			}
-		},
-
-		showPostProcessInfo(): void {
-			const lv = level();
-			if (lv === 'silent') return;
-			if (lv === 'all') {
-				vscode.window.showInformationMessage(
-					"Sorting and deduping operate on final numbers, not structured positions. Structural order/indices aren't preserved.",
-				);
-			}
+			vscode.window.showErrorMessage(sanitizeErrorMessage(message));
 		},
 	});
 }
