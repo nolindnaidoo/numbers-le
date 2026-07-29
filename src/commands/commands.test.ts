@@ -248,6 +248,6 @@ describe('numbers-le.help', () => {
 		expect(help).toContain('# Numbers-LE Help & Documentation');
 		expect(help).toContain('Toggle CSV Streaming');
 		expect(help).not.toContain('Post-Process: Analyze');
-		expect(help).not.toContain('OffensiveEdge');
+		expect(help).toContain('github.com/nolindnaidoo/numbers-le');
 	});
 });

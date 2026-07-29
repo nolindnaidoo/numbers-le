@@ -1,22 +1,22 @@
 {
 	"name": "numbers-le",
-	"publisher": "OffensiveEdge",
+	"publisher": "nolindnaidoo",
 	"displayName": "Numbers-LE",
 	"description": "Zero Hassle Number Extraction from JSON, YAML, CSV, TOML, INI, and .ENV",
-	"version": "1.8.1",
+	"version": "2.0.0",
 	"license": "MIT",
 	"author": {
-		"name": "OffensiveEdge",
-		"url": "https://github.com/OffensiveEdge"
+		"name": "nolindnaidoo",
+		"url": "https://github.com/nolindnaidoo"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/OffensiveEdge/numbers-le.git"
+		"url": "https://github.com/nolindnaidoo/numbers-le.git"
 	},
 	"bugs": {
-		"url": "https://github.com/OffensiveEdge/numbers-le/issues"
+		"url": "https://github.com/nolindnaidoo/numbers-le/issues"
 	},
-	"homepage": "https://github.com/OffensiveEdge/numbers-le#readme",
+	"homepage": "https://github.com/nolindnaidoo/numbers-le#readme",
 	"engines": {
 		"vscode": "^1.90.0",
 		"node": ">=20.0.0"
@@ -32,21 +32,15 @@
 		"extract",
 		"extractor",
 		"extraction",
-		"data",
-		"analysis",
-		"validation",
 		"json",
 		"yaml",
 		"csv",
 		"toml",
 		"ini",
 		"env",
-		"math",
-		"statistics",
-		"flatten",
+		"dotenv",
 		"sort",
-		"sorting",
-		"compliance"
+		"dedupe"
 	],
 	"icon": "src/assets/images/icon.png",
 	"main": "./dist/extension.js",

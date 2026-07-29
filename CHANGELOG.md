@@ -5,78 +5,97 @@ All notable changes to Numbers-LE will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.1] - 2025-11-02
+## [2.0.0] - 2026-07-29
 
-### Documentation
+Full rehabilitation release. The headline: **v1.x VSIXes built from this
+repo could not activate** — the build had no bundler while the package
+excluded `node_modules`, so the extension crashed on load with
+`Cannot find module 'vscode-nls'`. 2.0.0 ships a self-contained esbuild
+bundle, verified by a packaging gate and a real extension-host
+integration suite on every CI run.
 
-- **LE Family Updates** - Added Regex-LE and Secrets-LE to the "More from the LE Family" section in README
+### Fixed
 
-## [1.8.0] - 2025-10-26
+- **Packaging**: `dist/extension.js` is now a single self-contained
+  bundle (VSIX: 21 files). A bundle gate (static require scan + loading
+  the bundle with `vscode` stubbed) blocks any regression.
+- **`Toggle CSV Streaming`**: the command was declared in the manifest
+  (palette entry, activation event) but never registered — invoking it
+  errored with "command not found" in every 1.x release. It now flips
+  `csv.streamingEnabled` globally and reports the new state.
+- **Errors were invisible by default**: the notifier suppressed error
+  messages at the default `silent` level. `silent` now means errors
+  only; `important` adds warnings; `all` shows everything.
+- **`postProcess.openInNewFile`** shipped declared (default `true`) but
+  ignored — Dedupe/Sort always overwrote the current editor. It is now
+  honored, and in-place replacement is the opt-out.
+- **Config**: code fallbacks silently disagreed with manifest defaults
+  (`openResultsSideBySide`, `postProcess.openInNewFile`); a parity test
+  now asserts every declared key. Non-numeric setting overrides no
+  longer produce `NaN` thresholds that disabled every safety check.
+- **Context menu**: the `resourceExtname in …` when-clause never
+  matched ('in' tests context-list membership, not string equality), so
+  the right-click entry never appeared; replaced with an `editorLangId`
+  regex.
+- **Error hygiene**: user directories and credential-shaped fragments
+  are redacted from every notification.
 
-### Security & Enterprise Readiness
+### Changed — extraction output
 
-- **CSV Injection Prevention** - Added comprehensive security tests covering:
-  - Formula injection (`=`, `+`, `-`, `@` prefixes)
-  - Command injection (DDE attacks)
-  - SQL injection patterns
-  - XSS injection vectors
-  - Path traversal in CSV data
-  - Null byte injection
-  - Long line DoS prevention
-- **ENV/INI Injection Prevention** - Added security tests for:
-  - Command injection in environment values
-  - Shell expansion attacks (`$()`, backticks)
-  - Variable expansion exploitation
-  - Newline and null byte injection
-  - Export statement abuse
-  - Multiline value attacks
-- **Test Suite Expansion** - Increased from 129 to 171 unit tests (+33%)
-  - 95% function coverage, 80% line coverage
-  - Zero critical vulnerabilities
-  - Enterprise-grade reliability
+One shared heuristics module replaces four divergent per-format number
+collectors, and csv-parse replaces three hand-rolled CSV splitters
+(which mishandled escaped quotes). The unified policy:
 
-### Quality Improvements
+- **Coerced strings must be numeric in full** (INI/.env/CSV): `12abc`
+  no longer extracts `12`, `VERSION=1.2.3` no longer extracts `1.2`,
+  `"1,000"` no longer extracts `1`. JSON/YAML/TOML quoted numbers
+  remain data, not numbers (unchanged, now deliberate and documented).
+- **Finite numbers only**: YAML `.inf` / TOML `inf` no longer leak the
+  literal `Infinity` into results.
+- **CSV sync and streaming now agree**: the streaming path previously
+  consumed the first row as a header and silently dropped it. No header
+  inference anywhere — every row is data.
+- **Multi-document YAML** (`---` streams) now extracts from every
+  document instead of failing with a parse error.
+- **Unknown-file-type fallback** now understands exponents, leading
+  `+`, and leading-dot floats (`1e6` no longer reads as `1` and `6`).
 
-- **Type Safety** - 100% TypeScript strict mode compliance
-- **Immutability** - All exports frozen with `Object.freeze()`
-- **Dependency Security** - Zero vulnerabilities in dependency chain
+### Removed
 
-## [1.7.0] - 2025-01-27
+- 14 settings that were never read by any code path (`analysis.*`,
+  `performance.*`, `keyboard.*`, `presets.*`). 15 real settings remain,
+  each with a consumer.
+- The runtime "localization" layer: it never loaded a single
+  translation (broken `vscode-nls` wiring; the per-module bundles it
+  needed were never generated) — users always saw English.
+  Manifest/settings translations in 13 catalogues remain, pruned to
+  exact key parity.
+- The 450-line performance monitor (metrics recorded with hardcoded
+  zeros into a buffer nothing read), two dead 380+-line utility
+  modules, 138MB of committed benchmark fixtures, and the fabricated
+  documentation set (`ENTERPRISE_QUALITY.md`, `docs/`) — replaced by an
+  accurate README + AGENTS.md.
+- The `Post-Process: Analyze` section of the help document: no such
+  command exists, and no statistics feature ships in this extension.
 
-### Initial Public Release
+### Infrastructure
 
-Numbers-LE brings zero-hassle number extraction to VS Code. Simple, reliable, focused.
+- esbuild bundle + allow-list `.vscodeignore` + bundle gate.
+- tsc now typechecks tests and configs (`noEmit`, strict).
+- Stateful vscode mock; 243 unit tests, coverage thresholds enforced
+  (80 lines / 80 funcs / 75 branches / 80 stmts).
+- Real extension-host integration suite (`@vscode/test-cli`).
+- CI on 3 OSes: lint → typecheck → coverage → build → bundle gate →
+  package → integration tests; VSIX artifact uploaded. Manual release
+  workflow publishes to Marketplace + Open VSX.
+- Publisher/branding: `nolindnaidoo`.
 
-#### Supported File Types
+## 1.x (condensed) - 2025
 
-- **JSON** - API responses and configuration files
-- **YAML** - Configuration and data files
-- **CSV** - Data exports and analysis files
-- **TOML** - Configuration files
-- **INI** - Configuration files
-- **ENV** - Environment files
-
-#### Features
-
-- **Multi-language support** - Comprehensive localization for 12+ languages
-- **Intelligent number detection** - Identifies true numeric values (integers, floats, percentages, currencies)
-- **Smart filtering** - Filters out IDs, version numbers, and non-data noise
-- **Statistical analysis built-in**:
-  - **Basic stats** - count, sum, average, min, max, median, mode
-  - **Advanced analysis** - range, variance, standard deviation
-  - **Data insights** - outliers, trends, patterns
-- **Automatic cleanup**:
-  - **Sort** for stable analysis and reviews
-  - **Dedupe** to eliminate noise
-  - **Filter** by ranges or conditions
-- **Stream processing** - Work with millions of rows without locking VS Code
-- **High-performance** - Efficiently processes large datasets
-- **One-command extraction** - `Ctrl+Alt+N` (`Cmd+Alt+N` on macOS)
-- **Developer-friendly** - 129 passing tests (95.24% function coverage, 80.06% line coverage), TypeScript strict mode, functional programming, MIT licensed
-
-#### Use Cases
-
-- **Financial Analysis** - Extract revenue, profit, and growth metrics from JSON/CSV for quick validation
-- **Config Validation** - Pull timeouts, limits, and thresholds from YAML/TOML/INI for auditing
-- **Performance Monitoring** - Analyze CPU, memory, and response times from logs and metrics files
-- **Data QA** - Get instant statistics (avg, median, outliers) on numeric datasets
+Versions 1.7.0–1.8.1 claimed statistical analysis, smart filtering,
+stream processing of "millions of rows", currency/percentage detection,
+and enterprise security hardening. Most of those claims did not hold
+against the code (no analysis command ever existed, filtering was
+`parseFloat` coercion, and the published VSIX could not activate at
+all); their entries are condensed here rather than preserved as
+documentation.

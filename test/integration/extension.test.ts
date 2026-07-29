@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as vscode from 'vscode';
 
-const EXTENSION_ID = 'OffensiveEdge.numbers-le';
+const EXTENSION_ID = 'nolindnaidoo.numbers-le';
 
 async function openFile(
 	name: string,
