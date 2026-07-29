@@ -1,5 +1,3 @@
-import type { NumbersLeConfig } from '../config/config';
-
 /**
  * Performance monitoring and optimization utilities for Numbers-LE
  * Provides performance metrics, monitoring, and optimization strategies
@@ -305,16 +303,13 @@ export class PerformanceTracker {
 /**
  * Get default performance thresholds
  */
-export function getDefaultPerformanceThresholds(
-	config: NumbersLeConfig,
-): PerformanceThresholds {
-	return {
-		maxDuration: config.performanceMaxDuration,
-		maxMemoryUsage: config.performanceMaxMemoryUsage,
-		maxCpuUsage: config.performanceMaxCpuUsage,
-		minThroughput: config.performanceMinThroughput,
-	};
-}
+export const DEFAULT_PERFORMANCE_THRESHOLDS: PerformanceThresholds =
+	Object.freeze({
+		maxDuration: 5000,
+		maxMemoryUsage: 104857600,
+		maxCpuUsage: 1000000,
+		minThroughput: 1000,
+	});
 
 /**
  * Format performance metrics for display
@@ -402,9 +397,6 @@ export function getPerformanceOptimizations(
 /**
  * Create performance monitor instance
  */
-export function createPerformanceMonitor(
-	config: NumbersLeConfig,
-): PerformanceMonitor {
-	const thresholds = getDefaultPerformanceThresholds(config);
-	return new PerformanceMonitor(thresholds);
+export function createPerformanceMonitor(): PerformanceMonitor {
+	return new PerformanceMonitor(DEFAULT_PERFORMANCE_THRESHOLDS);
 }

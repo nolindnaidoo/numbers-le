@@ -54,8 +54,6 @@ export interface Configuration {
 	readonly sortMode: SortMode;
 	readonly statusBarEnabled: boolean;
 	readonly telemetryEnabled: boolean;
-	readonly analysisEnabled: boolean;
-	readonly analysisIncludeStats: boolean;
 }
 
 // Error handling types

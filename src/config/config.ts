@@ -1,94 +1,145 @@
 import * as vscode from 'vscode';
-import type { SortMode } from '../utils/sort';
+import type { Configuration, SortMode } from '../types';
 
-export function readConfig(): NumbersLeConfig {
-	const cfg = vscode.workspace.getConfiguration('numbers-le');
+/**
+ * Fallback values, kept identical to the defaults declared in
+ * package.json contributes.configuration. A unit test asserts parity so
+ * the two can never drift again.
+ */
+export const CONFIG_DEFAULTS = Object.freeze({
+	copyToClipboardEnabled: false,
+	csvStreamingEnabled: false,
+	dedupeEnabled: false,
+	notificationsLevel: 'silent' as const,
+	postProcessOpenInNewFile: true,
+	openResultsSideBySide: true,
+	safetyEnabled: true,
+	safetyFileSizeWarnBytes: 1_000_000,
+	safetyLargeOutputLinesThreshold: 50_000,
+	safetyManyDocumentsThreshold: 8,
+	showParseErrors: false,
+	sortEnabled: false,
+	sortMode: 'off' as const,
+	statusBarEnabled: true,
+	telemetryEnabled: false,
+});
 
-	const dedupeEnabled = Boolean(cfg.get('dedupeEnabled', false));
-	const sortEnabled = Boolean(cfg.get('sortEnabled', false));
-	const sortModeRaw = cfg.get('sortMode', 'off');
-	const sortMode = isValidSortMode(sortModeRaw) ? sortModeRaw : 'off';
-	const showParseErrors = Boolean(cfg.get('showParseErrors', false));
-	const openInNewFile = Boolean(cfg.get('postProcess.openInNewFile', false));
-	const openResultsSideBySide = Boolean(
-		cfg.get('openResultsSideBySide', false),
-	);
-	const telemetryEnabled = Boolean(cfg.get('telemetryEnabled', false));
-	const copyToClipboardEnabled = Boolean(
-		cfg.get('copyToClipboardEnabled', false),
-	);
-	const notifRaw = cfg.get('notificationsLevel', 'silent');
-	const notificationsLevel = isValidNotificationLevel(notifRaw)
-		? notifRaw
-		: 'silent';
-	const statusBarEnabled = Boolean(cfg.get('statusBar.enabled', true));
-	const safetyEnabled = Boolean(cfg.get('safety.enabled', true));
-	const fileSizeWarnBytes = Math.max(
-		1000,
-		Number(cfg.get('safety.fileSizeWarnBytes', 1_000_000)),
-	);
-	const largeOutputLinesThreshold = Math.max(
-		100,
-		Number(cfg.get('safety.largeOutputLinesThreshold', 50_000)),
-	);
-	const manyDocumentsThreshold = Math.max(
-		1,
-		Number(cfg.get('safety.manyDocumentsThreshold', 8)),
-	);
-	const csvStreamingEnabled = Boolean(cfg.get('csv.streamingEnabled', false));
-	const analysisEnabled = Boolean(cfg.get('analysis.enabled', true));
-	const analysisIncludeStats = Boolean(cfg.get('analysis.includeStats', true));
-	const performanceEnabled = Boolean(cfg.get('performance.enabled', true));
-	const performanceMaxDuration = Math.max(
-		1000,
-		Number(cfg.get('performance.maxDuration', 5000)),
-	);
-	const performanceMaxMemoryUsage = Math.max(
-		1048576,
-		Number(cfg.get('performance.maxMemoryUsage', 104857600)),
-	);
-	const performanceMaxCpuUsage = Math.max(
-		100000,
-		Number(cfg.get('performance.maxCpuUsage', 1000000)),
-	);
-	const performanceMinThroughput = Math.max(
-		100,
-		Number(cfg.get('performance.minThroughput', 1000)),
-	);
-	const performanceMaxCacheSize = Math.max(
-		100,
-		Number(cfg.get('performance.maxCacheSize', 1000)),
-	);
+export function readConfig(): Configuration {
+	const config = vscode.workspace.getConfiguration('numbers-le');
 
-	// Freeze to communicate immutability to consumers
 	return Object.freeze({
-		dedupeEnabled,
-		sortEnabled,
-		sortMode,
-		showParseErrors,
-		openInNewFile,
-		openResultsSideBySide,
-		telemetryEnabled,
-		copyToClipboardEnabled,
-		notificationsLevel,
-		statusBarEnabled,
-		safetyEnabled,
-		fileSizeWarnBytes,
-		largeOutputLinesThreshold,
-		manyDocumentsThreshold,
-		csvStreamingEnabled,
-		analysisEnabled,
-		analysisIncludeStats,
-		performanceEnabled,
-		performanceMaxDuration,
-		performanceMaxMemoryUsage,
-		performanceMaxCpuUsage,
-		performanceMinThroughput,
-		performanceMaxCacheSize,
+		copyToClipboardEnabled: readBoolean(
+			config,
+			'copyToClipboardEnabled',
+			CONFIG_DEFAULTS.copyToClipboardEnabled,
+		),
+		csvStreamingEnabled: readBoolean(
+			config,
+			'csv.streamingEnabled',
+			CONFIG_DEFAULTS.csvStreamingEnabled,
+		),
+		dedupeEnabled: readBoolean(
+			config,
+			'dedupeEnabled',
+			CONFIG_DEFAULTS.dedupeEnabled,
+		),
+		notificationsLevel: readNotificationLevel(config),
+		postProcessOpenInNewFile: readBoolean(
+			config,
+			'postProcess.openInNewFile',
+			CONFIG_DEFAULTS.postProcessOpenInNewFile,
+		),
+		openResultsSideBySide: readBoolean(
+			config,
+			'openResultsSideBySide',
+			CONFIG_DEFAULTS.openResultsSideBySide,
+		),
+		safetyEnabled: readBoolean(
+			config,
+			'safety.enabled',
+			CONFIG_DEFAULTS.safetyEnabled,
+		),
+		safetyFileSizeWarnBytes: readNumber(
+			config,
+			'safety.fileSizeWarnBytes',
+			CONFIG_DEFAULTS.safetyFileSizeWarnBytes,
+			1000,
+		),
+		safetyLargeOutputLinesThreshold: readNumber(
+			config,
+			'safety.largeOutputLinesThreshold',
+			CONFIG_DEFAULTS.safetyLargeOutputLinesThreshold,
+			100,
+		),
+		safetyManyDocumentsThreshold: readNumber(
+			config,
+			'safety.manyDocumentsThreshold',
+			CONFIG_DEFAULTS.safetyManyDocumentsThreshold,
+			1,
+		),
+		showParseErrors: readBoolean(
+			config,
+			'showParseErrors',
+			CONFIG_DEFAULTS.showParseErrors,
+		),
+		sortEnabled: readBoolean(
+			config,
+			'sortEnabled',
+			CONFIG_DEFAULTS.sortEnabled,
+		),
+		sortMode: readSortMode(config),
+		statusBarEnabled: readBoolean(
+			config,
+			'statusBar.enabled',
+			CONFIG_DEFAULTS.statusBarEnabled,
+		),
+		telemetryEnabled: readBoolean(
+			config,
+			'telemetryEnabled',
+			CONFIG_DEFAULTS.telemetryEnabled,
+		),
 	});
 }
 
+function readBoolean(
+	config: vscode.WorkspaceConfiguration,
+	key: string,
+	defaultValue: boolean,
+): boolean {
+	const value = config.get(key, defaultValue);
+	return typeof value === 'boolean' ? value : defaultValue;
+}
+
+function readNumber(
+	config: vscode.WorkspaceConfiguration,
+	key: string,
+	defaultValue: number,
+	minValue: number,
+): number {
+	const value = Number(config.get(key, defaultValue));
+	if (!Number.isFinite(value)) {
+		return defaultValue;
+	}
+	return Math.max(minValue, value);
+}
+
 export type NotificationLevel = 'all' | 'important' | 'silent';
+
+export function isValidNotificationLevel(v: unknown): v is NotificationLevel {
+	return v === 'all' || v === 'important' || v === 'silent';
+}
+
+function readNotificationLevel(
+	config: vscode.WorkspaceConfiguration,
+): NotificationLevel {
+	const raw = config.get<string>(
+		'notificationsLevel',
+		CONFIG_DEFAULTS.notificationsLevel,
+	);
+	return isValidNotificationLevel(raw)
+		? raw
+		: CONFIG_DEFAULTS.notificationsLevel;
+}
 
 export function isValidSortMode(v: unknown): v is SortMode {
 	return (
@@ -100,32 +151,7 @@ export function isValidSortMode(v: unknown): v is SortMode {
 	);
 }
 
-export function isValidNotificationLevel(v: unknown): v is NotificationLevel {
-	return v === 'all' || v === 'important' || v === 'silent';
+function readSortMode(config: vscode.WorkspaceConfiguration): SortMode {
+	const raw = config.get<string>('sortMode', CONFIG_DEFAULTS.sortMode);
+	return isValidSortMode(raw) ? raw : CONFIG_DEFAULTS.sortMode;
 }
-
-export type NumbersLeConfig = Readonly<{
-	dedupeEnabled: boolean;
-	sortEnabled: boolean;
-	sortMode: SortMode;
-	showParseErrors: boolean;
-	openInNewFile: boolean;
-	openResultsSideBySide: boolean;
-	telemetryEnabled: boolean;
-	copyToClipboardEnabled: boolean;
-	notificationsLevel: NotificationLevel;
-	statusBarEnabled: boolean;
-	safetyEnabled: boolean;
-	fileSizeWarnBytes: number;
-	largeOutputLinesThreshold: number;
-	manyDocumentsThreshold: number;
-	csvStreamingEnabled: boolean;
-	analysisEnabled: boolean;
-	analysisIncludeStats: boolean;
-	performanceEnabled: boolean;
-	performanceMaxDuration: number;
-	performanceMaxMemoryUsage: number;
-	performanceMaxCpuUsage: number;
-	performanceMinThroughput: number;
-	performanceMaxCacheSize: number;
-}>;

@@ -1,7 +1,6 @@
 import type * as vscode from 'vscode';
 import { registerCommands } from './commands';
 import { registerHelpCommand } from './commands/help';
-import { readConfig } from './config/config';
 import { registerOpenSettingsCommand } from './config/settings';
 import { createTelemetry } from './telemetry/telemetry';
 import { createNotifier } from './ui/notifier';
@@ -16,9 +15,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	// Register disposables
 	context.subscriptions.push(telemetry);
 
-	// Initialize performance monitoring
-	const config = readConfig();
-	const performanceMonitor = createPerformanceMonitor(config);
+	const performanceMonitor = createPerformanceMonitor();
 
 	// Register all commands with utilities
 	registerCommands(context, {

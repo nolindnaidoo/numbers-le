@@ -106,8 +106,8 @@ async function handleCsvMultiColumnExtraction(
 
 	if (
 		config.safetyEnabled &&
-		(targetIndexes.length >= config.manyDocumentsThreshold ||
-			estimatedTotal > config.largeOutputLinesThreshold)
+		(targetIndexes.length >= config.safetyManyDocumentsThreshold ||
+			estimatedTotal > config.safetyLargeOutputLinesThreshold)
 	) {
 		const ok = await confirmManyDocuments(targetIndexes.length, estimatedTotal);
 		if (!ok) return true; // Handled (cancelled)
@@ -371,7 +371,7 @@ async function processAndOutputResults(
 	let openDoc = true;
 	if (
 		config.safetyEnabled &&
-		finalNumbers.length > config.largeOutputLinesThreshold
+		finalNumbers.length > config.safetyLargeOutputLinesThreshold
 	) {
 		const hasPostProcess = config.dedupeEnabled || config.sortEnabled;
 		const hasContextualNotes = fileType === 'csv' || hasPostProcess;
@@ -459,7 +459,10 @@ export async function extractNumbers(deps: CommandDependencies): Promise<void> {
 				// Warn for large files
 				try {
 					const stat = await vscode.workspace.fs.stat(document.uri);
-					if (config.safetyEnabled && stat.size > config.fileSizeWarnBytes) {
+					if (
+						config.safetyEnabled &&
+						stat.size > config.safetyFileSizeWarnBytes
+					) {
 						deps.notifier.warn(
 							`Large file detected (${stat.size} bytes). Extraction may take longer.`,
 						);
