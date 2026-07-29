@@ -1,7 +1,4 @@
-import * as nls from 'vscode-nls';
 import type { NumbersLeConfig } from '../config/config';
-
-const localize = nls.config({ messageFormat: nls.MessageFormat.file })();
 
 /**
  * Safety utilities for Numbers-LE
@@ -40,31 +37,17 @@ export function performSafetyChecks(
 	if (fileSize > config.fileSizeWarnBytes * 10) {
 		// 10x threshold
 		errors.push(
-			localize(
-				'runtime.safety.error.large-file',
-				'File size too large ({0} MB). This may cause performance issues.',
-				Math.round(fileSize / (1024 * 1024)),
-			),
+			`File size too large (${Math.round(fileSize / (1024 * 1024))} MB). This may cause performance issues.`,
 		);
 		recommendations.push(
-			localize(
-				'runtime.safety.recommendation.large-file',
-				'Consider using CSV streaming mode or splitting the file into smaller chunks',
-			),
+			'Consider using CSV streaming mode or splitting the file into smaller chunks',
 		);
 	} else if (fileSize > config.fileSizeWarnBytes) {
 		warnings.push(
-			localize(
-				'runtime.safety.warning.large-file',
-				'Large file detected ({0} MB). Processing may take longer.',
-				Math.round(fileSize / (1024 * 1024)),
-			),
+			`Large file detected (${Math.round(fileSize / (1024 * 1024))} MB). Processing may take longer.`,
 		);
 		recommendations.push(
-			localize(
-				'runtime.safety.recommendation.enable-streaming',
-				'Enable CSV streaming in settings for better performance with large files',
-			),
+			'Enable CSV streaming in settings for better performance with large files',
 		);
 	}
 
@@ -72,26 +55,15 @@ export function performSafetyChecks(
 	if (metrics.estimatedProcessingTime > 10000) {
 		// 10 seconds
 		errors.push(
-			localize(
-				'runtime.safety.error.long-processing',
-				'Estimated processing time too long ({0} seconds). This may cause UI freezing.',
-				Math.round(metrics.estimatedProcessingTime / 1000),
-			),
+			`Estimated processing time too long (${Math.round(metrics.estimatedProcessingTime / 1000)} seconds). This may cause UI freezing.`,
 		);
 		recommendations.push(
-			localize(
-				'runtime.safety.recommendation.long-processing',
-				'Consider disabling automatic analysis or using CSV streaming',
-			),
+			'Consider disabling automatic analysis or using CSV streaming',
 		);
 	} else if (metrics.estimatedProcessingTime > 5000) {
 		// 5 seconds
 		warnings.push(
-			localize(
-				'runtime.safety.warning.long-processing',
-				'Long processing time expected ({0} seconds). Consider adjusting settings.',
-				Math.round(metrics.estimatedProcessingTime / 1000),
-			),
+			`Long processing time expected (${Math.round(metrics.estimatedProcessingTime / 1000)} seconds). Consider adjusting settings.`,
 		);
 	}
 
@@ -99,17 +71,10 @@ export function performSafetyChecks(
 	if (metrics.memoryUsage > 100 * 1024 * 1024) {
 		// 100MB
 		warnings.push(
-			localize(
-				'runtime.safety.warning.high-memory',
-				'High memory usage expected ({0} MB). Monitor system resources.',
-				Math.round(metrics.memoryUsage / (1024 * 1024)),
-			),
+			`High memory usage expected (${Math.round(metrics.memoryUsage / (1024 * 1024))} MB). Monitor system resources.`,
 		);
 		recommendations.push(
-			localize(
-				'runtime.safety.recommendation.high-memory',
-				'Use CSV streaming mode or disable automatic sorting/deduplication to reduce memory usage',
-			),
+			'Use CSV streaming mode or disable automatic sorting/deduplication to reduce memory usage',
 		);
 	}
 
@@ -146,31 +111,17 @@ export function checkOutputSafety(
 
 	if (outputLines > config.largeOutputLinesThreshold * 2) {
 		errors.push(
-			localize(
-				'runtime.safety.error.large-output',
-				'Output too large ({0} numbers). This may overwhelm the editor.',
-				outputLines,
-			),
+			`Output too large (${outputLines} numbers). This may overwhelm the editor.`,
 		);
 		recommendations.push(
-			localize(
-				'runtime.safety.recommendation.large-output',
-				'Consider copying to clipboard instead of opening in editor, or enable deduplication',
-			),
+			'Consider copying to clipboard instead of opening in editor, or enable deduplication',
 		);
 	} else if (outputLines > config.largeOutputLinesThreshold) {
 		warnings.push(
-			localize(
-				'runtime.safety.warning.large-output',
-				'Large output detected ({0} numbers). Opening may be slow.',
-				outputLines,
-			),
+			`Large output detected (${outputLines} numbers). Opening may be slow.`,
 		);
 		recommendations.push(
-			localize(
-				'runtime.safety.recommendation.copy-clipboard',
-				"Consider using 'Copy to Clipboard' option for large outputs",
-			),
+			"Consider using 'Copy to Clipboard' option for large outputs",
 		);
 	}
 
@@ -249,10 +200,7 @@ export function getSafetyRecommendations(
 		!config.csvStreamingEnabled
 	) {
 		recommendations.push(
-			localize(
-				'runtime.safety.recommendation.enable-csv-streaming',
-				'Enable CSV streaming mode in settings for better performance with large files',
-			),
+			'Enable CSV streaming mode in settings for better performance with large files',
 		);
 	}
 
@@ -262,10 +210,7 @@ export function getSafetyRecommendations(
 		config.analysisIncludeStats
 	) {
 		recommendations.push(
-			localize(
-				'runtime.safety.recommendation.disable-analysis',
-				'Consider disabling automatic analysis for faster extraction with large datasets',
-			),
+			'Consider disabling automatic analysis for faster extraction with large datasets',
 		);
 	}
 
@@ -274,10 +219,7 @@ export function getSafetyRecommendations(
 		!config.copyToClipboardEnabled
 	) {
 		recommendations.push(
-			localize(
-				'runtime.safety.recommendation.use-clipboard',
-				"Enable 'Copy to Clipboard' in settings to avoid opening large outputs in editor",
-			),
+			"Enable 'Copy to Clipboard' in settings to avoid opening large outputs in editor",
 		);
 	}
 

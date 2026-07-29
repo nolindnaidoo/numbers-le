@@ -1,8 +1,5 @@
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import { readConfig } from '../config/config';
-
-const localize = nls.config({ messageFormat: nls.MessageFormat.file })();
 
 export interface StatusBar {
 	flash(text: string): void;
@@ -13,8 +10,8 @@ export function createStatusBar(context: vscode.ExtensionContext): StatusBar {
 		vscode.StatusBarAlignment.Left,
 		100,
 	);
-	item.text = localize('runtime.statusbar.text', '$(symbol-number) Numbers-LE');
-	item.tooltip = localize('runtime.status.tooltip', 'Run Numbers-LE: Extract');
+	item.text = '$(symbol-number) Numbers-LE';
+	item.tooltip = 'Run Numbers-LE: Extract';
 	item.command = 'numbers-le.extractNumbers';
 	context.subscriptions.push(item);
 
@@ -25,11 +22,8 @@ export function createStatusBar(context: vscode.ExtensionContext): StatusBar {
 
 		const csvStreaming = readConfig().csvStreamingEnabled;
 		item.text = csvStreaming
-			? localize(
-					'runtime.statusbar.text.csv-streaming',
-					'$(symbol-number) Numbers-LE (CSV Streaming)',
-				)
-			: localize('runtime.statusbar.text', '$(symbol-number) Numbers-LE');
+			? '$(symbol-number) Numbers-LE (CSV Streaming)'
+			: '$(symbol-number) Numbers-LE';
 	}
 
 	updateVisibility();
@@ -60,11 +54,7 @@ export function createStatusBar(context: vscode.ExtensionContext): StatusBar {
 		flash(text: string): void {
 			// Flash a short-lived status text without spamming notifications
 			if (!readConfig().statusBarEnabled) return;
-			item.text = localize(
-				'runtime.statusbar.text.flash',
-				'$(symbol-number) {0}',
-				text,
-			);
+			item.text = `$(symbol-number) ${text}`;
 			if (hideTimer) {
 				clearTimeout(hideTimer);
 				hideTimer = undefined;
@@ -72,15 +62,10 @@ export function createStatusBar(context: vscode.ExtensionContext): StatusBar {
 			hideTimer = setTimeout(() => {
 				const csvStreaming = readConfig().csvStreamingEnabled;
 				item.text = csvStreaming
-					? localize(
-							'runtime.statusbar.text.csv-streaming',
-							'$(symbol-number) Numbers-LE (CSV Streaming)',
-						)
-					: localize('runtime.statusbar.text', '$(symbol-number) Numbers-LE');
+					? '$(symbol-number) Numbers-LE (CSV Streaming)'
+					: '$(symbol-number) Numbers-LE';
 				hideTimer = undefined;
 			}, 2000);
 		},
 	});
 }
-
-void localize;

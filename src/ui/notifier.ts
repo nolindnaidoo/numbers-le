@@ -1,8 +1,5 @@
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import { readConfig } from '../config/config';
-
-const localize = nls.config({ messageFormat: nls.MessageFormat.file })();
 
 export interface Notifier {
 	info(message: string): void;
@@ -42,10 +39,7 @@ export function createNotifier(): Notifier {
 			if (lv === 'silent') return;
 			if (lv === 'all') {
 				vscode.window.showInformationMessage(
-					localize(
-						'runtime.info.multiline-detected',
-						'Detected multi‑line numbers. Rendering may vary by format. Prefer single‑line numbers for stable results.',
-					),
+					'Detected multi‑line numbers. Rendering may vary by format. Prefer single‑line numbers for stable results.',
 				);
 			}
 		},
@@ -55,10 +49,7 @@ export function createNotifier(): Notifier {
 			if (lv === 'silent') return;
 			if (lv === 'all') {
 				vscode.window.showInformationMessage(
-					localize(
-						'runtime.info.csv-no-clipboard',
-						"CSV results aren't auto‑copied when streaming or extracting all columns. Use the editor output or Copy manually.",
-					),
+					"CSV results aren't auto‑copied when streaming or extracting all columns. Use the editor output or Copy manually.",
 				);
 			}
 		},
@@ -68,10 +59,7 @@ export function createNotifier(): Notifier {
 			if (lv === 'silent') return;
 			if (lv === 'all') {
 				vscode.window.showInformationMessage(
-					localize(
-						'runtime.info.postprocess-semantics',
-						"Sorting and deduping operate on final numbers, not structured positions. Structural order/indices aren't preserved.",
-					),
+					"Sorting and deduping operate on final numbers, not structured positions. Structural order/indices aren't preserved.",
 				);
 			}
 		},

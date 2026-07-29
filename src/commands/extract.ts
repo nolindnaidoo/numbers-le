@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
 import { readConfig } from '../config/config';
 import { detectFileType, extractNumber } from '../extraction/extract';
 import { parseCsvLine } from '../extraction/formats/csv';
@@ -12,8 +11,6 @@ import type { CsvPromptOptions } from '../ui/prompts';
 import { promptCsvOptionsIfNeeded, promptForFileType } from '../ui/prompts';
 import { dedupeNumber, sortNumber } from '../utils/sort';
 import type { CommandDependencies } from './index';
-
-const localize = nls.config({ messageFormat: nls.MessageFormat.file })();
 
 // Helper function to build TextDocumentShowOptions based on config
 function getShowDocumentOptions(
@@ -45,9 +42,7 @@ async function validateAndPrepareExtraction(
 	const editor = vscode.window.activeTextEditor;
 
 	if (!editor) {
-		deps.notifier.error(
-			localize('runtime.message.error.no-editor', 'No active editor'),
-		);
+		deps.notifier.error('No active editor');
 		return null;
 	}
 
@@ -58,9 +53,7 @@ async function validateAndPrepareExtraction(
 	try {
 		const text = document.getText();
 		if (text.trim().length === 0) {
-			deps.notifier.info(
-				localize('runtime.message.info.file-empty', 'File is empty'),
-			);
+			deps.notifier.info('File is empty');
 			return null;
 		}
 
@@ -75,12 +68,7 @@ async function validateAndPrepareExtraction(
 		return { document, text, fileType };
 	} catch (_error) {
 		// Document became invalid during access
-		deps.notifier.error(
-			localize(
-				'runtime.message.error.document-invalid',
-				'Document is no longer valid',
-			),
-		);
+		deps.notifier.error('Document is no longer valid');
 		return null;
 	}
 }
@@ -134,9 +122,7 @@ async function handleCsvMultiColumnExtraction(
 	}
 
 	deps.telemetry.event('extracted', { count: 'multi', type: 'csv' });
-	deps.statusBar.flash(
-		localize('runtime.status.csv-opened', 'CSV opened (no auto‑copy)'),
-	);
+	deps.statusBar.flash('CSV opened (no auto‑copy)');
 	return true; // Handled
 }
 
@@ -194,12 +180,7 @@ async function handleStreamingMultiColumn(
 			} catch (error: unknown) {
 				if (error instanceof Error) {
 					deps.notifier.error(
-						localize(
-							'runtime.message.error.column-stream',
-							'Column {0} streaming failed: {1}',
-							idx,
-							error.message,
-						),
+						`Column ${idx} streaming failed: ${error.message}`,
 					);
 				}
 				// Continue with next column
@@ -246,12 +227,7 @@ async function handleNonStreamingMultiColumn(
 			);
 		} catch (error: unknown) {
 			if (error instanceof Error) {
-				deps.notifier.error(
-					localize(
-						'runtime.message.error.open-results',
-						'Could not open results',
-					),
-				);
+				deps.notifier.error('Could not open results');
 			}
 		}
 	}
@@ -311,12 +287,7 @@ async function handleCsvStreamingExtraction(
 		// Extract numbers (simplified streaming for now)
 		const result = extractNumber(text, fileType, context.document.fileName);
 		if (!result.success) {
-			deps.notifier.error(
-				localize(
-					'runtime.message.error.extraction-failed',
-					'Extraction failed',
-				),
-			);
+			deps.notifier.error('Extraction failed');
 			return true;
 		}
 
@@ -335,26 +306,13 @@ async function handleCsvStreamingExtraction(
 		});
 
 		deps.telemetry.event('extracted', { count: 'stream', type: 'csv' });
-		deps.statusBar.flash(
-			localize('runtime.status.csv-opened', 'CSV opened (no auto‑copy)'),
-		);
+		deps.statusBar.flash('CSV opened (no auto‑copy)');
 		return true; // Handled
 	} catch (error: unknown) {
 		if (error instanceof Error) {
-			deps.notifier.error(
-				localize(
-					'runtime.message.error.csv-streaming',
-					'CSV streaming failed: {0}',
-					error.message,
-				),
-			);
+			deps.notifier.error(`CSV streaming failed: ${error.message}`);
 		} else {
-			deps.notifier.error(
-				localize(
-					'runtime.message.error.csv-streaming-unknown',
-					'CSV streaming failed with unknown error',
-				),
-			);
+			deps.notifier.error('CSV streaming failed with unknown error');
 		}
 		return true; // Handled (with error)
 	}
@@ -389,17 +347,13 @@ async function handleNormalExtraction(
 		: dedupedNumbers;
 
 	if (finalNumbers.length === 0) {
-		deps.notifier.info(
-			localize('runtime.message.info.no-numbers', 'No numbers found'),
-		);
+		deps.notifier.info('No numbers found');
 		return;
 	}
 
 	// Show post-processing info if dedupe or sort was applied
 	if (shouldDedupe || sortEnabled) {
-		deps.statusBar.flash(
-			localize('runtime.status.postprocess', 'Dedupe/Sort applied'),
-		);
+		deps.statusBar.flash('Dedupe/Sort applied');
 	}
 
 	await processAndOutputResults(finalNumbers, context, token);
@@ -444,12 +398,7 @@ async function processAndOutputResults(
 			);
 		} catch (error: unknown) {
 			if (error instanceof Error) {
-				deps.notifier.error(
-					localize(
-						'runtime.message.error.open-results',
-						'Could not open results',
-					),
-				);
+				deps.notifier.error('Could not open results');
 			}
 		}
 	}
@@ -462,12 +411,7 @@ async function processAndOutputResults(
 			await vscode.env.clipboard.writeText(finalNumbers.join('\n'));
 			clipboardSuccess = true;
 		} catch {
-			deps.notifier.warn(
-				localize(
-					'runtime.message.warn.clipboard-failed',
-					'Could not copy to clipboard',
-				),
-			);
+			deps.notifier.warn('Could not copy to clipboard');
 		}
 	}
 
@@ -478,17 +422,9 @@ async function processAndOutputResults(
 
 	// Choose appropriate status message
 	if (clipboardSuccess) {
-		deps.statusBar.flash(
-			localize('runtime.status.copied', 'Copied to clipboard'),
-		);
+		deps.statusBar.flash('Copied to clipboard');
 	} else {
-		deps.statusBar.flash(
-			localize(
-				'runtime.status.extracted',
-				'Extracted {0}',
-				finalNumbers.length,
-			),
-		);
+		deps.statusBar.flash(`Extracted ${finalNumbers.length}`);
 	}
 }
 
@@ -511,10 +447,7 @@ export async function extractNumbers(deps: CommandDependencies): Promise<void> {
 		await vscode.window.withProgress(
 			{
 				location: vscode.ProgressLocation.Notification,
-				title: localize(
-					'runtime.progress.extract.title',
-					'Extracting numbers...',
-				),
+				title: 'Extracting numbers...',
 				cancellable: true,
 			},
 			async (_progress, token): Promise<void> => {
@@ -528,11 +461,7 @@ export async function extractNumbers(deps: CommandDependencies): Promise<void> {
 					const stat = await vscode.workspace.fs.stat(document.uri);
 					if (config.safetyEnabled && stat.size > config.fileSizeWarnBytes) {
 						deps.notifier.warn(
-							localize(
-								'runtime.message.warn.large-file',
-								'Large file detected ({0} bytes). Extraction may take longer.',
-								stat.size,
-							),
+							`Large file detected (${stat.size} bytes). Extraction may take longer.`,
 						);
 					}
 				} catch {

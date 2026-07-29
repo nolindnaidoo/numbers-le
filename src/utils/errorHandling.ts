@@ -1,7 +1,4 @@
-import * as nls from 'vscode-nls';
 import type { ParseError } from '../types';
-
-const localize = nls.config({ messageFormat: nls.MessageFormat.file })();
 
 export type ErrorCategory =
 	| 'parse'
@@ -112,53 +109,21 @@ function formatUserMessage(
 ): string {
 	switch (category) {
 		case 'parse':
-			return localize(
-				'runtime.error.parse',
-				'Failed to parse file: {0}',
-				baseError.filepath || 'unknown file',
-			);
+			return `Failed to parse file: ${baseError.filepath || 'unknown file'}`;
 		case 'file-system':
-			return localize(
-				'runtime.error.file-system',
-				'File system error: {0}',
-				baseError.message,
-			);
+			return `File system error: ${baseError.message}`;
 		case 'configuration':
-			return localize(
-				'runtime.error.configuration',
-				'Configuration error: {0}',
-				baseError.message,
-			);
+			return `Configuration error: ${baseError.message}`;
 		case 'validation':
-			return localize(
-				'runtime.error.validation',
-				'Validation failed: {0}',
-				baseError.message,
-			);
+			return `Validation failed: ${baseError.message}`;
 		case 'safety':
-			return localize(
-				'runtime.error.safety',
-				'Safety threshold exceeded: {0}',
-				baseError.message,
-			);
+			return `Safety threshold exceeded: ${baseError.message}`;
 		case 'operational':
-			return localize(
-				'runtime.error.operational',
-				'Operation failed: {0}',
-				baseError.message,
-			);
+			return `Operation failed: ${baseError.message}`;
 		case 'analysis':
-			return localize(
-				'runtime.error.analysis',
-				'Analysis failed: {0}',
-				baseError.message,
-			);
+			return `Analysis failed: ${baseError.message}`;
 		default:
-			return localize(
-				'runtime.error.unknown',
-				'Unknown error: {0}',
-				baseError.message,
-			);
+			return `Unknown error: ${baseError.message}`;
 	}
 }
 
@@ -168,57 +133,27 @@ function generateSuggestion(
 ): string {
 	switch (category) {
 		case 'parse':
-			return localize(
-				'runtime.suggestion.parse',
-				"Check the file syntax and ensure it's a valid format (JSON, YAML, CSV, TOML, INI, or ENV)",
-			);
+			return "Check the file syntax and ensure it's a valid format (JSON, YAML, CSV, TOML, INI, or ENV)";
 		case 'file-system':
 			if (baseError.message.includes('permission')) {
-				return localize(
-					'runtime.suggestion.permission',
-					'Check file permissions and ensure the extension has read access',
-				);
+				return 'Check file permissions and ensure the extension has read access';
 			}
 			if (baseError.message.includes('network')) {
-				return localize(
-					'runtime.suggestion.network',
-					'Check network connectivity and try again',
-				);
+				return 'Check network connectivity and try again';
 			}
-			return localize(
-				'runtime.suggestion.file-system',
-				'Check if the file exists and is accessible',
-			);
+			return 'Check if the file exists and is accessible';
 		case 'configuration':
-			return localize(
-				'runtime.suggestion.configuration',
-				'Check your extension settings and fix any invalid values',
-			);
+			return 'Check your extension settings and fix any invalid values';
 		case 'validation':
-			return localize(
-				'runtime.suggestion.validation',
-				'Review the input data and ensure it contains valid numeric values',
-			);
+			return 'Review the input data and ensure it contains valid numeric values';
 		case 'safety':
-			return localize(
-				'runtime.suggestion.safety',
-				'Adjust safety thresholds in settings or reduce the scope of the operation',
-			);
+			return 'Adjust safety thresholds in settings or reduce the scope of the operation';
 		case 'operational':
-			return localize(
-				'runtime.suggestion.operational',
-				'Try reloading the window or restarting VS Code',
-			);
+			return 'Try reloading the window or restarting VS Code';
 		case 'analysis':
-			return localize(
-				'runtime.suggestion.analysis',
-				'Ensure sufficient numeric data exists for statistical analysis',
-			);
+			return 'Ensure sufficient numeric data exists for statistical analysis';
 		default:
-			return localize(
-				'runtime.suggestion.unknown',
-				'Check the logs for more details and consider reporting this issue',
-			);
+			return 'Check the logs for more details and consider reporting this issue';
 	}
 }
 
