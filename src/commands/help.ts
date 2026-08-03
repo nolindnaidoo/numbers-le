@@ -234,12 +234,17 @@ function generateHelpContent(): string {
 	lines.push(
 		'- **Report Issues:** [GitHub Issues](https://github.com/nolindnaidoo/numbers-le/issues)',
 	);
+	lines.push('- **LE Tools:** [letools.dev](https://letools.dev)');
 	lines.push('');
 
 	lines.push('---');
 	lines.push('');
 	lines.push(
 		'**Need more help?** Open an issue on GitHub or check the documentation at the repository.',
+	);
+	lines.push('');
+	lines.push(
+		'Built by [nolindnaidoo](https://github.com/nolindnaidoo) — MIT licensed.',
 	);
 	lines.push('');
 
