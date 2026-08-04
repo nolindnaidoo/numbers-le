@@ -12,7 +12,6 @@ export async function chooseLargeOutputAction(
 		? [
 				'',
 				'Notes:',
-				'• Statistical analysis may be included if enabled',
 				'• CSV streaming/editor-first (no auto‑copy)',
 				'• Dedupe/Sort apply to final numbers only',
 			].join('\n')
