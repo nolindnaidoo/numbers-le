@@ -22,9 +22,9 @@
 		"node": ">=20.0.0"
 	},
 	"categories": [
-		"Other",
+		"Data Science",
 		"Programming Languages",
-		"Linters"
+		"Visualization"
 	],
 	"keywords": [
 		"numbers",
