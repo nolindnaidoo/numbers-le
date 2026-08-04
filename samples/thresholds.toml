@@ -1,0 +1,10 @@
+[alerts]
+error_rate = 0.02
+p99_ms = 500
+queue_depth = 10000
+
+[scaling]
+min_instances = 2
+max_instances = 64
+target_cpu = 0.65
+cooldown_seconds = 180

@@ -1,0 +1,9 @@
+{
+  "window": "24h",
+  "requests": { "total": 1284391, "cached": 903118, "errors": 412 },
+  "latency_ms": { "p50": 18.4, "p95": 121.7, "p99": 486.2 },
+  "cost_usd": { "compute": 41.28, "storage": 6.05, "egress": 12.9 },
+  "limits": { "rps": 2500, "burst": 5000, "timeout_ms": 30000 },
+  "ratios": [0.031, 0.0072, 0.98, 1.0],
+  "scientific": [1.2e-7, 4.5e6, 6.02e23]
+}
