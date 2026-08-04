@@ -12,7 +12,16 @@ export default defineConfig({
 		exclude: ['node_modules/**', 'dist/**', 'out-test/**'],
 		coverage: {
 			provider: 'v8',
-			reporter: ['text', 'json', 'html', 'lcov'],
+			// Pinned to the level this repo actually measures today, so the gate
+			// is a ratchet against regression rather than an aspiration. Raise
+			// these when coverage improves; never lower them to make CI pass.
+			thresholds: {
+				lines: 79,
+				functions: 90,
+				branches: 62,
+				statements: 78,
+			},
+			reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],
 			include: ['src/**/*.ts'],
 			exclude: [
 				'src/**/*.test.ts',

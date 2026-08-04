@@ -95,6 +95,25 @@ bun run package          # VSIX into release/
 
 Architecture and conventions live in [AGENTS.md](AGENTS.md). Changes are tracked in [CHANGELOG.md](CHANGELOG.md).
 
+## Testing
+
+<!-- coverage:start -->
+| Metric | Coverage |
+| --- | --- |
+| Statements | 78.13% |
+| Branches | 62.57% |
+| Functions | 90.26% |
+| Lines | 79.61% |
+
+221 test cases across 17 files, plus an integration suite that runs
+in a real VS Code extension host and an end-to-end test that installs the
+built `.vsix` into a clean profile.
+
+Generated from `coverage/coverage-summary.json` by
+`scripts/coverage-readme.js`; CI fails if this section drifts from a fresh
+run. Reproduce with `bun run test:coverage`.
+<!-- coverage:end -->
+
 ## More from the LE Family
 
 Every tool in the family, one page: **[letools.dev](https://letools.dev)**
