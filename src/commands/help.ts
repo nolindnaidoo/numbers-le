@@ -236,6 +236,14 @@ function generateHelpContent(): string {
 	);
 	lines.push('- **LE Tools:** [letools.dev](https://letools.dev)');
 	lines.push('');
+	lines.push("**Enjoying it?** A rating helps more than you'd think:");
+	lines.push(
+		'- [Rate on VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.numbers-le&ssr=false#review-details)',
+	);
+	lines.push(
+		'- [Rate on Open VSX](https://open-vsx.org/extension/nolindnaidoo/numbers-le/reviews)',
+	);
+	lines.push('');
 
 	lines.push('---');
 	lines.push('');
