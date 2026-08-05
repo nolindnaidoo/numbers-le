@@ -58,11 +58,10 @@ export async function handleCsvMultiColumnExtraction(
 
 	const streamingEnabled = config.csvStreamingEnabled;
 
-	if (streamingEnabled) {
-		await handleStreamingMultiColumn(context, targetIndexes, token);
-	} else {
-		await handleNonStreamingMultiColumn(context, targetIndexes, token);
-	}
+	const handleMultiColumn = streamingEnabled
+		? handleStreamingMultiColumn
+		: handleNonStreamingMultiColumn;
+	await handleMultiColumn(context, targetIndexes, token);
 
 	deps.telemetry.event('extracted', { count: 'multi', type: 'csv' });
 	deps.statusBar.flash('CSV opened (no auto‑copy)');
@@ -256,11 +255,11 @@ export async function handleCsvStreamingExtraction(
 			deps.notifier.error(
 				vscode.l10n.t('CSV streaming failed: {0}', error.message),
 			);
-		} else {
-			deps.notifier.error(
-				vscode.l10n.t('CSV streaming failed with unknown error'),
-			);
+			return true; // Handled (with error)
 		}
+		deps.notifier.error(
+			vscode.l10n.t('CSV streaming failed with unknown error'),
+		);
 		return true; // Handled (with error)
 	}
 }

@@ -188,12 +188,11 @@ async function processAndOutputResults(
 		type: fileType,
 	});
 
-	// Choose appropriate status message
-	if (clipboardSuccess) {
-		deps.statusBar.flash('Copied to clipboard');
-	} else {
-		deps.statusBar.flash(`Extracted ${finalNumbers.length}`);
-	}
+	deps.statusBar.flash(
+		clipboardSuccess
+			? 'Copied to clipboard'
+			: `Extracted ${finalNumbers.length}`,
+	);
 }
 
 export async function extractNumbers(deps: CommandDependencies): Promise<void> {
