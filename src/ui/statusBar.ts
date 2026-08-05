@@ -17,8 +17,12 @@ export function createStatusBar(context: vscode.ExtensionContext): StatusBar {
 
 	function updateVisibility(): void {
 		const enabled = readConfig().statusBarEnabled;
-		if (enabled) item.show();
-		else item.hide();
+		if (enabled) {
+			item.show();
+		}
+		if (!enabled) {
+			item.hide();
+		}
 
 		const csvStreaming = readConfig().csvStreamingEnabled;
 		item.text = csvStreaming

@@ -50,6 +50,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Every `else` block is gone (11 of them), replaced by guard clauses, early
+  returns and value expressions, per the fleet standard in `../AGENTS.md`.
+- Dedupe and sort carried the same two blocks verbatim — collecting the numbers
+  and writing the result. Both now use one implementation in
+  `commands/postProcessShared.ts`; dedupe drops from 130 lines to 51 and sort
+  from 150 to 75. The mutable `let numbers` each maintained is gone with them.
+- `commands/extract.ts` held orchestration, CSV handling, the normal extraction
+  path and output routing in 509 lines. CSV moved to `commands/extractCsv.ts`,
+  leaving 257 and 268.
+
 - Test coverage raised from 62.78% to 80.11% of branches (78.28% to 89.62% of
   statements), which moves the repo from 2.78 points above the branch floor to
   20.11, with no file left below any of the repo's own floors. The activation

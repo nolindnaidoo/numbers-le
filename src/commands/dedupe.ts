@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { readConfig } from '../config/config';
-import { detectFileType, extractNumber } from '../extraction/extract';
+import { detectFileType } from '../extraction/extract';
 import { dedupeNumber } from '../utils/sort';
 import type { CommandDependencies } from './index';
+import { collectNumbers, writeResult } from './postProcessShared';
 
 export async function dedupeNumbers(deps: CommandDependencies): Promise<void> {
 	const editor = vscode.window.activeTextEditor;
@@ -20,43 +20,10 @@ export async function dedupeNumbers(deps: CommandDependencies): Promise<void> {
 			return trimmed === '' || !Number.isNaN(Number(trimmed));
 		});
 
-	let numbers: readonly number[];
-
-	if (isNumbersFile) {
-		numbers = Object.freeze(
-			lines
-				.map((line) => Number(line.trim()))
-				.filter((n) => !Number.isNaN(n) && Number.isFinite(n)),
-		);
-
-		if (numbers.length === 0) {
-			deps.notifier.info(
-				vscode.l10n.t('No valid numbers found in the current file'),
-			);
-			return;
-		}
-	} else {
-		const fileType = detectFileType(editor.document.fileName);
-		deps.notifier.info(
-			vscode.l10n.t('Deduplicating numbers from {0} file...', fileType),
-		);
-
-		const result = extractNumber(text, fileType, editor.document.fileName);
-
-		if (!result.success) {
-			deps.notifier.error(
-				`Failed to extract numbers: ${result.errors[0]?.message}`,
-			);
-			return;
-		}
-
-		numbers = result.numbers;
-
-		if (numbers.length === 0) {
-			deps.notifier.info(vscode.l10n.t('No numbers found in the file'));
-			return;
-		}
-	}
+	const numbers = collectNumbers(editor, isNumbersFile, deps, (fileType) =>
+		vscode.l10n.t('Deduplicating numbers from {0} file...', fileType),
+	);
+	if (!numbers) return;
 
 	const dedupedNumbers = dedupeNumber(numbers);
 	const duplicatesRemoved = numbers.length - dedupedNumbers.length;
@@ -67,39 +34,11 @@ export async function dedupeNumbers(deps: CommandDependencies): Promise<void> {
 	}
 
 	const output = dedupedNumbers.join('\n');
-	const config = readConfig();
 
-	if (config.postProcessOpenInNewFile) {
-		const doc = await vscode.workspace.openTextDocument({
-			content: output,
-			language: 'plaintext',
-		});
-		await vscode.window.showTextDocument(doc, {
-			preview: false,
-			...(config.openResultsSideBySide
-				? { viewColumn: vscode.ViewColumn.Beside }
-				: {}),
-		});
-		deps.notifier.info(
-			`Removed ${duplicatesRemoved} duplicates (${dedupedNumbers.length} unique numbers remaining)`,
-		);
-	} else {
-		const success = await editor.edit((editBuilder) => {
-			const fullRange = new vscode.Range(
-				editor.document.positionAt(0),
-				editor.document.positionAt(editor.document.getText().length),
-			);
-			editBuilder.replace(fullRange, output);
-		});
-
-		if (success) {
-			deps.notifier.info(
-				`Removed ${duplicatesRemoved} duplicates (${dedupedNumbers.length} unique numbers remaining) in current editor`,
-			);
-		} else {
-			deps.notifier.error(vscode.l10n.t('Failed to update the editor content'));
-		}
-	}
+	await writeResult(editor, output, deps, {
+		newDocument: `Removed ${duplicatesRemoved} duplicates (${dedupedNumbers.length} unique numbers remaining)`,
+		inPlace: `Removed ${duplicatesRemoved} duplicates (${dedupedNumbers.length} unique numbers remaining) in current editor`,
+	});
 
 	deps.telemetry.event('numbers.deduped', {
 		originalCount: String(numbers.length),

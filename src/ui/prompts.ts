@@ -189,7 +189,6 @@ export async function promptCsvOptionsIfNeeded(
 
 	if (looksLikeHeader) {
 		return await handleCsvHeaderBasedSelection(headerCells);
-	} else {
-		return await handleCsvIndexBasedSelection(lines);
 	}
+	return await handleCsvIndexBasedSelection(lines);
 }
