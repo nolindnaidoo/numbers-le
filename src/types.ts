@@ -1,13 +1,13 @@
 export interface ExtractionResult {
-	success: boolean;
-	numbers: readonly number[];
-	errors: readonly ParseError[];
+	readonly success: boolean;
+	readonly numbers: readonly number[];
+	readonly errors: readonly ParseError[];
 }
 
 export interface ParseError {
-	type: 'parse-error' | 'validation-error';
-	message: string;
-	filepath?: string;
+	readonly type: 'parse-error' | 'validation-error';
+	readonly message: string;
+	readonly filepath?: string;
 }
 
 export type FileType =
