@@ -5,20 +5,20 @@ import { parseCsvLine } from '../extraction/formats/csv';
 async function handleCsvHeaderBasedSelection(
 	headerCells: readonly string[],
 ): Promise<CsvPromptOptions> {
-	const allLabel = 'All columns';
+	const allLabel = vscode.l10n.t('All columns');
 	const picks: Array<vscode.QuickPickItem> = [
 		{
 			label: allLabel,
-			description: 'Extract from all columns',
+			description: vscode.l10n.t('Extract from all columns'),
 		},
 		...headerCells.map((name, index) => ({
-			label: name || `(Column ${index})`,
-			description: `Index ${index}`,
+			label: name || vscode.l10n.t('(Column {0})', index),
+			description: vscode.l10n.t('Index {0}', index),
 		})),
 	];
 
 	const selected = await vscode.window.showQuickPick(picks, {
-		placeHolder: 'Select a CSV column or all columns',
+		placeHolder: vscode.l10n.t('Select a CSV column or all columns'),
 		matchOnDescription: true,
 	});
 
@@ -68,8 +68,9 @@ async function handleCsvIndexBasedSelection(
 	lines: readonly string[],
 ): Promise<CsvPromptOptions> {
 	const idxStr = await vscode.window.showInputBox({
-		prompt:
+		prompt: vscode.l10n.t(
 			'Enter column indexes (comma-separated), or leave empty for all columns',
+		),
 		validateInput: (val) => {
 			if (val.trim() === '') return null;
 			const parts = val
@@ -79,7 +80,9 @@ async function handleCsvIndexBasedSelection(
 			const allInts = parts.every((p) => /^(\d+)$/.test(p));
 			return allInts
 				? null
-				: 'Enter valid column indexes separated by commas, or leave empty';
+				: vscode.l10n.t(
+						'Enter valid column indexes separated by commas, or leave empty',
+					);
 		},
 	});
 
@@ -104,7 +107,10 @@ async function handleCsvIndexBasedSelection(
 
 	if (inRange.length === 0) {
 		vscode.window.showWarningMessage(
-			`Column index out of range (${indices.join(',')}). Using all columns instead`,
+			vscode.l10n.t(
+				'Column index out of range ({0}). Using all columns instead',
+				indices.join(','),
+			),
 		);
 		return Object.freeze({ csvHasHeader: false, selectAllColumns: true });
 	}
@@ -139,7 +145,7 @@ export function promptForFileType(): Promise<
 		{ label: 'INI', value: 'ini' },
 		{ label: '.env', value: 'env' },
 		{
-			label: 'Unknown (regex fallback)',
+			label: vscode.l10n.t('Unknown (regex fallback)'),
 			value: 'unknown',
 		},
 	];
@@ -148,7 +154,7 @@ export function promptForFileType(): Promise<
 			.showQuickPick(
 				items.map((i) => i.label),
 				{
-					placeHolder: 'Choose file type for number extraction',
+					placeHolder: vscode.l10n.t('Choose file type for number extraction'),
 				},
 			)
 			.then(

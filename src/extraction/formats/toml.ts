@@ -1,5 +1,6 @@
 import * as toml from '@iarna/toml';
 import type { ExtractionResult } from '../../types';
+import { errorMessage } from '../../utils/errors';
 import { collectNumbers } from '../heuristics';
 
 export function extractFromToml(
@@ -20,7 +21,7 @@ export function extractFromToml(
 			errors: Object.freeze([
 				{
 					type: 'parse-error',
-					message: `Failed to parse TOML: ${(error as Error).message}`,
+					message: `Failed to parse TOML: ${errorMessage(error)}`,
 					filepath,
 				},
 			]),

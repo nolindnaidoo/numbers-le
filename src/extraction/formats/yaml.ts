@@ -1,5 +1,6 @@
 import * as yaml from 'js-yaml';
 import type { ExtractionResult } from '../../types';
+import { errorMessage } from '../../utils/errors';
 import { collectNumbers } from '../heuristics';
 
 export function extractFromYaml(
@@ -25,7 +26,7 @@ export function extractFromYaml(
 			errors: Object.freeze([
 				{
 					type: 'parse-error',
-					message: `Failed to parse YAML: ${(error as Error).message}`,
+					message: `Failed to parse YAML: ${errorMessage(error)}`,
 					filepath,
 				},
 			]),

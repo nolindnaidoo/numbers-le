@@ -7,7 +7,7 @@ import type { CommandDependencies } from './index';
 export async function sortNumbers(deps: CommandDependencies): Promise<void> {
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
-		deps.notifier.warn('No active editor found');
+		deps.notifier.warn(vscode.l10n.t('No active editor found'));
 		return;
 	}
 
@@ -30,12 +30,16 @@ export async function sortNumbers(deps: CommandDependencies): Promise<void> {
 		);
 
 		if (numbers.length === 0) {
-			deps.notifier.info('No valid numbers found in the current file');
+			deps.notifier.info(
+				vscode.l10n.t('No valid numbers found in the current file'),
+			);
 			return;
 		}
 	} else {
 		const fileType = detectFileType(editor.document.fileName);
-		deps.notifier.info(`Sorting numbers from ${fileType} file...`);
+		deps.notifier.info(
+			vscode.l10n.t('Sorting numbers from {0} file...', fileType),
+		);
 
 		const result = extractNumber(text, fileType, editor.document.fileName);
 
@@ -49,37 +53,40 @@ export async function sortNumbers(deps: CommandDependencies): Promise<void> {
 		numbers = result.numbers;
 
 		if (numbers.length === 0) {
-			deps.notifier.info('No numbers found in the file');
+			deps.notifier.info(vscode.l10n.t('No numbers found in the file'));
 			return;
 		}
 	}
 
-	const sortOptions = [
+	// Typed as SortMode so the choice stays typed from the quick-pick through to
+	// sortNumber; a plain array widens `value` to string and forces a cast at
+	// the call site, which is exactly where an invalid mode would slip past.
+	const sortOptions: readonly { label: string; value: SortMode }[] = [
 		{
-			label: 'Numeric Ascending',
+			label: vscode.l10n.t('Numeric Ascending'),
 			value: 'numeric-asc',
 		},
 		{
-			label: 'Numeric Descending',
+			label: vscode.l10n.t('Numeric Descending'),
 			value: 'numeric-desc',
 		},
 		{
-			label: 'Magnitude Ascending',
+			label: vscode.l10n.t('Magnitude Ascending'),
 			value: 'magnitude-asc',
 		},
 		{
-			label: 'Magnitude Descending',
+			label: vscode.l10n.t('Magnitude Descending'),
 			value: 'magnitude-desc',
 		},
 	];
 
 	const selected = await vscode.window.showQuickPick(sortOptions, {
-		placeHolder: 'Select sorting method',
+		placeHolder: vscode.l10n.t('Select sorting method'),
 	});
 
 	if (!selected) return;
 
-	const sortedNumbers = sortNumber(numbers, selected.value as SortMode);
+	const sortedNumbers = sortNumber(numbers, selected.value);
 	const output = sortedNumbers.join('\n');
 	const config = readConfig();
 
@@ -94,7 +101,9 @@ export async function sortNumbers(deps: CommandDependencies): Promise<void> {
 				? { viewColumn: vscode.ViewColumn.Beside }
 				: {}),
 		});
-		deps.notifier.info(`Sorted ${numbers.length} numbers (${selected.label})`);
+		deps.notifier.info(
+			vscode.l10n.t('Sorted {0} numbers ({1})', numbers.length, selected.label),
+		);
 	} else {
 		const success = await editor.edit((editBuilder) => {
 			const fullRange = new vscode.Range(
@@ -109,7 +118,7 @@ export async function sortNumbers(deps: CommandDependencies): Promise<void> {
 				`Sorted ${numbers.length} numbers (${selected.label}) in current editor`,
 			);
 		} else {
-			deps.notifier.error('Failed to update the editor content');
+			deps.notifier.error(vscode.l10n.t('Failed to update the editor content'));
 		}
 	}
 

@@ -1,4 +1,5 @@
 import type { ExtractionResult } from '../../types';
+import { errorMessage } from '../../utils/errors';
 import { collectNumbers } from '../heuristics';
 
 export function extractFromJson(
@@ -19,7 +20,7 @@ export function extractFromJson(
 			errors: Object.freeze([
 				{
 					type: 'parse-error',
-					message: `Failed to parse JSON: ${(error as Error).message}`,
+					message: `Failed to parse JSON: ${errorMessage(error)}`,
 					filepath,
 				},
 			]),

@@ -5,12 +5,64 @@ All notable changes to Numbers-LE will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.2] - 2026-08-04
+## [2.1.0] - 2026-08-04
 
 ### Added
 
+- Runtime strings are localized, and this time they render. All 41 of them —
+  notifications, status bar, quick-picks and prompts — go through
+  `vscode.l10n` and ship as twelve translated bundles in `l10n/`. The v1.x
+  line carried manifest catalogues that worked and runtime catalogues that
+  never reached the screen: `vscode-nls` was configured without
+  `__filename`, so every runtime string fell back to English while the VSIX
+  looked correct.
+- An integration test covering both localization mechanisms — manifest
+  substitution, key parity across all thirteen catalogues, and placeholder
+  integrity in every translation. A translation that silently drops `{0}`
+  now fails the build instead of shipping a message with the value missing.
+
 - Dependency review on pull requests, failing on a high-severity addition
   before Dependabot's auto-merge can act.
+
+### Fixed
+
+- The six format parsers reported a failure with `(error as Error).message`.
+  The cast is accepted by the compiler and wrong the moment a parser throws
+  anything that is not an Error — a string or a plain object produced
+  "Failed to parse JSON: undefined". `extract.ts` already guarded with
+  `instanceof Error`; that is now the single convention, behind one
+  `errorMessage()` helper with tests for the non-Error cases.
+- The sort quick-pick widened its `value` to `string` and cast back to
+  `SortMode` at the call site — the one place an invalid mode could reach
+  `sortNumber`. The options array is typed, so the choice stays typed end to
+  end and the last cast in the codebase is gone.
+- The CSV column-index validator message was never localized; it is returned
+  from a `validateInput` callback rather than assigned to a property.
+- The large-file warning was never localized either — an interpolated template
+  literal inside a multi-line `notifier.warn(...)` call.
+
+### Changed
+
+- Test coverage raised from 62.78% to 80.11% of branches (78.28% to 89.62% of
+  statements), which moves the repo from 2.78 points above the branch floor to
+  20.11, with no file left below any of the repo's own floors. The activation
+  entry point had no test at all — it was one of two in the family at 0%
+  statements, so a command declared in the manifest but never registered would
+  have failed at the moment a user ran it with nothing to catch it. Only two
+  of `detectFileType`'s seven arms were covered, which decides which extractor
+  runs. The gap was concentrated almost entirely in `commands/extract.ts`,
+  whose settings and prompt-answer permutations — side-by-side output, the
+  large-output prompt, the safety thresholds, CSV column selection and the
+  multi-column path, the streaming toggle — were unreachable from the
+  default-config tests. Writing them found the unlocalized warning above and
+  two behaviours worth recording: the file-size gate warns rather than
+  refusing, and dismissing the CSV column prompt continues with default
+  options instead of cancelling.
+- The `vscode` test mock honours `validateInput`. VS Code will not hand a
+  command a value its own validator rejected — the input box stays open until
+  the input is valid or the user escapes — but the mock returned whatever the
+  test supplied, which let tests drive commands with input the real UI could
+  never deliver.
 
 ### Changed
 

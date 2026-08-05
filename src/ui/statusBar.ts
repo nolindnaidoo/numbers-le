@@ -11,7 +11,7 @@ export function createStatusBar(context: vscode.ExtensionContext): StatusBar {
 		100,
 	);
 	item.text = '$(symbol-number) Numbers-LE';
-	item.tooltip = 'Run Numbers-LE: Extract';
+	item.tooltip = vscode.l10n.t('Run Numbers-LE: Extract');
 	item.command = 'numbers-le.extractNumbers';
 	context.subscriptions.push(item);
 

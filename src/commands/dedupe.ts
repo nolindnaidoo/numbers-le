@@ -7,7 +7,7 @@ import type { CommandDependencies } from './index';
 export async function dedupeNumbers(deps: CommandDependencies): Promise<void> {
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
-		deps.notifier.warn('No active editor found');
+		deps.notifier.warn(vscode.l10n.t('No active editor found'));
 		return;
 	}
 
@@ -30,12 +30,16 @@ export async function dedupeNumbers(deps: CommandDependencies): Promise<void> {
 		);
 
 		if (numbers.length === 0) {
-			deps.notifier.info('No valid numbers found in the current file');
+			deps.notifier.info(
+				vscode.l10n.t('No valid numbers found in the current file'),
+			);
 			return;
 		}
 	} else {
 		const fileType = detectFileType(editor.document.fileName);
-		deps.notifier.info(`Deduplicating numbers from ${fileType} file...`);
+		deps.notifier.info(
+			vscode.l10n.t('Deduplicating numbers from {0} file...', fileType),
+		);
 
 		const result = extractNumber(text, fileType, editor.document.fileName);
 
@@ -49,7 +53,7 @@ export async function dedupeNumbers(deps: CommandDependencies): Promise<void> {
 		numbers = result.numbers;
 
 		if (numbers.length === 0) {
-			deps.notifier.info('No numbers found in the file');
+			deps.notifier.info(vscode.l10n.t('No numbers found in the file'));
 			return;
 		}
 	}
@@ -58,7 +62,7 @@ export async function dedupeNumbers(deps: CommandDependencies): Promise<void> {
 	const duplicatesRemoved = numbers.length - dedupedNumbers.length;
 
 	if (duplicatesRemoved === 0) {
-		deps.notifier.info('No duplicate numbers found');
+		deps.notifier.info(vscode.l10n.t('No duplicate numbers found'));
 		return;
 	}
 
@@ -93,7 +97,7 @@ export async function dedupeNumbers(deps: CommandDependencies): Promise<void> {
 				`Removed ${duplicatesRemoved} duplicates (${dedupedNumbers.length} unique numbers remaining) in current editor`,
 			);
 		} else {
-			deps.notifier.error('Failed to update the editor content');
+			deps.notifier.error(vscode.l10n.t('Failed to update the editor content'));
 		}
 	}
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sanitizeErrorMessage } from './errors';
+import { errorMessage, sanitizeErrorMessage } from './errors';
 
 describe('sanitizeErrorMessage', () => {
 	it('redacts user directories', () => {
@@ -26,5 +26,25 @@ describe('sanitizeErrorMessage', () => {
 		expect(sanitizeErrorMessage('Failed to parse JSON: bad input')).toBe(
 			'Failed to parse JSON: bad input',
 		);
+	});
+});
+
+describe('errorMessage', () => {
+	it('takes the message from a real Error', () => {
+		expect(errorMessage(new Error('parse failed'))).toBe('parse failed');
+	});
+
+	it('stringifies a thrown non-Error instead of yielding undefined', () => {
+		// The format parsers used `(error as Error).message`, which the compiler
+		// accepts and which produces "Failed to parse JSON: undefined" the moment
+		// a parser throws anything that is not an Error.
+		expect(errorMessage('boom')).toBe('boom');
+		expect(errorMessage({ code: 'EBADF' })).toBe('[object Object]');
+		expect(errorMessage(undefined)).toBe('undefined');
+	});
+
+	it('handles a subclassed Error', () => {
+		class ParseError extends Error {}
+		expect(errorMessage(new ParseError('bad token'))).toBe('bad token');
 	});
 });

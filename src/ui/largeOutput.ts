@@ -7,27 +7,34 @@ export async function chooseLargeOutputAction(
 	hasContextualNotes = false,
 ): Promise<LargeOutputAction> {
 	// Enhanced warning with contextual notes
-	const baseMessage = `Detected ${count} numbers. Opening large results may freeze the editor. What would you like to do?`;
+	const baseMessage = vscode.l10n.t(
+		'Detected {0} numbers. Opening large results may freeze the editor. What would you like to do?',
+		count,
+	);
 	const notes = hasContextualNotes
 		? [
 				'',
-				'Notes:',
-				'• CSV streaming/editor-first (no auto‑copy)',
-				'• Dedupe/Sort apply to final numbers only',
+				vscode.l10n.t('Notes:'),
+				vscode.l10n.t('• CSV streaming/editor-first (no auto‑copy)'),
+				vscode.l10n.t('• Dedupe/Sort apply to final numbers only'),
 			].join('\n')
 		: '';
 
 	const fullMessage = notes ? `${baseMessage}\n${notes}` : baseMessage;
 
+	const openLabel = vscode.l10n.t('Open results');
+	const copyLabel = vscode.l10n.t('Copy only');
+	const cancelLabel = vscode.l10n.t('Cancel');
+
 	const choice = await vscode.window.showWarningMessage(
 		fullMessage,
 		{ modal: true },
-		'Open results',
-		'Copy only',
-		'Cancel',
+		openLabel,
+		copyLabel,
+		cancelLabel,
 	);
-	if (!choice || choice === 'Cancel') return 'cancel';
-	if (choice === 'Copy only') return 'copy';
+	if (!choice || choice === cancelLabel) return 'cancel';
+	if (choice === copyLabel) return 'copy';
 	return 'open';
 }
 
@@ -35,11 +42,16 @@ export async function confirmManyDocuments(
 	countDocs: number,
 	totalLines: number,
 ): Promise<boolean> {
+	const openLabel = vscode.l10n.t('Open results');
 	const choice = await vscode.window.showWarningMessage(
-		`Many results — opening ${countDocs} documents (~${totalLines} total numbers). Proceed?`,
+		vscode.l10n.t(
+			'Many results — opening {0} documents (~{1} total numbers). Proceed?',
+			countDocs,
+			totalLines,
+		),
 		{ modal: true },
-		'Open results',
-		'Cancel',
+		openLabel,
+		vscode.l10n.t('Cancel'),
 	);
-	return choice === 'Open results';
+	return choice === openLabel;
 }

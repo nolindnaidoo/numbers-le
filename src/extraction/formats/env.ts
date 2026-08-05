@@ -1,5 +1,6 @@
 import { parse } from 'dotenv';
 import type { ExtractionResult } from '../../types';
+import { errorMessage } from '../../utils/errors';
 import { collectNumbers } from '../heuristics';
 
 export function extractFromEnv(
@@ -22,7 +23,7 @@ export function extractFromEnv(
 			errors: Object.freeze([
 				{
 					type: 'parse-error',
-					message: `Failed to parse .env: ${(error as Error).message}`,
+					message: `Failed to parse .env: ${errorMessage(error)}`,
 					filepath,
 				},
 			]),

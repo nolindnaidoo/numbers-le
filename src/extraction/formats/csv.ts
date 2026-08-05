@@ -1,6 +1,7 @@
 import { parse } from 'csv-parse';
 import { parse as parseSync } from 'csv-parse/sync';
 import type { ExtractionResult, ParseError } from '../../types';
+import { errorMessage } from '../../utils/errors';
 import { parseStrictNumber } from '../heuristics';
 
 /**
@@ -46,7 +47,7 @@ export function extractFromCsv(
 			errors: Object.freeze([
 				{
 					type: 'parse-error',
-					message: `CSV parse error: ${(error as Error).message}`,
+					message: `CSV parse error: ${errorMessage(error)}`,
 					filepath,
 				},
 			]),
