@@ -1,6 +1,6 @@
 {
 	"name": "numbers-le-mcp",
-	"version": "2.2.1",
+	"version": "2.2.2",
 	"mcpName": "io.github.nolindnaidoo/numbers-le",
 	"description": "Extract numeric values from config files, data files and plain text.",
 	"keywords": [
