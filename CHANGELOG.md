@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Every `else` block is gone (11 of them), replaced by guard clauses, early
-  returns and value expressions, per the fleet standard in `../AGENTS.md`.
+  returns and value expressions, per the code style in `AGENTS.md`.
 - Dedupe and sort carried the same two blocks verbatim — collecting the numbers
   and writing the result. Both now use one implementation in
   `commands/postProcessShared.ts`; dedupe drops from 130 lines to 51 and sort
