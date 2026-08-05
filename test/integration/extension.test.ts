@@ -66,6 +66,29 @@ describe('Numbers-LE integration', function () {
 		]);
 	});
 
+	it('offers its MCP server to agent mode', async () => {
+		// The provider is registered against the id the manifest declares; a
+		// mismatch leaves the tools invisible with nothing logged. Assert the
+		// declaration and the API the floor was raised for, together — the
+		// registration itself is only observable in a real host, which
+		// scripts/e2e-vsix.js covers against the installed VSIX.
+		const extension = vscode.extensions.getExtension(EXTENSION_ID);
+		await extension?.activate();
+
+		assert.strictEqual(
+			typeof vscode.lm.registerMcpServerDefinitionProvider,
+			'function',
+			'this VS Code build predates the MCP provider API',
+		);
+
+		const providers = extension?.packageJSON.contributes
+			.mcpServerDefinitionProviders as { id: string; label: string }[];
+		assert.deepStrictEqual(
+			providers.map((p) => p.id),
+			['numbers-le'],
+		);
+	});
+
 	it('dedupe writes unique numbers to a new document', async () => {
 		await openFile('numbers.txt', '5\n5\n6\n5');
 

@@ -30,5 +30,6 @@
 	"manifest.settings.sort.mode.option.magnitude-desc": "絶対値降順",
 	"manifest.settings.statusbar.enabled.desc": "クイックアクセス用に Numbers-LE ステータスバー項目を表示",
 	"manifest.settings.telemetry.desc": "出力パネルへのローカル専用テレメトリログを有効化",
-	"manifest.capability.untrusted-workspaces.desc": "信頼されていないワークスペースでの機能制限"
+	"manifest.capability.untrusted-workspaces.desc": "信頼されていないワークスペースでの機能制限",
+	"manifest.mcp.label": "Numbers-LE：エージェントモード用の数値抽出ツール"
 }

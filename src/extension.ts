@@ -2,6 +2,7 @@ import type * as vscode from 'vscode';
 import { registerCommands } from './commands';
 import { registerHelpCommand } from './commands/help';
 import { registerOpenSettingsCommand } from './config/settings';
+import { registerMcpProvider } from './mcp/provider';
 import { createTelemetry } from './telemetry/telemetry';
 import { createNotifier } from './ui/notifier';
 import { createStatusBar } from './ui/statusBar';
@@ -24,6 +25,9 @@ export function activate(context: vscode.ExtensionContext): void {
 	// Register settings and help commands
 	registerOpenSettingsCommand(context, telemetry);
 	registerHelpCommand(context, telemetry);
+
+	// Offer the bundled MCP server to agent mode, where the host supports it
+	registerMcpProvider(context);
 
 	telemetry.event('extension-activated');
 }

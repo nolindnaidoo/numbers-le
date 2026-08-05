@@ -30,5 +30,6 @@
 	"manifest.settings.sort.mode.option.magnitude-desc": "按数值降序",
 	"manifest.settings.statusbar.enabled.desc": "显示 Numbers-LE 状态栏以实现快速访问",
 	"manifest.settings.telemetry.desc": "在输出窗格启用本地遥测日志",
-	"manifest.capability.untrusted-workspaces.desc": "不受信任工作区功能受限"
+	"manifest.capability.untrusted-workspaces.desc": "不受信任工作区功能受限",
+	"manifest.mcp.label": "Numbers-LE 代理模式下的数字提取工具"
 }

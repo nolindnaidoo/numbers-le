@@ -30,5 +30,6 @@
 	"manifest.settings.sort.mode.option.magnitude-desc": "Sắp xếp theo thứ tự giảm dần của giá trị",
 	"manifest.settings.statusbar.enabled.desc": "Hiển thị thanh trạng thái Numbers-LE để truy cập nhanh",
 	"manifest.settings.telemetry.desc": "Bật nhật ký telemetry cục bộ trong cửa sổ đầu ra",
-	"manifest.capability.untrusted-workspaces.desc": "Chức năng hạn chế trong không gian làm việc không tin cậy"
+	"manifest.capability.untrusted-workspaces.desc": "Chức năng hạn chế trong không gian làm việc không tin cậy",
+	"manifest.mcp.label": "Các công cụ trích xuất số Numbers-LE dành cho chế độ đại lý"
 }

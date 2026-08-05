@@ -30,5 +30,6 @@
 	"manifest.settings.sort.mode.option.magnitude-desc": "Größenordnung absteigend",
 	"manifest.settings.statusbar.enabled.desc": "Numbers-LE-Statusleisten-Eintrag für schnellen Zugriff anzeigen",
 	"manifest.settings.telemetry.desc": "Lokale Telemetrieprotokolle im Ausgabefenster aktivieren",
-	"manifest.capability.untrusted-workspaces.desc": "Eingeschränkte Funktionalität in nicht vertrauenswürdigen Arbeitsbereichen"
+	"manifest.capability.untrusted-workspaces.desc": "Eingeschränkte Funktionalität in nicht vertrauenswürdigen Arbeitsbereichen",
+	"manifest.mcp.label": "Numbers-LE-Tools zur Nummernextraktion für den Agentenmodus"
 }

@@ -30,5 +30,6 @@
 	"manifest.settings.sort.mode.option.magnitude-desc": "크기 내림차순",
 	"manifest.settings.statusbar.enabled.desc": "빠른 접근을 위한 Numbers-LE 상태 표시줄 항목 표시",
 	"manifest.settings.telemetry.desc": "로컬 전용 텔레메트리 로그를 출력 패널에 활성화",
-	"manifest.capability.untrusted-workspaces.desc": "신뢰할 수 없는 작업 영역에서 제한된 기능"
+	"manifest.capability.untrusted-workspaces.desc": "신뢰할 수 없는 작업 영역에서 제한된 기능",
+	"manifest.mcp.label": "에이전트 모드용 Numbers-LE 번호 추출 도구"
 }

@@ -30,5 +30,6 @@
 	"manifest.settings.sort.mode.option.magnitude-desc": "Magnitudine discendente",
 	"manifest.settings.statusbar.enabled.desc": "Mostra la voce della barra di stato di Numbers-LE per un accesso rapido",
 	"manifest.settings.telemetry.desc": "Abilita i log di telemetria solo locali nel pannello Output",
-	"manifest.capability.untrusted-workspaces.desc": "Funzionalità limitate in spazi di lavoro non attendibili"
+	"manifest.capability.untrusted-workspaces.desc": "Funzionalità limitate in spazi di lavoro non attendibili",
+	"manifest.mcp.label": "Strumenti di estrazione dei numeri Numbers-LE per la modalità agente"
 }

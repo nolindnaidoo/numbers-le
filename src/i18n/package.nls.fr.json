@@ -30,5 +30,6 @@
 	"manifest.settings.sort.mode.option.magnitude-desc": "Magnitude décroissante",
 	"manifest.settings.statusbar.enabled.desc": "Afficher l'entrée de la barre d'état Numbers-LE pour un accès rapide",
 	"manifest.settings.telemetry.desc": "Activer les journaux de télémétrie locaux uniquement dans le panneau de sortie",
-	"manifest.capability.untrusted-workspaces.desc": "Fonctionnalités limitées dans les espaces de travail non fiables"
+	"manifest.capability.untrusted-workspaces.desc": "Fonctionnalités limitées dans les espaces de travail non fiables",
+	"manifest.mcp.label": "Outils d'extraction de numéros Numbers-LE pour le mode agent"
 }
