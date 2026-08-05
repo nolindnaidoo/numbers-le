@@ -1,18 +1,28 @@
 {
 	"name": "numbers-le-mcp",
-	"version": "2.2.2",
+	"version": "2.2.3",
 	"mcpName": "io.github.nolindnaidoo/numbers-le",
 	"description": "Extract numeric values from config files, data files and plain text.",
 	"keywords": [
 		"mcp",
 		"modelcontextprotocol",
 		"model-context-protocol",
-		"numbers-le"
+		"mcp-server",
+		"ai-agent",
+		"claude",
+		"cursor",
+		"zed",
+		"vscode",
+		"llm-tools",
+		"numbers-le",
+		"numbers-le-mcp",
+		"nolindnaidoo",
+		"letools"
 	],
 	"license": "MIT",
 	"author": {
-		"name": "nolindnaidoo",
-		"url": "https://github.com/nolindnaidoo"
+		"name": "Nolin Naidoo",
+		"url": "https://nolindnaidoo.com"
 	},
 	"homepage": "https://letools.dev",
 	"repository": {
@@ -34,5 +44,9 @@
 	],
 	"engines": {
 		"node": ">=20"
+	},
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
 	}
 }
