@@ -4,6 +4,19 @@ import type { ExtractionResult, ParseError } from '../../types';
 import { errorMessage } from '../../utils/errors';
 import { parseStrictNumber } from '../heuristics';
 
+/** Every strictly-numeric cell in one parsed record. */
+function numbersInRecord(record: unknown): readonly number[] {
+	if (!Array.isArray(record)) return [];
+
+	const found: number[] = [];
+	for (const value of record) {
+		if (typeof value !== 'string') continue;
+		const num = parseStrictNumber(value);
+		if (num !== undefined) found.push(num);
+	}
+	return found;
+}
+
 /**
  * All CSV handling goes through csv-parse. v1.x had three hand-rolled
  * splitters (two in this module, one in ui/prompts.ts) that mishandled
@@ -68,14 +81,7 @@ export function extractFromCsvAsync(
 		parser.on('readable', () => {
 			let record: unknown = parser.read();
 			while (record !== null) {
-				if (Array.isArray(record)) {
-					for (const value of record) {
-						if (typeof value === 'string') {
-							const num = parseStrictNumber(value);
-							if (num !== undefined) numbers.push(num);
-						}
-					}
-				}
+				numbers.push(...numbersInRecord(record));
 				record = parser.read();
 			}
 		});
