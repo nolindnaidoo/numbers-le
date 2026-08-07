@@ -3,7 +3,7 @@
 	"name": "io.github.nolindnaidoo/numbers-le",
 	"title": "Numbers-LE",
 	"description": "Extract numeric values from config files, data files and plain text.",
-	"websiteUrl": "https://letools.dev",
+	"websiteUrl": "https://letools.dev/tools/numbers-le",
 	"icons": [
 		{
 			"src": "https://raw.githubusercontent.com/nolindnaidoo/numbers-le/main/src/assets/images/icon.png",
@@ -17,13 +17,13 @@
 		"url": "https://github.com/nolindnaidoo/numbers-le",
 		"source": "github"
 	},
-	"version": "2.2.3",
+	"version": "2.2.4",
 	"packages": [
 		{
 			"registryType": "npm",
 			"registryBaseUrl": "https://registry.npmjs.org",
 			"identifier": "numbers-le-mcp",
-			"version": "2.2.3",
+			"version": "2.2.4",
 			"runtimeHint": "npx",
 			"transport": {
 				"type": "stdio"
