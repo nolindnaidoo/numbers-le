@@ -241,7 +241,7 @@ function generateHelpContent(): string {
 		'- [Rate on VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.numbers-le&ssr=false#review-details)',
 	);
 	lines.push(
-		'- [Rate on Open VSX](https://open-vsx.org/extension/nolindnaidoo/numbers-le/reviews)',
+		'- [Rate on Open VSX](https://open-vsx.org/extension/OffensiveEdge/numbers-le/reviews)',
 	);
 	lines.push('');
 
