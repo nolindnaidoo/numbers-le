@@ -5,6 +5,26 @@ All notable changes to Numbers-LE will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+This file covers the **VS Code extension**. The Rust CLI in `crate/` is a
+separate product on its own cadence and keeps its own
+[CHANGELOG](crate/CHANGELOG.md).
+
+## [Unreleased]
+
+### Added
+
+- A **Rust CLI and MCP server**, in [`crate/`](crate/README.md), to be
+  published to crates.io as `numbers-le`. It runs the same extraction over
+  a whole tree, with exit codes following grep — 0 found, 1 none found, 2
+  malformed question — so checking every hardcoded number in a repository
+  against a specification is one command and a file.
+
+  The extension stays the reference implementation and `crate/fixtures/`
+  is the contract, which now pins how a number is *printed* as well as
+  which numbers are found: JavaScript and Rust render the same double
+  differently, and the crate implements ECMAScript's rendering rather than
+  approximating it.
+
 ## [2.2.4] - 2026-08-07
 
 ### Changed

@@ -1,0 +1,11 @@
+{
+  "port": 8080,
+  "rate": 0.0825,
+  "ratio": -3.25e2,
+  "quoted": "42",
+  "flag": true,
+  "nothing": null,
+  "nested": { "limits": [1, 2.5, 1000000] },
+  "huge": 1e21,
+  "tiny": 1e-7
+}

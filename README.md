@@ -115,6 +115,46 @@ That prints the tool list and exits — if you see `extract_numbers`, the server
 
 The shared policy (one heuristics module, applied to every format): only finite numbers are extracted — `NaN` and `inf`/`.inf` never appear in results — and a coerced string must be numeric in full: plain decimals with optional sign, decimal point, and exponent. For unrecognized file types you can pick a format explicitly or fall back to a plain-text scan (no grammar: `v1.2.3` reads as `1.2` and `0.3`).
 
+## The CLI
+
+The same extraction runs from a terminal or a shell pipeline: a Rust CLI
+in [`crate/`](crate/README.md), sharing one corpus with the extension —
+[`crate/fixtures/`](crate/fixtures/) — so the two can never read a
+document differently.
+
+```bash
+numbers-le .                     # every number in the tree, as JSON
+numbers-le --values config/      # just the numbers, one per line
+numbers-le mcp                   # the same extraction over MCP on stdio
+
+# the point of the whole thing:
+numbers-le --values --dedupe src/ | sort -n > after.txt
+diff before.txt after.txt        # what constants moved this release
+```
+
+**Somebody has to verify that the rate in the code is the rate in the
+specification.** A tax percentage, a retention window, a rounding
+boundary. In a regulated setting that check is a deliverable, and the
+person doing it usually has no checkout and never has the editor open.
+
+**Numbers are printed exactly as JavaScript prints them** — `1e+21`, not
+Rust's `1000000000000000000000`. This tool's whole output is numbers as
+text, so the rendering is the contract, and the corpus pins it.
+
+**Exit codes follow grep** — 0 numbers found, 1 none found, 2 the question
+was malformed.
+
+Install it with `cargo install numbers-le` once it is published; until
+then it builds from `crate/`. The spec
+([`crate/SPEC.md`](crate/SPEC.md)) and the engineering standard
+([`crate/AGENTS.md`](crate/AGENTS.md)) live alongside it, and it keeps
+its own [CHANGELOG](crate/CHANGELOG.md).
+
+**Two MCP servers, one tool.** `numbers-le mcp` offers `extract_numbers`
+exactly as [`numbers-le-mcp`](https://www.npmjs.com/package/numbers-le-mcp)
+does — [`crate/fixtures/mcp-extract-numbers.json`](crate/fixtures/mcp-extract-numbers.json)
+runs against both and CI fails if they diverge.
+
 ## Commands
 
 | Command | Description |
@@ -219,7 +259,7 @@ run. Reproduce with `bun run test:coverage`.
 
 Every tool in the family, one page: **[letools.dev](https://letools.dev)**
 
-All ten also ship as MCP servers — `npx <name>-mcp` gives any agent the same engine. Six go further and ship a Rust CLI: **Paths-LE**, **Secrets-LE**, **URLs-LE**, **Regex-LE**, **String-LE** and **Scrape-LE**, each installed with `cargo install <that-name>`.
+All ten also ship as MCP servers — `npx <name>-mcp` gives any agent the same engine. Seven go further and ship a Rust CLI: **Paths-LE**, **Secrets-LE**, **URLs-LE**, **Regex-LE**, **String-LE**, **Numbers-LE** and **Scrape-LE**, each installed with `cargo install <that-name>`.
 
 - **[String-LE](https://letools.dev/tools/string-le)** - Extract string values for i18n from JSON, YAML, CSV, TOML, INI, and .env
 - **[Paths-LE](https://letools.dev/tools/paths-le)** - Extract file paths from JS/TS imports, JSON, HTML, CSS, TOML, CSV, and .env
@@ -233,12 +273,14 @@ All ten also ship as MCP servers — `npx <name>-mcp` gives any agent the same e
 
 ## Also by nolindnaidoo
 
-**Rust** — pixelcoords and pixelactions are one loop: pixelcoords answers *where*, pixelactions *acts* there. The six LE crates are the terminal half of the extensions they sit in — the same extraction, held to the extension's own corpus, and an exit code instead of a results editor.
+**Rust** — pixelcoords and pixelactions are one loop: pixelcoords answers *where*, pixelactions *acts* there. The seven LE crates are the terminal half of the extensions they sit in — the same extraction, held to the extension's own corpus, and an exit code instead of a results editor.
 
 - **[pixelcoords](https://github.com/nolindnaidoo/pixelcoords)** — Freeze your screen, mark regions, get pixel-exact coordinates and crops
   [pixelcoords.dev](https://pixelcoords.dev) · [crates.io](https://crates.io/crates/pixelcoords) · [docs.rs](https://docs.rs/pixelcoords)
 - **[pixelactions](https://github.com/nolindnaidoo/pixelactions)** — Consume human-verified coordinates, perform the interaction, confirm it landed
   [pixelactions.dev](https://pixelactions.dev) · [crates.io](https://crates.io/crates/pixelactions) · [docs.rs](https://docs.rs/pixelactions)
+- **[numbers-le](https://github.com/nolindnaidoo/numbers-le/tree/main/crate)** — This extension's own CLI: find every hardcoded number in a codebase so a person can check them
+  [crates.io](https://crates.io/crates/numbers-le)
 - **[paths-le](https://github.com/nolindnaidoo/paths-le/tree/main/crate)** — Find every path in a codebase and report whether it still points at anything
   [crates.io](https://crates.io/crates/paths-le)
 - **[secrets-le](https://github.com/nolindnaidoo/secrets-le/tree/main/crate)** — Find hardcoded credentials, and never print one
