@@ -1,2 +1,0 @@
-Version v1.2.3 released; rate 0.0825 applied to 1000 units at -7e2 offset.
-No numbers on this line at all.
