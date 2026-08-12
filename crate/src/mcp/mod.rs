@@ -185,9 +185,16 @@ fn scan_tool(arguments: &Value) -> Result<Value, String> {
     };
 
     let targets = walk::collect(&inputs, &walk_options)?;
-    let reports: Vec<Value> = targets
+    let scanned = targets
         .iter()
         .map(|target| scan::scan_file(target, options))
+        .collect();
+    // A binary file was never a text candidate, so it gets no report —
+    // but the count is carried, because an agent reading `reports` as
+    // the whole tree would otherwise be wrong about coverage.
+    let (read, binary) = scan::partition(scanned);
+    let reports: Vec<Value> = read
+        .iter()
         .map(|report| serde_json::to_value(report).expect("a report serializes"))
         .collect();
 
@@ -229,7 +236,7 @@ fn scan_tool(arguments: &Value) -> Result<Value, String> {
     let count = reports.len();
     Ok(envelope(
         "numbers_le_scan",
-        &json!({ "reports": reports, "numbers": numbers }),
+        &json!({ "reports": reports, "numbers": numbers, "binaryFiles": binary }),
         count,
         &diagnostics,
         false,
@@ -376,7 +383,8 @@ mod tests {
         );
         let envelope = &response["result"]["structuredContent"];
         assert_eq!(envelope["meta"]["tool"], "extract_numbers");
-        assert_eq!(envelope["data"]["numbers"][0], 8080);
+        assert_eq!(envelope["data"]["numbers"][0]["value"], 8080);
+        assert_eq!(envelope["data"]["numbers"][0]["notation"], "decimal");
         assert_eq!(envelope["ok"], true);
         assert_eq!(response["result"]["isError"], false);
     }
@@ -390,7 +398,7 @@ mod tests {
             &json!({ "content": "const port = 8080;" }),
         );
         let envelope = &response["result"]["structuredContent"];
-        assert_eq!(envelope["data"]["numbers"][0], 8080);
+        assert_eq!(envelope["data"]["numbers"][0]["value"], 8080);
         assert!(envelope["data"].get("exists").is_none());
     }
 
@@ -399,12 +407,12 @@ mod tests {
     fn an_unknown_format_falls_back_rather_than_failing() {
         let response = call(
             "extract_numbers",
-            &json!({ "content": "rate 0.0825", "format": "typescript" }),
+            &json!({ "content": "rate 0.0825", "format": "handwriting" }),
         );
         assert_eq!(response["result"]["isError"], false);
         let envelope = &response["result"]["structuredContent"];
         assert_eq!(envelope["data"]["fileType"], "unknown");
-        assert_eq!(envelope["data"]["numbers"][0], 0.0825);
+        assert_eq!(envelope["data"]["numbers"][0]["value"], 0.0825);
     }
 
     /// An empty answer is the scan running and finding nothing.

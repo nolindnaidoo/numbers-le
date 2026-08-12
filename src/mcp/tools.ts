@@ -57,8 +57,18 @@ function extract(args: Record<string, unknown>): Promise<unknown> {
 	// passes an empty string rather than a fabricated name.
 	const result = extractNumber(content, fileType, filename ?? '');
 
+	// Deduplication is by value, never by notation: `0xFF` and `255` are
+	// one number written twice, and a caller asking for the distinct
+	// numbers in a file means the distinct numbers.
+	const seen = new Set<number>();
 	const deduped =
-		args.dedupe === true ? [...new Set(result.numbers)] : result.numbers;
+		args.dedupe === true
+			? result.numbers.filter((found) => {
+					if (seen.has(found.value)) return false;
+					seen.add(found.value);
+					return true;
+				})
+			: result.numbers;
 
 	const { items, truncated } = capped(deduped, maxResults);
 
@@ -77,7 +87,7 @@ export const TOOLS: readonly ToolDefinition[] = Object.freeze([
 	Object.freeze({
 		name: 'extract_numbers',
 		description:
-			'Extract every numeric value from a document. Parses JSON, YAML, CSV, TOML, INI and dotenv; anything else is scanned as plain text, so a format is optional. Returns the numbers themselves, in document order, not their positions.',
+			'Extract every numeric value from a document. Parses JSON, YAML, CSV, TOML, INI and dotenv, and reads numeric literals in Python, Rust, Go, Java, Kotlin, C#, C, C++, JavaScript, TypeScript, SQL and shell — including hex, binary, octal, digit separators and type suffixes. Anything else is scanned as plain text, so a format is optional. Returns each number with the notation it was written in, in document order, not its position.',
 		inputSchema: {
 			type: 'object',
 			properties: {

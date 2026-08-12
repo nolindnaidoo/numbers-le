@@ -40,9 +40,11 @@ Options:
   --hidden             walk hidden files and directories too
   --no-ignore          walk files that .gitignore excludes
 
-Files that are not text, or that cannot be opened, are named on stderr
-and carried in the report, and do not by themselves fail the run — every
-repository has a PNG in it. --strict turns them back into a failure.
+A binary file — a NUL byte in its first 8 KiB, ripgrep's own test — is
+never a text candidate: it produces no report line, is counted on stderr,
+and never fails the run. A file that looked like text and could not be
+read is named on stderr, carried in the report, and does not fail the run
+by itself; --strict turns that one into a failure.
 
 Exit codes follow grep: 0 numbers found · 1 none found · 2 malformed
 question. Finding none is an answer, not an error.";
@@ -103,13 +105,14 @@ pub(crate) fn run() -> ExitCode {
 
 fn execute(args: &[String]) -> Result<u8, String> {
     let options = parse(args)?;
-    let reports = if options.stdin {
-        vec![scan_stdin(&options)?]
+    let (reports, binary) = if options.stdin {
+        (vec![scan_stdin(&options)?], 0)
     } else {
-        walk::collect(&options.inputs, &options.walk)?
+        let scanned = walk::collect(&options.inputs, &options.walk)?
             .iter()
             .map(|target| scan::scan_file(target, options.scan))
-            .collect()
+            .collect();
+        scan::partition(scanned)
     };
 
     if options.values_only {
@@ -118,7 +121,7 @@ fn execute(args: &[String]) -> Result<u8, String> {
         write_reports(&reports)?;
     }
 
-    summarise(&reports, options.values_only);
+    summarise(&reports, binary, options.values_only);
     Ok(scan::exit_code(&reports, options.strict))
 }
 
@@ -211,8 +214,10 @@ fn parse(args: &[String]) -> Result<Cli, String> {
     Ok(options)
 }
 
-/// The human half. Every line restates something already on stdout.
-fn summarise(reports: &[FileReport], values_only: bool) {
+/// The human half. Every line restates something already on stdout —
+/// except the binary count, which is the one thing stdout cannot carry
+/// because those files produce no report line at all.
+fn summarise(reports: &[FileReport], binary: usize, values_only: bool) {
     let mut stderr = std::io::stderr().lock();
     let mut numbers = 0;
     let mut unlocated = 0;
@@ -238,6 +243,15 @@ fn summarise(reports: &[FileReport], values_only: bool) {
         plural(numbers, "number", "numbers"),
         plural(reports.len(), "file", "files")
     );
+    if binary > 0 {
+        // Not a report line, but not a silence either: a reader has to
+        // know the scan covered fewer files than the tree holds.
+        let _ = writeln!(
+            stderr,
+            "{} skipped",
+            plural(binary, "binary file", "binary files")
+        );
+    }
     if unlocated > 0 {
         // Said plainly: a reader treating this report as a complete
         // index of where each number lives needs to know how much of it
@@ -294,12 +308,12 @@ mod tests {
     }
 
     /// The one place this crate is deliberately lenient, and it is the
-    /// extension's leniency: a format nobody recognises is the fallback
-    /// extractor, not a refusal.
+    /// extension's leniency: a format nobody recognises is the text
+    /// scan, not a refusal.
     #[test]
     fn an_unknown_format_falls_back_rather_than_being_refused() {
         let options =
-            parse(&["--format".into(), "typescript".into(), "x".into()]).expect("accepted");
+            parse(&["--format".into(), "handwriting".into(), "x".into()]).expect("accepted");
         assert_eq!(options.scan.format, Some(crate::extract::FALLBACK_FORMAT));
     }
 

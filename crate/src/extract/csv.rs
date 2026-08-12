@@ -8,7 +8,7 @@
 //!
 //! **Untyped**, like INI and `.env`: a numeric-looking cell is a number.
 
-use super::policy::strict_number;
+use super::policy::{Literal, strict_number};
 
 /// Move the whitespace around a quoted field before parsing, and catch
 /// an unterminated quote.
@@ -88,7 +88,7 @@ fn rows(text: &str) -> Result<Vec<Vec<String>>, String> {
         .collect()
 }
 
-pub(crate) fn extract(text: &str) -> Vec<f64> {
+pub(crate) fn extract(text: &str) -> Vec<Literal> {
     let Ok(rows) = rows(text) else {
         return Vec::new();
     };
@@ -106,48 +106,55 @@ pub(crate) fn parse_error(text: &str) -> Option<String> {
 mod tests {
     use super::*;
 
+    fn values(text: &str) -> Vec<f64> {
+        extract(text)
+            .into_iter()
+            .map(|literal| literal.value)
+            .collect()
+    }
+
     #[test]
     fn numeric_cells_are_numbers() {
-        assert_eq!(extract("1,2.5\n3,4"), [1.0, 2.5, 3.0, 4.0]);
+        assert_eq!(values("1,2.5\n3,4"), [1.0, 2.5, 3.0, 4.0]);
     }
 
     /// No header inference, in either frontend. A row of names yields no
     /// numbers, which is the right answer for a row of names.
     #[test]
     fn the_first_row_is_data_like_any_other() {
-        assert_eq!(extract("id,rate\n1,0.0825"), [1.0, 0.0825]);
-        assert_eq!(extract("1,2\n3,4"), [1.0, 2.0, 3.0, 4.0]);
+        assert_eq!(values("id,rate\n1,0.0825"), [1.0, 0.0825]);
+        assert_eq!(values("1,2\n3,4"), [1.0, 2.0, 3.0, 4.0]);
     }
 
     #[test]
     fn non_numeric_cells_are_skipped() {
-        assert_eq!(extract("1,3abc,alpha,2"), [1.0, 2.0]);
+        assert_eq!(values("1,3abc,alpha,2"), [1.0, 2.0]);
     }
 
     #[test]
     fn empty_cells_are_skipped() {
-        assert_eq!(extract("1,,2"), [1.0, 2.0]);
+        assert_eq!(values("1,,2"), [1.0, 2.0]);
     }
 
     #[test]
     fn a_quoted_cell_may_contain_the_delimiter() {
-        assert_eq!(extract("\"1,2\",3"), [3.0]);
+        assert_eq!(values("\"1,2\",3"), [3.0]);
     }
 
     #[test]
     fn whitespace_before_a_quoted_field_does_not_break_it() {
-        assert_eq!(extract("1, \"2\"\n"), [1.0, 2.0]);
+        assert_eq!(values("1, \"2\"\n"), [1.0, 2.0]);
     }
 
     #[test]
     fn ragged_rows_are_data_not_failure() {
-        assert_eq!(extract("1,2,3\n4"), [1.0, 2.0, 3.0, 4.0]);
+        assert_eq!(values("1,2,3\n4"), [1.0, 2.0, 3.0, 4.0]);
         assert!(parse_error("1,2,3\n4").is_none());
     }
 
     #[test]
     fn an_unterminated_quote_is_a_parse_failure() {
-        assert!(extract("1,\"unterminated").is_empty());
+        assert!(values("1,\"unterminated").is_empty());
         assert!(parse_error("1,\"unterminated").is_some());
     }
 }

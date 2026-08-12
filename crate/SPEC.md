@@ -58,7 +58,7 @@ the sibling repos.
 ```
 crate/
 ├── src/
-│   ├── extract/    pure: the seven extractors, the shared numeric
+│   ├── extract/    pure: the eight extractors, the shared numeric
 │   │               policy, JS number rendering, positions.
 │   ├── walk.rs     ignore-aware tree walking
 │   ├── scan.rs     one file end to end — the only path either surface calls
@@ -75,7 +75,7 @@ floor per module**.
 ### One numeric policy
 
 Ported from `heuristics.ts`, which is already the single source the
-extension's six format extractors share:
+extension's format extractors share:
 
 - **Only finite numbers.** `NaN` and `±Infinity` are rejected even where
   a format can express them — YAML `.inf`, TOML `nan`. JSON cannot
@@ -99,14 +99,55 @@ as the number 26 in YAML and TOML, because those parsers resolve it
 before the policy ever sees it. Both frontends inherit that from their
 parsers and the corpus pins it.
 
+### Twelve source languages have a literal reader
+
+`python rust go java kotlin csharp cpp c javascript typescript sql
+shellscript` — plus their file extensions and the React language ids —
+are read by a numeric-literal extractor rather than by the text scan.
+
+It understands hex `0xFF`, binary `0b1010`, octal `0o755` and the legacy
+`0755`, digit separators `1_000_000` and `1'000`, and suffixes `123n`,
+`1.5f`, `10u32`, `100L`, `1.5e3f64`. Two rules do most of the work: a
+literal never begins inside a word, and a literal is consumed whole,
+suffix included.
+
+**Type names are not numbers.** `u32`, `i64`, `f32`, `usize` and `int64`
+report nothing. Under the text scan they reported `32`, `64`, `32` and
+`64`, and a Rust file yielded numbers that were never in it — the one
+failure an audit tool cannot have.
+
+**A dialect changes an answer, so the language is not a label.** `0755`
+is 493 in C, C++, Go and Java and 755 in Rust, Python 3, Kotlin and C#;
+`1_000` is one thousand in Rust and the number 1 in C; `123n` is a BigInt
+in JavaScript and nowhere else. That is why the twelve resolve to their
+own names rather than to one `source` key.
+
+It reads comments and strings too, deliberately: a threshold quoted in a
+docstring is exactly as interesting to a reviewer as one in an
+expression, and skipping either would need a per-language lexer.
+
 ### The fallback has no grammar
 
-For an unrecognised format, numbers come from a scan of the raw text:
-optional sign, digits, optional point, optional exponent. **`v1.2.3`
-reads as `1.2` and `0.3`.** That is not a defect to fix here — it is what
-the extension does, and a scan with no parser cannot know that a version
-string is one token. It is why the fallback is only used when the format
-is unknown.
+For a format nothing here parses and no language claims — Markdown, a
+log, plain text — numbers come from a scan of the raw text: optional
+sign, digits, optional point, optional exponent. **`v1.2.3` reads as
+`1.2` and `0.3`.** That is not a defect to fix here — it is what the
+extension does, and a scan with no parser cannot know that a version
+string is one token. It is why the fallback is now reserved for prose.
+
+### Notation
+
+Every finding carries how the literal was written: `decimal`, `hex`,
+`binary`, `octal`, `scientific` or `bigint`. Without it a reader cannot
+tell `0x1A` from `26`, which got worse the moment hex was supported at
+all.
+
+**Notation follows coercion.** A typed format hands over a number its own
+parser already resolved — `0x1A` is 26 by the time TOML reaches the
+policy, and the token is gone — so JSON, YAML and TOML report `decimal`.
+An untyped format hands over text this policy parses itself, so INI,
+`.env` and CSV keep what the text said. The source languages and the text
+scan read their literals directly and keep everything.
 
 ## Output contract
 
@@ -118,8 +159,8 @@ line per file.
   "file": "src/pricing.toml",
   "format": "toml",
   "numbers": [
-    { "value": "0.0825", "line": 4, "column": 12 },
-    { "value": "1e+21", "line": 9, "column": 8 }
+    { "value": "0.0825", "notation": "decimal", "line": 4, "column": 12 },
+    { "value": "1e+21", "notation": "decimal", "line": 9, "column": 8 }
   ],
   "diagnostics": [],
   "summary": { "numbers": 2, "unlocated": 0 }
@@ -161,8 +202,10 @@ Options:
 ## The MCP surface
 
 - **`extract_numbers` belongs to both servers**: same schema, same
-  envelope, byte-identical output. `fixtures/mcp-extract-numbers.json`
-  runs against both.
+  envelope, byte-identical number tokens.
+  `fixtures/mcp-extract-numbers.json` runs against both. Each entry of
+  `data.numbers` is `{ value, notation }` — the value a JSON number
+  rendered by this crate, never re-encoded by a serializer.
 - **`numbers_le_scan` is this server's own**: files or directories in,
   the same reports the CLI writes.
 
@@ -186,14 +229,26 @@ Exit 2 means the *question* was malformed — an unknown flag, an
 unreadable format name, a path that does not exist. It does not mean one
 file in fifty thousand was a PNG.
 
-A file that is not UTF-8 text, or that cannot be opened, is:
+Two different things, and the difference is the whole point:
+
+**A binary file was never a text candidate.** A NUL byte in the first
+8 KiB — ripgrep's own test — and the file is not read, produces **no
+report line**, and never affects the exit code. Reporting a PNG as a
+file that could not be read made `--strict` exit 2 on every repository
+holding an image, which made the flag useless in CI, the one place it is
+most worth having. It is **counted on stderr** (`16 binary files
+skipped`) so a reader still knows coverage was narrower than the tree;
+the MCP scan tool carries the same count as `data.binaryFiles`.
+
+**A file that looked like text and could not be read** — a permissions
+error, or invalid UTF-8 with no NUL byte — is:
 
 - named on stderr,
 - carried in the JSON report with a `skipped` diagnostic saying why,
-- and left out of the exit code.
+- and left out of the exit code unless `--strict` is on.
 
-`--strict` turns any skipped file back into exit 2, for a pipeline that
-wants zero tolerance. What is never allowed is the third option: a file
+`--strict` turns that one back into exit 2, for a pipeline that wants
+zero tolerance. What is never allowed is the third option: a *text* file
 that silently vanishes from the report, which reads to whoever ran it as
 a file that was clean.
 

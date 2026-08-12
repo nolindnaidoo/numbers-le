@@ -1,5 +1,5 @@
 import * as yaml from 'js-yaml';
-import type { ExtractionResult } from '../../types';
+import type { ExtractionResult, NumberFinding } from '../../types';
 import { errorMessage } from '../../utils/errors';
 import { collectNumbers } from '../heuristics';
 
@@ -8,7 +8,7 @@ export function extractFromYaml(
 	filepath: string,
 ): ExtractionResult {
 	try {
-		const numbers: number[] = [];
+		const numbers: NumberFinding[] = [];
 		// loadAll handles both single documents and `---`-separated
 		// multi-document streams (load() rejects the latter outright).
 		for (const doc of yaml.loadAll(text)) {

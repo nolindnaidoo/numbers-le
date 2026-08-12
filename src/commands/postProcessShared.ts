@@ -59,7 +59,9 @@ export function collectNumbers(
 		deps.notifier.info(vscode.l10n.t('No numbers found in the file'));
 		return null;
 	}
-	return result.numbers;
+	// Post-processing works on the values alone; the notation belongs to
+	// the report surfaces.
+	return Object.freeze(result.numbers.map((found) => found.value));
 }
 
 /**

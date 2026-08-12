@@ -13,6 +13,43 @@ separate product on its own cadence and keeps its own
 
 ### Added
 
+- **Numeric literals in twelve source languages** — Python, Rust, Go,
+  Java, Kotlin, C#, C, C++, JavaScript, TypeScript, SQL and shell, by
+  `languageId` or by file extension. Hex `0xFF`, binary `0b1010`, octal
+  `0o755` and legacy `0755`, digit separators `1_000_000` and `1'000`,
+  and suffixes `123n`, `1.5f`, `10u32`, `100L`.
+
+  **`u32` and `i64` are type names, not the numbers 32 and 64.** These
+  files used to go through the grammar-less text scan, which splits on
+  any non-digit: it reported `0` and `755` for `0o755`, `1`,`0`,`0` for
+  `1_000_000`, and `32`/`64` for `u32`/`u64`. A Rust file yielded numbers
+  that were never in it.
+
+  A dialect changes an answer, so each language keeps its own name:
+  `0755` is 493 in C, C++, Go and Java and 755 in Rust, Python 3, Kotlin
+  and C#; `123n` is a BigInt in JavaScript alone.
+
+- **A `notation` on every finding** — `decimal`, `hex`, `binary`,
+  `octal`, `scientific`, `bigint`.
+
+### Changed
+
+- **Behaviour change: `ExtractionResult.numbers` is
+  `readonly NumberFinding[]`**, each `{ value, notation }`, where it was
+  `readonly number[]`. The commands still write one number per line; the
+  notation belongs to the report surfaces.
+
+- **Behaviour change: `data.numbers` in the `extract_numbers` MCP tool is
+  an array of `{ value, notation }`** rather than bare numbers. The Rust
+  server moved in the same commit — the tool is shared byte for byte, and
+  the shared corpus pins the new shape.
+
+- **Behaviour change: `detectFileType` resolves source extensions.**
+  `a.rs` is `rust`, not `unknown`, so the file-type prompt no longer
+  appears for them.
+
+- Characterization goldens regenerated for both changes.
+
 - A **Rust CLI and MCP server**, in [`crate/`](crate/README.md), to be
   published to crates.io as `numbers-le`. It runs the same extraction over
   a whole tree, with exit codes following grep — 0 found, 1 none found, 2

@@ -4,7 +4,7 @@
 <h1 align="center">Numbers-LE: Zero Hassle Number Extraction</h1>
 <p align="center">
   <b>Pull every number out of the current file in one keystroke</b><br/>
-  <i>JSON, YAML, CSV, TOML, INI, and Environment files</i>
+  <i>JSON, YAML, CSV, TOML, INI, Environment files, and twelve source languages</i>
 </p>
 
 <p align="center">
@@ -113,7 +113,11 @@ That prints the tool list and exits — if you see `extract_numbers`, the server
 | INI | Values whose entire content is numeric (INI values are inherently strings) |
 | Environment | Values whose entire content is numeric (`PORT=3000` yields 3000; `VERSION=1.2.3` yields nothing) |
 
-The shared policy (one heuristics module, applied to every format): only finite numbers are extracted — `NaN` and `inf`/`.inf` never appear in results — and a coerced string must be numeric in full: plain decimals with optional sign, decimal point, and exponent. For unrecognized file types you can pick a format explicitly or fall back to a plain-text scan (no grammar: `v1.2.3` reads as `1.2` and `0.3`).
+The shared policy (one heuristics module, applied to every format): only finite numbers are extracted — `NaN` and `inf`/`.inf` never appear in results — and a coerced string must be numeric in full: plain decimals with optional sign, decimal point, and exponent.
+
+Python, Rust, Go, Java, Kotlin, C#, C, C++, JavaScript, TypeScript, SQL and shell are read by a numeric-literal extractor that understands hex `0xFF`, binary `0b1010`, octal `0o755` and legacy `0755`, digit separators `1_000_000` and `1'000`, and suffixes `123n`, `1.5f`, `10u32`, `100L` — and that knows `u32` is a type name, not the number 32. A dialect changes an answer: `0755` is 493 in C, C++, Go and Java, and 755 in Rust, Python 3, Kotlin and C#.
+
+Every finding carries the notation it was written in — `decimal`, `hex`, `binary`, `octal`, `scientific`, `bigint`. For anything left over you can pick a format explicitly or fall back to a plain-text scan (no grammar: `v1.2.3` reads as `1.2` and `0.3`).
 
 ## The CLI
 
@@ -241,12 +245,12 @@ a build only tells you how busy the runner was.
 <!-- coverage:start -->
 | Metric | Coverage |
 | --- | --- |
-| Statements | 89.74% |
-| Branches | 80.93% |
-| Functions | 96.42% |
-| Lines | 91.30% |
+| Statements | 90.65% |
+| Branches | 84.08% |
+| Functions | 96.34% |
+| Lines | 92.42% |
 
-309 test cases across 21 files, plus an integration suite that runs
+335 test cases across 22 files, plus an integration suite that runs
 in a real VS Code extension host and an end-to-end test that installs the
 built `.vsix` into a clean profile.
 

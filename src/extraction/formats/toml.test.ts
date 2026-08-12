@@ -1,5 +1,15 @@
 import { describe, expect, test } from 'vitest';
+import type { ExtractionResult } from '../../types';
 import { extractFromToml } from './toml';
+
+/**
+ * The values alone. Findings carry `{ value, notation }` since 0.2.0;
+ * these tests are about which numbers come out, and the notation has its
+ * own cases in the shared corpus.
+ */
+function values(result: ExtractionResult): readonly number[] {
+	return result.numbers.map((found) => found.value);
+}
 
 describe('TOML Number Extraction', () => {
 	describe('extractFromToml', () => {
@@ -8,9 +18,9 @@ describe('TOML Number Extraction', () => {
 			const result = extractFromToml(toml, 'test.toml');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(42)).toBe(true);
-			expect(result.numbers.includes(19.99)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(42)).toBe(true);
+			expect(values(result).includes(19.99)).toBe(true);
 		});
 
 		test('should extract numbers from TOML array', () => {
@@ -18,13 +28,13 @@ describe('TOML Number Extraction', () => {
 			const result = extractFromToml(toml, 'test.toml');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(8);
-			expect(result.numbers.includes(1)).toBe(true);
-			expect(result.numbers.includes(2)).toBe(true);
-			expect(result.numbers.includes(3)).toBe(true);
-			expect(result.numbers.includes(1.1)).toBe(true);
-			expect(result.numbers.includes(2.2)).toBe(true);
-			expect(result.numbers.includes(3.3)).toBe(true);
+			expect(values(result).length).toBe(8);
+			expect(values(result).includes(1)).toBe(true);
+			expect(values(result).includes(2)).toBe(true);
+			expect(values(result).includes(3)).toBe(true);
+			expect(values(result).includes(1.1)).toBe(true);
+			expect(values(result).includes(2.2)).toBe(true);
+			expect(values(result).includes(3.3)).toBe(true);
 		});
 
 		test('should extract numbers from TOML tables', () => {
@@ -39,10 +49,10 @@ score = 95.5
 			const result = extractFromToml(toml, 'test.toml');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(3);
-			expect(result.numbers.includes(123)).toBe(true);
-			expect(result.numbers.includes(25)).toBe(true);
-			expect(result.numbers.includes(95.5)).toBe(true);
+			expect(values(result).length).toBe(3);
+			expect(values(result).includes(123)).toBe(true);
+			expect(values(result).includes(25)).toBe(true);
+			expect(values(result).includes(95.5)).toBe(true);
 		});
 
 		test('should handle negative numbers', () => {
@@ -50,9 +60,9 @@ score = 95.5
 			const result = extractFromToml(toml, 'test.toml');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(-10)).toBe(true);
-			expect(result.numbers.includes(-5.5)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(-10)).toBe(true);
+			expect(values(result).includes(-5.5)).toBe(true);
 		});
 
 		test('should handle zero values', () => {
@@ -60,8 +70,8 @@ score = 95.5
 			const result = extractFromToml(toml, 'test.toml');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(3);
-			expect(result.numbers.filter((n) => n === 0).length).toBe(3);
+			expect(values(result).length).toBe(3);
+			expect(values(result).filter((n) => n === 0).length).toBe(3);
 		});
 
 		test('should ignore non-numeric values', () => {
@@ -69,9 +79,9 @@ score = 95.5
 			const result = extractFromToml(toml, 'test.toml');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(30)).toBe(true);
-			expect(result.numbers.includes(85.5)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(30)).toBe(true);
+			expect(values(result).includes(85.5)).toBe(true);
 		});
 
 		test('should handle empty TOML', () => {
@@ -79,7 +89,7 @@ score = 95.5
 			const result = extractFromToml(toml, 'test.toml');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(0);
+			expect(values(result).length).toBe(0);
 		});
 
 		test('should handle invalid TOML', () => {
@@ -96,9 +106,9 @@ score = 95.5
 			const result = extractFromToml(toml, 'test.toml');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(1234567890)).toBe(true);
-			expect(result.numbers.includes(0.000001)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(1234567890)).toBe(true);
+			expect(values(result).includes(0.000001)).toBe(true);
 		});
 
 		test('should handle scientific notation', () => {
@@ -106,9 +116,9 @@ score = 95.5
 			const result = extractFromToml(toml, 'test.toml');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(12300)).toBe(true);
-			expect(result.numbers.includes(-0.0567)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(12300)).toBe(true);
+			expect(values(result).includes(-0.0567)).toBe(true);
 		});
 
 		test('should extract numbers from inline tables', () => {
@@ -116,10 +126,10 @@ score = 95.5
 			const result = extractFromToml(toml, 'test.toml');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(3);
-			expect(result.numbers.includes(10)).toBe(true);
-			expect(result.numbers.includes(20)).toBe(true);
-			expect(result.numbers.includes(30)).toBe(true);
+			expect(values(result).length).toBe(3);
+			expect(values(result).includes(10)).toBe(true);
+			expect(values(result).includes(20)).toBe(true);
+			expect(values(result).includes(30)).toBe(true);
 		});
 
 		test('should extract numbers from array of tables', () => {
@@ -135,11 +145,11 @@ price = 20.50
 			const result = extractFromToml(toml, 'test.toml');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(4);
-			expect(result.numbers.includes(1)).toBe(true);
-			expect(result.numbers.includes(2)).toBe(true);
-			expect(result.numbers.includes(10.99)).toBe(true);
-			expect(result.numbers.includes(20.5)).toBe(true);
+			expect(values(result).length).toBe(4);
+			expect(values(result).includes(1)).toBe(true);
+			expect(values(result).includes(2)).toBe(true);
+			expect(values(result).includes(10.99)).toBe(true);
+			expect(values(result).includes(20.5)).toBe(true);
 		});
 	});
 });

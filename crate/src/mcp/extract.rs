@@ -19,11 +19,13 @@ const MAX_MAX_RESULTS: usize = 5000;
 pub(crate) fn definition() -> Value {
     json!({
         "name": "extract_numbers",
-        "description": "Extract every string value from a document. Parses JSON, YAML, CSV, \
-                        TOML, INI and dotenv; for any other format it falls back to quoted \
-                        numbers — single, double or backtick — so a format is optional but \
-                        unquoted prose yields nothing. Returns the values themselves, in \
-                        document order, not their positions.",
+        "description": "Extract every numeric value from a document. Parses JSON, YAML, CSV, \
+                        TOML, INI and dotenv, and reads numeric literals in Python, Rust, Go, \
+                        Java, Kotlin, C#, C, C++, JavaScript, TypeScript, SQL and shell — \
+                        including hex, binary, octal, digit separators and type suffixes. \
+                        Anything else is scanned as plain text, so a format is optional. \
+                        Returns each number with the notation it was written in, in document \
+                        order, not its position.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -32,7 +34,7 @@ pub(crate) fn definition() -> Value {
                     "type": "string",
                     "enum": SUPPORTED_FORMATS,
                     "description": "Document format. Optional — an unrecognised or absent \
-                                    format falls back to extracting quoted numbers.",
+                                    format scans the text directly.",
                 },
                 "filename": {
                     "type": "string",
@@ -91,16 +93,20 @@ pub(crate) fn run(arguments: &Value) -> Result<Value, String> {
 
     let mut values: Vec<Value> = extract::extract(content, format, Options)
         .into_iter()
-        .map(|printed| {
-            serde_json::value::RawValue::from_string(printed)
+        .map(|number| {
+            let token = serde_json::value::RawValue::from_string(number.value)
                 .map(|raw| serde_json::to_value(raw).expect("a raw token serializes"))
-                .expect("a rendered number is valid JSON")
+                .expect("a rendered number is valid JSON");
+            json!({ "value": token, "notation": number.notation })
         })
         .collect();
 
+    // Deduplication is by value, never by notation: `0xFF` and `255` are
+    // one number written twice, and a caller asking for the distinct
+    // numbers in a file means the distinct numbers.
     if arguments.get("dedupe").and_then(Value::as_bool) == Some(true) {
         let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
-        values.retain(|value| seen.insert(value.to_string()));
+        values.retain(|value| seen.insert(value["value"].to_string()));
     }
 
     // The `truncated` flag matters more than the cap: a silently
@@ -190,7 +196,13 @@ mod tests {
                 let ours = run(&arguments).expect("a result");
                 if case.file.as_deref() == Some("mixed-array.toml") {
                     assert_eq!(ours["ok"], true, "this parser reads TOML 1.0");
-                    assert_eq!(ours["data"]["numbers"], json!([1, 2.5]));
+                    assert_eq!(
+                        ours["data"]["numbers"],
+                        json!([
+                            { "value": 1, "notation": "decimal" },
+                            { "value": 2.5, "notation": "decimal" },
+                        ])
+                    );
                 } else {
                     assert_eq!(ours["ok"], false, "{}", case.name);
                     assert_eq!(
@@ -242,24 +254,42 @@ mod tests {
         assert_eq!(advertised, SUPPORTED_FORMATS);
     }
 
-    /// The contract two servers hold: numbers as JSON numbers, in
-    /// document order, and no positions.
+    /// The contract two servers hold: each number a JSON number with the
+    /// notation it was written in, in document order, and no positions.
+    ///
+    /// **Changed in 0.2.0**: `numbers` used to be a bare array of JSON
+    /// numbers. It moved because this was the one crate in the family
+    /// whose findings carried no kind, and a reader cannot tell `0x1A`
+    /// from `26` without one — which got worse the moment the source
+    /// extractor started reporting hex at all.
     #[test]
-    fn the_shared_tool_returns_bare_numbers() {
+    fn the_shared_tool_returns_a_number_and_its_notation() {
         let result =
             run(&json!({ "content": r#"{"a":8080}"#, "format": "json" })).expect("a result");
-        assert!(result["data"]["numbers"][0].is_number());
-        assert_eq!(result["data"]["numbers"][0], 8080);
+        assert!(result["data"]["numbers"][0]["value"].is_number());
+        assert_eq!(result["data"]["numbers"][0]["value"], 8080);
+        assert_eq!(result["data"]["numbers"][0]["notation"], "decimal");
+        assert!(
+            result["data"]["numbers"][0].get("line").is_none(),
+            "the shared tool never carries positions"
+        );
     }
 
     /// The reason the tokens are emitted raw. `serde_json` would print
     /// this double as `1e21`, and the other server writes `1e+21`.
+    ///
+    /// Key order is the serializer's — `serde_json` sorts and JavaScript
+    /// keeps insertion order — and it is not what the two servers are
+    /// held to. The *number token* is.
     #[test]
     fn a_number_keeps_the_token_javascript_would_write() {
         let result = run(&json!({ "content": r#"{"a":1e21,"b":1e-7}"#, "format": "json" }))
             .expect("a result");
         let text = serde_json::to_string(&result["data"]["numbers"]).expect("serializes");
-        assert_eq!(text, "[1e+21,1e-7]");
+        assert_eq!(
+            text,
+            r#"[{"notation":"decimal","value":1e+21},{"notation":"decimal","value":1e-7}]"#
+        );
     }
 
     /// An unresolved format is a text scan, never a refusal.
@@ -268,7 +298,23 @@ mod tests {
         let result =
             run(&json!({ "content": "rate 0.0825", "format": "nonsense" })).expect("a result");
         assert_eq!(result["data"]["fileType"], FALLBACK_FORMAT);
-        assert_eq!(result["data"]["numbers"][0], 0.0825);
+        assert_eq!(result["data"]["numbers"][0]["value"], 0.0825);
+    }
+
+    /// A source language is routed by name, and its literals come back
+    /// whole. Under the text scan `u32` was the number 32.
+    #[test]
+    fn a_source_language_is_routed_by_name() {
+        let result = run(&json!({
+            "content": "const MODE: u32 = 0o755;",
+            "format": "rust",
+        }))
+        .expect("a result");
+        assert_eq!(result["data"]["fileType"], "rust");
+        assert_eq!(
+            result["data"]["numbers"],
+            json!([{ "value": 493, "notation": "octal" }])
+        );
     }
 
     /// A document that neither parser reads comes back unsuccessful,

@@ -7,6 +7,60 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **A numeric-literal extractor for twelve source languages** —
+  `python rust go java kotlin csharp cpp c javascript typescript sql
+  shellscript`, by language id or by file extension, including the React
+  ids. It reads hex `0xFF`, binary `0b1010`, octal `0o755` and legacy
+  `0755`, digit separators `1_000_000` and `1'000`, and suffixes `123n`,
+  `1.5f`, `10u32`, `100L`, `1.5e3f64`.
+
+  **`u32` and `i64` are type names, not the numbers 32 and 64.** That is
+  the defect this exists for: the text scan these files used to go
+  through splits on any non-digit, so it reported `0` and `755` for
+  `0o755`, `1`,`0`,`0` for `1_000_000`, and `32`/`64` for `u32`/`u64`. A
+  Rust file yielded numbers that were never in it.
+
+  A dialect changes an answer, so the languages resolve to their own
+  names rather than to one key: `0755` is 493 in C, C++, Go and Java and
+  755 in Rust, Python 3, Kotlin and C#; `1_000` is one thousand in Rust
+  and the number 1 in C; `123n` is a BigInt in JavaScript alone.
+
+- **A `notation` on every finding** — `decimal`, `hex`, `binary`,
+  `octal`, `scientific`, `bigint` — on both the CLI report and the MCP
+  tool, under that one name on both.
+
+### Changed
+
+- **Behaviour change: `data.numbers` in `extract_numbers` is an array of
+  `{ value, notation }` rather than an array of bare numbers.** The value
+  is still a JSON number carrying the token this crate rendered, so
+  `1e+21` is still `1e+21`. Both servers moved together and the shared
+  corpus pins the new shape.
+
+- **Behaviour change: the CLI report's `numbers[]` entries carry
+  `notation`** alongside `value`, `line` and `column`.
+
+- **Behaviour change: a source file no longer reports `format:
+  "unknown"`.** It reports its language, and its numbers come from the
+  literal reader.
+
+- **Behaviour change: a binary file produces no report line.** A NUL byte
+  in the first 8 KiB — ripgrep's own test — means the file was never a
+  text candidate: it is not opened, not reported, and never affects the
+  exit code. It is counted on stderr (`16 binary files skipped`) and in
+  the scan tool's `data.binaryFiles`, so coverage is never overstated
+  silently.
+
+  It previously came back as a `skipped` report, which made `--strict`
+  exit 2 on any repository holding an image — every repository — and so
+  made the flag useless in CI. A file that *is* text and could not be
+  read keeps its named `skipped` diagnostic and keeps failing `--strict`;
+  that distinction is the point.
+
 ## [0.1.0] - 2026-08-11
 
 First release. The extension's extraction engine, ported and pinned

@@ -1,5 +1,15 @@
 import { describe, expect, test } from 'vitest';
+import type { ExtractionResult } from '../../types';
 import { extractFromJson } from './json';
+
+/**
+ * The values alone. Findings carry `{ value, notation }` since 0.2.0;
+ * these tests are about which numbers come out, and the notation has its
+ * own cases in the shared corpus.
+ */
+function values(result: ExtractionResult): readonly number[] {
+	return result.numbers.map((found) => found.value);
+}
 
 describe('JSON Number Extraction', () => {
 	describe('extractFromJson', () => {
@@ -8,9 +18,9 @@ describe('JSON Number Extraction', () => {
 			const result = extractFromJson(json, 'test.json');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(42)).toBe(true);
-			expect(result.numbers.includes(19.99)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(42)).toBe(true);
+			expect(values(result).includes(19.99)).toBe(true);
 		});
 
 		test('should extract numbers from JSON array', () => {
@@ -18,8 +28,8 @@ describe('JSON Number Extraction', () => {
 			const result = extractFromJson(json, 'test.json');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(5);
-			expect(result.numbers).toEqual([1, 2, 3.14, 4, 5.5]);
+			expect(values(result).length).toBe(5);
+			expect(values(result)).toEqual([1, 2, 3.14, 4, 5.5]);
 		});
 
 		test('should extract numbers from nested JSON objects', () => {
@@ -28,10 +38,10 @@ describe('JSON Number Extraction', () => {
 			const result = extractFromJson(json, 'test.json');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(3);
-			expect(result.numbers.includes(123)).toBe(true);
-			expect(result.numbers.includes(25)).toBe(true);
-			expect(result.numbers.includes(95.5)).toBe(true);
+			expect(values(result).length).toBe(3);
+			expect(values(result).includes(123)).toBe(true);
+			expect(values(result).includes(25)).toBe(true);
+			expect(values(result).includes(95.5)).toBe(true);
 		});
 
 		test('should extract numbers from nested arrays', () => {
@@ -39,12 +49,12 @@ describe('JSON Number Extraction', () => {
 			const result = extractFromJson(json, 'test.json');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(5);
-			expect(result.numbers.includes(1)).toBe(true);
-			expect(result.numbers.includes(2)).toBe(true);
-			expect(result.numbers.includes(3)).toBe(true);
-			expect(result.numbers.includes(4)).toBe(true);
-			expect(result.numbers.includes(5)).toBe(true);
+			expect(values(result).length).toBe(5);
+			expect(values(result).includes(1)).toBe(true);
+			expect(values(result).includes(2)).toBe(true);
+			expect(values(result).includes(3)).toBe(true);
+			expect(values(result).includes(4)).toBe(true);
+			expect(values(result).includes(5)).toBe(true);
 		});
 
 		test('should handle negative numbers', () => {
@@ -52,9 +62,9 @@ describe('JSON Number Extraction', () => {
 			const result = extractFromJson(json, 'test.json');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(-10)).toBe(true);
-			expect(result.numbers.includes(-5.5)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(-10)).toBe(true);
+			expect(values(result).includes(-5.5)).toBe(true);
 		});
 
 		test('should handle zero values', () => {
@@ -62,8 +72,8 @@ describe('JSON Number Extraction', () => {
 			const result = extractFromJson(json, 'test.json');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(3);
-			expect(result.numbers.includes(0)).toBe(true);
+			expect(values(result).length).toBe(3);
+			expect(values(result).includes(0)).toBe(true);
 		});
 
 		test('should ignore non-numeric values', () => {
@@ -71,9 +81,9 @@ describe('JSON Number Extraction', () => {
 			const result = extractFromJson(json, 'test.json');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(30)).toBe(true);
-			expect(result.numbers.includes(85.5)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(30)).toBe(true);
+			expect(values(result).includes(85.5)).toBe(true);
 		});
 
 		test('should handle empty JSON object', () => {
@@ -81,7 +91,7 @@ describe('JSON Number Extraction', () => {
 			const result = extractFromJson(json, 'test.json');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(0);
+			expect(values(result).length).toBe(0);
 		});
 
 		test('should handle empty JSON array', () => {
@@ -89,7 +99,7 @@ describe('JSON Number Extraction', () => {
 			const result = extractFromJson(json, 'test.json');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(0);
+			expect(values(result).length).toBe(0);
 		});
 
 		test('should handle invalid JSON', () => {
@@ -115,8 +125,8 @@ describe('JSON Number Extraction', () => {
 			const result = extractFromJson(json, 'test.json');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(1);
-			expect(result.numbers.includes(5)).toBe(true);
+			expect(values(result).length).toBe(1);
+			expect(values(result).includes(5)).toBe(true);
 		});
 
 		test('should handle large numbers', () => {
@@ -124,9 +134,9 @@ describe('JSON Number Extraction', () => {
 			const result = extractFromJson(json, 'test.json');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(1234567890)).toBe(true);
-			expect(result.numbers.includes(0.000001)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(1234567890)).toBe(true);
+			expect(values(result).includes(0.000001)).toBe(true);
 		});
 
 		test('should handle scientific notation', () => {
@@ -134,9 +144,9 @@ describe('JSON Number Extraction', () => {
 			const result = extractFromJson(json, 'test.json');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(12300)).toBe(true);
-			expect(result.numbers.includes(-0.0567)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(12300)).toBe(true);
+			expect(values(result).includes(-0.0567)).toBe(true);
 		});
 
 		test('should preserve number precision', () => {
@@ -144,9 +154,9 @@ describe('JSON Number Extraction', () => {
 			const result = extractFromJson(json, 'test.json');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(1);
+			expect(values(result).length).toBe(1);
 			// Use approximate equality for floating point numbers
-			expect(Math.abs((result.numbers[0] ?? 0) - Math.PI) < 1e-10).toBe(true);
+			expect(Math.abs((values(result)[0] ?? 0) - Math.PI) < 1e-10).toBe(true);
 		});
 	});
 });

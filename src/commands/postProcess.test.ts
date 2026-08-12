@@ -78,8 +78,17 @@ describe('detectFileType', () => {
 	});
 
 	it('treats an unknown extension as unknown', () => {
-		expect(detectFileType('a.rs')).toBe('unknown');
+		expect(detectFileType('a.md')).toBe('unknown');
 		expect(detectFileType('a.txt')).toBe('unknown');
+	});
+
+	// Changed deliberately in 0.2.0: a source file used to be `unknown`,
+	// which read `u32` as the number 32.
+	it('routes a source file to its language', () => {
+		expect(detectFileType('a.rs')).toBe('rust');
+		expect(detectFileType('a.py')).toBe('python');
+		expect(detectFileType('Widget.tsx')).toBe('typescript');
+		expect(detectFileType('deploy.sh')).toBe('shellscript');
 	});
 
 	it('treats a file with no extension as unknown', () => {

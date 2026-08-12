@@ -22,6 +22,11 @@ pub(crate) fn document(name: &str) -> &'static str {
         "numbers.env" => include_str!("../../fixtures/documents/numbers.env"),
         "numbers.csv" => include_str!("../../fixtures/documents/numbers.csv"),
         "numbers.txt" => include_str!("../../fixtures/documents/numbers.txt"),
+        "numbers.py" => include_str!("../../fixtures/documents/numbers.py"),
+        "numbers.rs" => include_str!("../../fixtures/documents/numbers.rs"),
+        "numbers.go" => include_str!("../../fixtures/documents/numbers.go"),
+        "numbers.java" => include_str!("../../fixtures/documents/numbers.java"),
+        "numbers.ts" => include_str!("../../fixtures/documents/numbers.ts"),
         other => panic!("the corpus has no document named {other}"),
     }
 }
@@ -110,7 +115,7 @@ mod document_tests {
     use serde::Deserialize;
 
     use super::document;
-    use crate::extract::{Options, extract};
+    use crate::extract::{Notation, Number, Options, extract};
 
     const CORPUS: &str = include_str!("../../fixtures/extraction.json");
 
@@ -125,8 +130,16 @@ mod document_tests {
         file: String,
         #[serde(rename = "fileType")]
         file_type: String,
-        expected: Vec<String>,
+        /// Each number as `{ value, notation }` — the extension's answer,
+        /// shape included, since 0.2.0 moved the value shape.
+        expected: Vec<Expected>,
         errors: Vec<String>,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct Expected {
+        value: String,
+        notation: Notation,
     }
 
     /// Every number, in the extension's order, printed the way the
@@ -147,9 +160,17 @@ mod document_tests {
                 );
                 continue;
             }
+            let expected: Vec<Number> = case
+                .expected
+                .into_iter()
+                .map(|pinned| Number {
+                    value: pinned.value,
+                    notation: pinned.notation,
+                })
+                .collect();
             assert_eq!(
                 extract(document(&case.file), &case.file_type, Options),
-                case.expected,
+                expected,
                 "{}",
                 case.name
             );
@@ -159,10 +180,36 @@ mod document_tests {
     #[test]
     fn the_corpus_covers_every_extractor() {
         let corpus: Corpus = serde_json::from_str(CORPUS).expect("the corpus is valid JSON");
-        for format in ["json", "yaml", "toml", "ini", "env", "csv", "unknown"] {
+        for format in [
+            "json", "yaml", "toml", "ini", "env", "csv", "unknown", "python", "rust", "go", "java",
+        ] {
             assert!(
                 corpus.documents.iter().any(|case| case.file_type == format),
                 "no corpus case reads {format}"
+            );
+        }
+    }
+
+    /// Every notation this tool can report has a document pinning it, so
+    /// the field cannot grow a value nothing checks.
+    #[test]
+    fn the_corpus_pins_every_notation() {
+        let corpus: Corpus = serde_json::from_str(CORPUS).expect("the corpus is valid JSON");
+        for notation in [
+            Notation::Decimal,
+            Notation::Hex,
+            Notation::Binary,
+            Notation::Octal,
+            Notation::Scientific,
+            Notation::BigInt,
+        ] {
+            assert!(
+                corpus
+                    .documents
+                    .iter()
+                    .flat_map(|case| &case.expected)
+                    .any(|pinned| pinned.notation == notation),
+                "no corpus case pins {notation:?}"
             );
         }
     }

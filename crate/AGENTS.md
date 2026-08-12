@@ -21,7 +21,7 @@ code matches a rate in a specification is an auditor, an actuary, a
 compliance reviewer — usually without a checkout and always without the
 editor open. Every decision below follows from that.
 
-**Status: released.** All seven extractors, both surfaces and
+**Status: released.** All eight extractors, both surfaces and
 the test layers below are green. Releases go out through
 `release-crate.yml`, which is dispatch-only and refuses a version that
 crates.io already carries, has no changelog entry, would ship a tarball
@@ -32,7 +32,7 @@ reproduces.
 
 ```
 crate/src/
-├── extract/     pure: the seven extractors, the shared numeric policy,
+├── extract/     pure: the eight extractors, the shared numeric policy,
 │                JS number rendering, positions. No filesystem.
 ├── walk.rs      ignore-aware tree walking
 ├── scan.rs      one file end to end — the only path either surface calls
@@ -66,6 +66,26 @@ crate/src/
   entire output is numbers as text. The corpus pins both notation
   boundaries in both directions; moving one is a behaviour change for
   every consumer.
+- **Every finding carries a `notation`**, on both surfaces, under that
+  one name. `format` was taken — the report already has one, meaning the
+  document's format — and `type` says nothing. The field exists because
+  this was the only crate in the family whose findings carried no kind,
+  and a reader cannot tell `0x1A` from `26` without one. **It follows
+  coercion**: a typed format's parser resolved the token before the
+  policy saw it, so JSON/YAML/TOML report `decimal`; INI, `.env` and CSV
+  parse their own text and keep what it said; `source.rs` and the text
+  scan read literals directly and keep everything.
+- **Source languages do not go to the text scan.** Twelve of them have
+  a literal reader in `source.rs`, because the scan read `u32` as the
+  number 32 and split `0o755` into `0` and `755`. A dialect changes an
+  answer — `0755` is 493 in Go and 755 in Rust — so the languages
+  resolve to their own names, not to one `source` key.
+- **A binary file is not a report.** A NUL byte in the first 8 KiB
+  (ripgrep's test) and the file produces no report line and no effect on
+  the exit code; it is counted on stderr and in the scan tool's
+  `binaryFiles`. A file that *is* text and could not be read keeps its
+  `skipped` diagnostic and keeps failing `--strict`. Collapsing the two
+  made `--strict` exit 2 on every repository holding a PNG.
 - **`value` is a string in the report, and a raw token over MCP.**
   Re-encoding through a JSON number hands the reader whatever their
   parser prints. The MCP tool emits `RawValue` tokens this crate

@@ -1,5 +1,15 @@
 import { describe, expect, test } from 'vitest';
+import type { ExtractionResult } from '../../types';
 import { extractFromIni } from './ini';
+
+/**
+ * The values alone. Findings carry `{ value, notation }` since 0.2.0;
+ * these tests are about which numbers come out, and the notation has its
+ * own cases in the shared corpus.
+ */
+function values(result: ExtractionResult): readonly number[] {
+	return result.numbers.map((found) => found.value);
+}
 
 describe('INI Number Extraction', () => {
 	describe('extractFromIni', () => {
@@ -8,9 +18,9 @@ describe('INI Number Extraction', () => {
 			const result = extractFromIni(ini, 'test.ini');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(42)).toBe(true);
-			expect(result.numbers.includes(19.99)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(42)).toBe(true);
+			expect(values(result).includes(19.99)).toBe(true);
 		});
 
 		test('should extract numbers from multiple sections', () => {
@@ -19,10 +29,10 @@ describe('INI Number Extraction', () => {
 			const result = extractFromIni(ini, 'test.ini');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(3);
-			expect(result.numbers.includes(8080)).toBe(true);
-			expect(result.numbers.includes(30)).toBe(true);
-			expect(result.numbers.includes(5)).toBe(true);
+			expect(values(result).length).toBe(3);
+			expect(values(result).includes(8080)).toBe(true);
+			expect(values(result).includes(30)).toBe(true);
+			expect(values(result).includes(5)).toBe(true);
 		});
 
 		test('should handle negative numbers', () => {
@@ -30,9 +40,9 @@ describe('INI Number Extraction', () => {
 			const result = extractFromIni(ini, 'test.ini');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(-10)).toBe(true);
-			expect(result.numbers.includes(-5.5)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(-10)).toBe(true);
+			expect(values(result).includes(-5.5)).toBe(true);
 		});
 
 		test('should handle zero values', () => {
@@ -40,8 +50,8 @@ describe('INI Number Extraction', () => {
 			const result = extractFromIni(ini, 'test.ini');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(3);
-			expect(result.numbers.filter((n) => n === 0).length).toBe(3);
+			expect(values(result).length).toBe(3);
+			expect(values(result).filter((n) => n === 0).length).toBe(3);
 		});
 
 		test('should ignore non-numeric values', () => {
@@ -50,9 +60,9 @@ describe('INI Number Extraction', () => {
 			const result = extractFromIni(ini, 'test.ini');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(30)).toBe(true);
-			expect(result.numbers.includes(85.5)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(30)).toBe(true);
+			expect(values(result).includes(85.5)).toBe(true);
 		});
 
 		test('should handle INI without sections', () => {
@@ -60,9 +70,9 @@ describe('INI Number Extraction', () => {
 			const result = extractFromIni(ini, 'test.ini');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(42)).toBe(true);
-			expect(result.numbers.includes(19.99)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(42)).toBe(true);
+			expect(values(result).includes(19.99)).toBe(true);
 		});
 
 		test('should handle empty INI', () => {
@@ -70,7 +80,7 @@ describe('INI Number Extraction', () => {
 			const result = extractFromIni(ini, 'test.ini');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(0);
+			expect(values(result).length).toBe(0);
 		});
 
 		test('should handle INI with comments', () => {
@@ -78,9 +88,9 @@ describe('INI Number Extraction', () => {
 			const result = extractFromIni(ini, 'test.ini');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(8080)).toBe(true);
-			expect(result.numbers.includes(30)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(8080)).toBe(true);
+			expect(values(result).includes(30)).toBe(true);
 		});
 
 		test('should handle large numbers', () => {
@@ -88,9 +98,9 @@ describe('INI Number Extraction', () => {
 			const result = extractFromIni(ini, 'test.ini');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(1234567890)).toBe(true);
-			expect(result.numbers.includes(0.000001)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(1234567890)).toBe(true);
+			expect(values(result).includes(0.000001)).toBe(true);
 		});
 
 		test('should handle scientific notation', () => {
@@ -98,9 +108,9 @@ describe('INI Number Extraction', () => {
 			const result = extractFromIni(ini, 'test.ini');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(12300)).toBe(true);
-			expect(result.numbers.includes(-0.0567)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(12300)).toBe(true);
+			expect(values(result).includes(-0.0567)).toBe(true);
 		});
 
 		test('should handle quoted values', () => {
@@ -108,10 +118,10 @@ describe('INI Number Extraction', () => {
 			const result = extractFromIni(ini, 'test.ini');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(3);
-			expect(result.numbers.includes(8080)).toBe(true);
-			expect(result.numbers.includes(30)).toBe(true);
-			expect(result.numbers.includes(3)).toBe(true);
+			expect(values(result).length).toBe(3);
+			expect(values(result).includes(8080)).toBe(true);
+			expect(values(result).includes(30)).toBe(true);
+			expect(values(result).includes(3)).toBe(true);
 		});
 
 		test('should handle spaces around equals', () => {
@@ -119,9 +129,9 @@ describe('INI Number Extraction', () => {
 			const result = extractFromIni(ini, 'test.ini');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers.includes(42)).toBe(true);
-			expect(result.numbers.includes(19.99)).toBe(true);
+			expect(values(result).length).toBe(2);
+			expect(values(result).includes(42)).toBe(true);
+			expect(values(result).includes(19.99)).toBe(true);
 		});
 	});
 });

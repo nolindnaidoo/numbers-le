@@ -1,7 +1,17 @@
 import { describe, expect, test } from 'vitest';
+import type { ExtractionResult } from '../../types';
 import { extractFromCsv } from './csv';
 import { extractFromEnv } from './env';
 import { extractFromIni } from './ini';
+
+/**
+ * The values alone. Findings carry `{ value, notation }` since 0.2.0;
+ * these tests are about which numbers come out, and the notation has its
+ * own cases in the shared corpus.
+ */
+function values(result: ExtractionResult): readonly number[] {
+	return result.numbers.map((found) => found.value);
+}
 
 describe('CSV/ENV/INI Security & Edge Cases', () => {
 	describe('CSV Injection Prevention', () => {
@@ -11,7 +21,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should not execute formulas, just try to parse as numbers
-			expect(result.numbers.length).toBe(0);
+			expect(values(result).length).toBe(0);
 		});
 
 		test('should handle CSV with command injection attempts', () => {
@@ -20,7 +30,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should safely ignore malicious strings
-			expect(result.numbers.length).toBe(0);
+			expect(values(result).length).toBe(0);
 		});
 
 		test('should handle CSV with SQL injection attempts', () => {
@@ -29,7 +39,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// No cell is numeric in full; nothing is extracted.
-			expect(result.numbers).toEqual([]);
+			expect(values(result)).toEqual([]);
 		});
 
 		test('should handle CSV with XSS attempts', () => {
@@ -38,7 +48,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(42);
+			expect(values(result)).toContain(42);
 		});
 
 		test('should handle CSV with path traversal attempts', () => {
@@ -47,7 +57,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(42);
+			expect(values(result)).toContain(42);
 		});
 
 		test('should handle CSV with null bytes', () => {
@@ -56,7 +66,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should handle null bytes gracefully
-			expect(result.numbers.length).toBeGreaterThan(0);
+			expect(values(result).length).toBeGreaterThan(0);
 		});
 
 		test('should handle CSV with Unicode control characters', () => {
@@ -65,7 +75,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract numbers despite control characters
-			expect(result.numbers).toContain(4);
+			expect(values(result)).toContain(4);
 		});
 
 		test('should handle CSV with very long lines', () => {
@@ -75,7 +85,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(42);
+			expect(values(result)).toContain(42);
 		});
 
 		test('should handle CSV with deeply nested quotes', () => {
@@ -84,7 +94,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// The cell value is literally "1" (with quotes) — not a number.
-			expect(result.numbers).toEqual([]);
+			expect(values(result)).toEqual([]);
 		});
 
 		test('should handle CSV with mixed encodings', () => {
@@ -93,8 +103,8 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract numbers regardless of Unicode
-			expect(result.numbers).toContain(1);
-			expect(result.numbers).toContain(5);
+			expect(values(result)).toContain(1);
+			expect(values(result)).toContain(5);
 		});
 	});
 
@@ -105,7 +115,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(42);
+			expect(values(result)).toContain(42);
 		});
 
 		test('should handle ENV with shell expansion attempts', () => {
@@ -114,7 +124,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(8080);
+			expect(values(result)).toContain(8080);
 		});
 
 		test('should handle ENV with backtick expansion', () => {
@@ -123,7 +133,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(42);
+			expect(values(result)).toContain(42);
 		});
 
 		test('should handle ENV with variable expansion', () => {
@@ -133,7 +143,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(8080);
+			expect(values(result)).toContain(8080);
 		});
 
 		test('should handle ENV with newline injection', () => {
@@ -142,7 +152,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(8080);
+			expect(values(result)).toContain(8080);
 		});
 
 		test('should handle ENV with null bytes', () => {
@@ -151,7 +161,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should handle null bytes gracefully
-			expect(result.numbers).toContain(8080);
+			expect(values(result)).toContain(8080);
 		});
 
 		test('should handle ENV with very long values', () => {
@@ -161,7 +171,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(8080);
+			expect(values(result)).toContain(8080);
 		});
 
 		test('should handle ENV with special characters in keys', () => {
@@ -171,7 +181,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract valid numbers
-			expect(result.numbers.length).toBeGreaterThan(0);
+			expect(values(result).length).toBeGreaterThan(0);
 		});
 
 		test('should handle ENV with export statements', () => {
@@ -180,7 +190,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// dotenv parser should handle export
-			expect(result.numbers.length).toBeGreaterThan(0);
+			expect(values(result).length).toBeGreaterThan(0);
 		});
 
 		test('should handle ENV with multiline values', () => {
@@ -189,7 +199,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(8080);
+			expect(values(result)).toContain(8080);
 		});
 	});
 
@@ -200,7 +210,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(42);
+			expect(values(result)).toContain(42);
 		});
 
 		test('should handle INI with SQL injection attempts', () => {
@@ -209,7 +219,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(42);
+			expect(values(result)).toContain(42);
 		});
 
 		test('should handle INI with path traversal attempts', () => {
@@ -218,7 +228,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(42);
+			expect(values(result)).toContain(42);
 		});
 
 		test('should handle INI with null bytes', () => {
@@ -227,7 +237,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should handle null bytes gracefully
-			expect(result.numbers).toContain(42);
+			expect(values(result)).toContain(42);
 		});
 
 		test('should handle INI with very long section names', () => {
@@ -237,7 +247,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(42);
+			expect(values(result)).toContain(42);
 		});
 
 		test('should handle INI with very long values', () => {
@@ -247,7 +257,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract the valid number
-			expect(result.numbers).toContain(42);
+			expect(values(result)).toContain(42);
 		});
 
 		test('should handle INI with duplicate sections', () => {
@@ -256,7 +266,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract numbers from both sections
-			expect(result.numbers.length).toBeGreaterThan(0);
+			expect(values(result).length).toBeGreaterThan(0);
 		});
 
 		test('should handle INI with duplicate keys', () => {
@@ -265,7 +275,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract numbers (behavior depends on ini parser)
-			expect(result.numbers.length).toBeGreaterThan(0);
+			expect(values(result).length).toBeGreaterThan(0);
 		});
 
 		test('should handle INI with special characters in section names', () => {
@@ -275,8 +285,8 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract valid numbers
-			expect(result.numbers).toContain(42);
-			expect(result.numbers).toContain(43);
+			expect(values(result)).toContain(42);
+			expect(values(result)).toContain(43);
 		});
 
 		test('should handle INI with nested sections (if supported)', () => {
@@ -285,7 +295,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract valid numbers
-			expect(result.numbers.length).toBeGreaterThan(0);
+			expect(values(result).length).toBeGreaterThan(0);
 		});
 	});
 
@@ -296,9 +306,9 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should only extract finite numbers
-			expect(result.numbers).toContain(42);
-			expect(result.numbers).not.toContain(Infinity);
-			expect(result.numbers).not.toContain(-Infinity);
+			expect(values(result)).toContain(42);
+			expect(values(result)).not.toContain(Infinity);
+			expect(values(result)).not.toContain(-Infinity);
 		});
 
 		test('should reject Infinity in ENV', () => {
@@ -307,9 +317,9 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should only extract finite numbers
-			expect(result.numbers).toContain(42);
-			expect(result.numbers).not.toContain(Infinity);
-			expect(result.numbers).not.toContain(-Infinity);
+			expect(values(result)).toContain(42);
+			expect(values(result)).not.toContain(Infinity);
+			expect(values(result)).not.toContain(-Infinity);
 		});
 
 		test('should reject Infinity in INI', () => {
@@ -318,9 +328,9 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should only extract finite numbers
-			expect(result.numbers).toContain(42);
-			expect(result.numbers).not.toContain(Infinity);
-			expect(result.numbers).not.toContain(-Infinity);
+			expect(values(result)).toContain(42);
+			expect(values(result)).not.toContain(Infinity);
+			expect(values(result)).not.toContain(-Infinity);
 		});
 
 		test('should reject NaN in CSV', () => {
@@ -329,8 +339,8 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should only extract valid numbers
-			expect(result.numbers).toContain(42);
-			expect(result.numbers.every((n) => !Number.isNaN(n))).toBe(true);
+			expect(values(result)).toContain(42);
+			expect(values(result).every((n) => !Number.isNaN(n))).toBe(true);
 		});
 
 		test('should reject NaN in ENV', () => {
@@ -339,8 +349,8 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should only extract valid numbers
-			expect(result.numbers).toContain(42);
-			expect(result.numbers.every((n) => !Number.isNaN(n))).toBe(true);
+			expect(values(result)).toContain(42);
+			expect(values(result).every((n) => !Number.isNaN(n))).toBe(true);
 		});
 
 		test('should reject NaN in INI', () => {
@@ -349,8 +359,8 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 
 			expect(result.success).toBe(true);
 			// Should only extract valid numbers
-			expect(result.numbers).toContain(42);
-			expect(result.numbers.every((n) => !Number.isNaN(n))).toBe(true);
+			expect(values(result)).toContain(42);
+			expect(values(result).every((n) => !Number.isNaN(n))).toBe(true);
 		});
 	});
 
@@ -362,7 +372,7 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 			// Should either succeed or fail gracefully
 			expect(result.success === true || result.success === false).toBe(true);
 			if (result.success) {
-				expect(result.numbers.length).toBeGreaterThan(0);
+				expect(values(result).length).toBeGreaterThan(0);
 			} else {
 				expect(result.errors.length).toBeGreaterThan(0);
 			}

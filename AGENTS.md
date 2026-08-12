@@ -6,7 +6,7 @@ This repo hosts **two products**: the extension at the root (this document's sco
 
 ## What this is
 
-A VS Code extension that extracts numeric values from the active document (JSON, YAML, CSV, TOML, INI, .env) into a results editor, with dedupe/sort post-processing and per-column CSV fan-out. No network access, no filesystem writes.
+A VS Code extension that extracts numeric values from the active document into a results editor, with dedupe/sort post-processing and per-column CSV fan-out. Six parsed formats (JSON, YAML, CSV, TOML, INI, .env), a numeric-literal reader for twelve source languages, and a grammar-less text scan for everything else. No network access, no filesystem writes.
 
 ## Architecture
 
@@ -14,13 +14,17 @@ A VS Code extension that extracts numeric values from the active document (JSON,
 extension.ts            activate(): create telemetry/notifier/statusBar -> registerCommands()
 commands/               one file per command; deps injected as a frozen bag
                         {notifier, statusBar, telemetry}
-extraction/extract.ts   dispatcher: FileType (from filename extension) -> extractor,
-                        plus the unknown-type regex fallback
+extraction/extract.ts   dispatcher: FileType (from filename extension) -> extractor;
+                        source languages -> formats/source.ts, everything else
+                        unrecognised -> the regex fallback
 extraction/heuristics.ts  THE single numeric policy: collectNumbers walker,
-                        parseStrictNumber, scanTextForNumbers
+                        parseStrictNumber, plainNotation, scanTextForNumbers
 extraction/formats/*.ts   one thin extractor per format: parse -> collectNumbers.
                         csv.ts owns ALL CSV parsing (csv-parse, sync + streaming
-                        + parseCsvLine) — nothing else splits CSV
+                        + parseCsvLine) — nothing else splits CSV.
+                        source.ts is the numeric-literal reader: hex/binary/octal,
+                        digit separators, suffixes, and the boundary rule that
+                        keeps `u32` a type name rather than the number 32
 ui/                     notifier (window messages, gated by notificationsLevel:
                         all -> everything, important -> warn+error, silent -> error only;
                         every message passes sanitizeErrorMessage),
@@ -319,8 +323,10 @@ Order matters beyond this repo: npm must be published *before* any Zed registry 
 
 ## Known limitations (documented, not bugs)
 
-- Results are values only — no source positions. Post-processing (dedupe/sort) operates on the flat number list, not on the original document.
+- Results are values only — no source positions. Post-processing (dedupe/sort) operates on the flat number list, not on the original document; findings carry `{ value, notation }` and the commands project to the value at that seam.
 - File type comes from the filename extension; untitled documents prompt for a type.
-- The unknown-type fallback is a grammar-less text scan: `v1.2.3` reads as `1.2` and `0.3`.
+- The unknown-type fallback is a grammar-less text scan: `v1.2.3` reads as `1.2` and `0.3`. It is now reserved for prose — a source language goes to `formats/source.ts`, which has a grammar.
+- `formats/source.ts` reads comments and strings as well as code. A number in a docstring is still a number in the file; skipping it would need a per-language lexer.
+- `notation` follows coercion: JSON/YAML/TOML report `decimal` because their parsers resolved the token first, INI/.env/CSV keep what their text said, and source/fallback keep everything.
 - `@iarna/toml` rejects mixed int/float inline arrays (`[1, 2.5, 3]`) per TOML 0.5 — the file reports a parse error rather than extracting partially.
 - CSV streaming mode still buffers the document text it is given (the streaming is per-record parsing, not file I/O streaming).

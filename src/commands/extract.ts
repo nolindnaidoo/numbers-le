@@ -93,9 +93,11 @@ async function handleNormalExtraction(
 	const sortMode = config.sortMode;
 
 	if (token.isCancellationRequested) return;
-	const dedupedNumbers = shouldDedupe
-		? dedupeNumber(result.numbers)
-		: result.numbers;
+	// The commands work on the values alone: the notation belongs to the
+	// report surfaces (the CLI and both MCP servers), and the editor
+	// output is one number per line.
+	const values = result.numbers.map((found) => found.value);
+	const dedupedNumbers = shouldDedupe ? dedupeNumber(values) : values;
 	const finalNumbers = sortEnabled
 		? sortNumber(dedupedNumbers, sortMode)
 		: dedupedNumbers;

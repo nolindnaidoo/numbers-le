@@ -192,9 +192,9 @@ function extractColumnNumbers(
 		if (columnIndex < cells.length) {
 			const cellValue = cells[columnIndex];
 			if (cellValue) {
-				const num = parseStrictNumber(cellValue);
-				if (num !== undefined) {
-					numbers.push(num);
+				const found = parseStrictNumber(cellValue);
+				if (found !== undefined) {
+					numbers.push(found.value);
 				}
 			}
 		}
@@ -233,7 +233,7 @@ export async function handleCsvStreamingExtraction(
 			return true;
 		}
 
-		let numbers = result.numbers;
+		let numbers: readonly number[] = result.numbers.map((found) => found.value);
 		if (config.dedupeEnabled) {
 			numbers = dedupeNumber(numbers);
 		}

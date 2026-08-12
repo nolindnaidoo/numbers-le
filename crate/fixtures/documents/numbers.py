@@ -1,0 +1,9 @@
+PORT = 8080
+RATE = 0.0825
+MASK = 0xFF
+FLAGS = 0b1010
+MODE = 0o755
+BUDGET = 1_000_000
+TINY = 1e-7
+DTYPE = "float32"
+COUNT = np.int64(3)

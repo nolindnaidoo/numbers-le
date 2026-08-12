@@ -62,7 +62,15 @@ interface DocumentCase {
 	readonly name: string;
 	readonly file: string;
 	readonly fileType: string;
-	readonly expected: readonly string[];
+	/**
+	 * Each number as `{ value, notation }` — the value as text, the
+	 * notation as the crate's serde name. The shape moved in 0.2.0 with
+	 * the field itself.
+	 */
+	readonly expected: ReadonlyArray<{
+		readonly value: string;
+		readonly notation: string;
+	}>;
 	readonly errors: readonly string[];
 }
 
@@ -93,7 +101,10 @@ function checkDocuments(): void {
 			testCase.fileType as any,
 			testCase.file,
 		);
-		const actual = [...result.numbers].map(String);
+		const actual = result.numbers.map((found) => ({
+			value: String(found.value),
+			notation: found.notation,
+		}));
 		if (!deepEqual(actual, testCase.expected)) {
 			fail(
 				`document "${testCase.name}":\n  expected: ${JSON.stringify(testCase.expected)}\n  got:      ${JSON.stringify(actual)}`,

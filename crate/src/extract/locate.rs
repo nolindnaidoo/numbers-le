@@ -12,9 +12,11 @@
 //! scanner cannot see — a hex literal, an underscored literal — has no
 //! offset to give, and that number is reported without a position.
 //!
-//! JSON and the plain-text fallback skip all of this: their extractors
-//! already know the offset, because one walks an AST with ranges and the
-//! other *is* the scanner.
+//! JSON, the source languages and the plain-text fallback skip all of
+//! this: their extractors already know the offset, because one walks an
+//! AST with ranges and the other two *are* scanners. That is why a hex
+//! literal in a `.rs` file is placed and one in a `.toml` file is not —
+//! the TOML parser resolved it to a number with no span attached.
 //!
 //! **A run is not always the value's source.** The scan sees the whole
 //! document, keys and comments included, so a value can match a run that
@@ -25,26 +27,30 @@
 //! position-preserving parser per format, which is the same purchase the
 //! `unlocated` count exists to justify.
 
+use super::policy::Literal;
 use super::position::PositionIndex;
-use super::{Found, fallback, format, json, render};
+use super::{Found, fallback, format, json, render, source};
 
 /// Pair each number with where it was found, in order.
-pub(crate) fn locate(text: &str, format_key: &str, values: &[f64]) -> Vec<Found> {
+pub(crate) fn locate(text: &str, format_key: &str, values: &[Literal]) -> Vec<Found> {
     let index = PositionIndex::new(text);
+    let key = format::canonical(format_key);
 
-    // The two formats that already know. Their extractors are re-run
-    // rather than threaded through, because a second scan of one
-    // document is cheaper than a signature every format has to carry.
-    let spans: Option<Vec<(f64, usize)>> = match format::canonical(format_key) {
+    // The formats that already know. Their extractors are re-run rather
+    // than threaded through, because a second scan of one document is
+    // cheaper than a signature every format has to carry.
+    let spans: Option<Vec<(Literal, usize)>> = match key {
         "json" => Some(json::extract_spanned(text)),
         "unknown" => Some(fallback::spanned(text)),
+        _ if format::is_source(key) => Some(source::spanned(text, key)),
         _ => None,
     };
     if let Some(spans) = spans {
         return spans
             .into_iter()
-            .map(|(value, offset)| Found {
-                value: render::js_number(value),
+            .map(|(literal, offset)| Found {
+                value: render::js_number(literal.value),
+                notation: literal.notation,
                 position: Some(index.at(offset)),
             })
             .collect();
@@ -55,7 +61,7 @@ pub(crate) fn locate(text: &str, format_key: &str, values: &[f64]) -> Vec<Found>
 
     values
         .iter()
-        .map(|&value| {
+        .map(|literal| {
             // Forward-only. A run earlier than the cursor belongs to a
             // number already reported above this one, and answering with
             // it would put the report out of order.
@@ -65,13 +71,14 @@ pub(crate) fn locate(text: &str, format_key: &str, values: &[f64]) -> Vec<Found>
             // double or they are a different number.
             let found = runs[cursor..]
                 .iter()
-                .position(|&(candidate, _)| candidate.to_bits() == value.to_bits());
+                .position(|(candidate, _)| candidate.value.to_bits() == literal.value.to_bits());
             let position = found.map(|offset| {
                 cursor += offset + 1;
                 index.at(runs[cursor - 1].1)
             });
             Found {
-                value: render::js_number(value),
+                value: render::js_number(literal.value),
+                notation: literal.notation,
                 position,
             }
         })
@@ -83,7 +90,8 @@ mod tests {
     use super::*;
 
     fn at(text: &str, format: &str, values: &[f64]) -> Vec<Option<(usize, usize)>> {
-        locate(text, format, values)
+        let literals: Vec<Literal> = values.iter().copied().map(Literal::decimal).collect();
+        locate(text, format, &literals)
             .into_iter()
             .map(|found| found.position.map(|p| (p.line, p.column)))
             .collect()
@@ -141,6 +149,15 @@ mod tests {
     #[test]
     fn the_fallback_places_its_own_runs() {
         assert_eq!(at("rate 0.0825 here", "unknown", &[0.0825]), [Some((1, 6))]);
+    }
+
+    /// A source language is a scanner too, which is why a hex literal is
+    /// placed in a `.rs` file and unplaced in a `.toml` one.
+    #[test]
+    fn a_source_language_places_a_literal_the_text_scanner_cannot_see() {
+        let found = locate("let mask = 0xFF;\n", "rust", &[Literal::decimal(255.0)]);
+        assert_eq!(found[0].value, "255");
+        assert_eq!(found[0].position.map(|p| (p.line, p.column)), Some((1, 12)));
     }
 
     /// The limitation, asserted rather than left to be discovered. A

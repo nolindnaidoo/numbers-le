@@ -1,14 +1,14 @@
 import { parse } from 'csv-parse';
 import { parse as parseSync } from 'csv-parse/sync';
-import type { ExtractionResult, ParseError } from '../../types';
+import type { ExtractionResult, NumberFinding, ParseError } from '../../types';
 import { errorMessage } from '../../utils/errors';
 import { parseStrictNumber } from '../heuristics';
 
 /** Every strictly-numeric cell in one parsed record. */
-function numbersInRecord(record: unknown): readonly number[] {
+function numbersInRecord(record: unknown): readonly NumberFinding[] {
 	if (!Array.isArray(record)) return [];
 
-	const found: number[] = [];
+	const found: NumberFinding[] = [];
 	for (const value of record) {
 		if (typeof value !== 'string') continue;
 		const num = parseStrictNumber(value);
@@ -39,7 +39,7 @@ export function extractFromCsv(
 ): ExtractionResult {
 	try {
 		const records = parseSync(text, PARSE_OPTIONS) as string[][];
-		const numbers: number[] = [];
+		const numbers: NumberFinding[] = [];
 
 		for (const record of records) {
 			for (const value of record) {
@@ -73,7 +73,7 @@ export function extractFromCsvAsync(
 	filepath: string,
 ): Promise<ExtractionResult> {
 	return new Promise((resolve) => {
-		const numbers: number[] = [];
+		const numbers: NumberFinding[] = [];
 		const errors: ParseError[] = [];
 
 		const parser = parse(PARSE_OPTIONS);

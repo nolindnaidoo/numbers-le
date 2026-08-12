@@ -3,13 +3,13 @@
 //! **Untyped**, like INI and CSV: every value is text, so `PORT=8080`
 //! yields the number 8080.
 
-use super::policy::strict_number;
+use super::policy::{Literal, strict_number};
 
-pub(crate) fn extract(text: &str) -> Vec<f64> {
+pub(crate) fn extract(text: &str) -> Vec<Literal> {
     text.lines().filter_map(value_of).collect()
 }
 
-fn value_of(raw_line: &str) -> Option<f64> {
+fn value_of(raw_line: &str) -> Option<Literal> {
     let line = raw_line.trim();
     if line.is_empty() || line.starts_with('#') {
         return None;
@@ -43,43 +43,50 @@ fn unquote(value: &str) -> &str {
 mod tests {
     use super::*;
 
+    fn values(text: &str) -> Vec<f64> {
+        extract(text)
+            .into_iter()
+            .map(|literal| literal.value)
+            .collect()
+    }
+
     #[test]
     fn a_numeric_value_is_a_number() {
-        assert_eq!(extract("PORT=8080"), [8080.0]);
+        assert_eq!(values("PORT=8080"), [8080.0]);
     }
 
     #[test]
     fn signs_and_leading_points_are_read() {
-        assert_eq!(extract("A=+7\nB=.5\nC=-1.5e3"), [7.0, 0.5, -1500.0]);
+        assert_eq!(values("A=+7\nB=.5\nC=-1.5e3"), [7.0, 0.5, -1500.0]);
     }
 
     #[test]
     fn keys_are_never_read_as_numbers() {
-        assert!(extract("PORT8080=hello").is_empty());
+        assert!(values("PORT8080=hello").is_empty());
     }
 
     #[test]
     fn comments_and_blank_lines_are_skipped() {
-        assert_eq!(extract("# n = 1\n\nA=2\n   \nB=3"), [2.0, 3.0]);
+        assert_eq!(values("# n = 1\n\nA=2\n   \nB=3"), [2.0, 3.0]);
     }
 
     #[test]
     fn an_export_prefix_is_removed() {
-        assert_eq!(extract("export PORT=8080"), [8080.0]);
+        assert_eq!(values("export PORT=8080"), [8080.0]);
     }
 
     #[test]
     fn quotes_are_removed_before_the_strict_test() {
-        assert_eq!(extract("A=\"42\"\nB='7'"), [42.0, 7.0]);
+        assert_eq!(values("A=\"42\"\nB='7'"), [42.0, 7.0]);
     }
 
     #[test]
     fn an_inline_comment_ends_an_unquoted_value() {
-        assert_eq!(extract("A=42 # the port"), [42.0]);
+        assert_eq!(values("A=42 # the port"), [42.0]);
     }
 
     #[test]
     fn non_numeric_values_are_skipped() {
-        assert!(extract("A=hello\nB=0x1A\nC=1_000\nD=").is_empty());
+        assert!(values("A=hello\nB=0x1A\nC=1_000\nD=").is_empty());
     }
 }

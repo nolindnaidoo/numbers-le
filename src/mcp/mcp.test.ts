@@ -123,18 +123,25 @@ describe('extract_numbers', () => {
 		if (!tool) throw new Error('no tool');
 		return (await tool.handler(args)) as {
 			ok: boolean;
-			data: { numbers: number[]; fileType: string };
+			data: {
+				numbers: { value: number; notation: string }[];
+				fileType: string;
+			};
 			meta: { count: number; truncated: boolean };
 		};
 	};
+
+	const values = (numbers: { value: number }[]) =>
+		numbers.map((found) => found.value);
 
 	it('parses a known format', async () => {
 		const result = await call({
 			content: '{"port": 8080, "ratio": 1.5}',
 			format: 'json',
 		});
-		expect(result.data.numbers).toContain(8080);
-		expect(result.data.numbers).toContain(1.5);
+		expect(values(result.data.numbers)).toContain(8080);
+		expect(values(result.data.numbers)).toContain(1.5);
+		expect(result.data.numbers[0]?.notation).toBe('decimal');
 		expect(result.ok).toBe(true);
 	});
 
@@ -142,8 +149,8 @@ describe('extract_numbers', () => {
 		// The behaviour that makes this server different: no format still works.
 		const result = await call({ content: 'retry after 30 seconds, up to 5' });
 		expect(result.data.fileType).toBe('unknown');
-		expect(result.data.numbers).toContain(30);
-		expect(result.data.numbers).toContain(5);
+		expect(values(result.data.numbers)).toContain(30);
+		expect(values(result.data.numbers)).toContain(5);
 	});
 
 	it('collapses repeats only when asked', async () => {

@@ -76,18 +76,71 @@ pub(crate) struct ScanOptions {
     pub(crate) format: Option<&'static str>,
 }
 
-pub(crate) fn scan_file(path: &PathBuf, options: ScanOptions) -> FileReport {
+/// What reading one file produced.
+///
+/// **A binary file is not a report.** It was never a text candidate —
+/// every repository holds a PNG — and reporting it as a file that could
+/// not be read made `--strict` exit 2 on any tree containing an image,
+/// which made `--strict` unusable. It is counted instead, so the reader
+/// still knows coverage was narrower than the tree.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum Scanned {
+    Read(Box<FileReport>),
+    Binary,
+}
+
+impl Scanned {
+    pub(crate) fn into_report(self) -> Option<FileReport> {
+        match self {
+            Self::Read(report) => Some(*report),
+            Self::Binary => None,
+        }
+    }
+}
+
+/// Split what a walk produced into the reports and the count of files
+/// that were never text. Both surfaces come through here so neither can
+/// grow its own idea of what a binary file is.
+pub(crate) fn partition(scanned: Vec<Scanned>) -> (Vec<FileReport>, usize) {
+    let binary = scanned
+        .iter()
+        .filter(|one| **one == Scanned::Binary)
+        .count();
+    let reports = scanned
+        .into_iter()
+        .filter_map(Scanned::into_report)
+        .collect();
+    (reports, binary)
+}
+
+/// ripgrep's heuristic, and deliberately the same one: a NUL byte in the
+/// first 8 KiB means binary. "What this tool opens" and "what ripgrep
+/// opens" being the same answer is already the rule `walk.rs` follows.
+const BINARY_SNIFF_BYTES: usize = 8192;
+
+fn is_binary(bytes: &[u8]) -> bool {
+    bytes
+        .iter()
+        .take(BINARY_SNIFF_BYTES)
+        .any(|byte| *byte == b'\0')
+}
+
+pub(crate) fn scan_file(path: &PathBuf, options: ScanOptions) -> Scanned {
     let file = path.to_string_lossy().into_owned();
     let format = options.format.unwrap_or_else(|| format_of(path));
 
     match std::fs::read(path) {
-        Ok(bytes) => match String::from_utf8(bytes) {
+        // Never a text candidate, so never a report. Counted, never
+        // silent.
+        Ok(bytes) if is_binary(&bytes) => Scanned::Binary,
+        Ok(bytes) => Scanned::Read(Box::new(match String::from_utf8(bytes) {
             Ok(content) => scan_content(without_bom(&content), file, format, options),
-            // Named rather than dropped. A file that vanishes from the
-            // report is a file the reader believes was covered.
+            // Named rather than dropped. A file that looked like text and
+            // was not is a file the reader would otherwise believe was
+            // covered.
             Err(_) => skipped(file, format, "not UTF-8 text"),
-        },
-        Err(error) => skipped(file, format, &error.to_string()),
+        })),
+        Err(error) => Scanned::Read(Box::new(skipped(file, format, &error.to_string()))),
     }
 }
 
@@ -174,6 +227,14 @@ mod tests {
         ScanOptions::default()
     }
 
+    /// The report for a file that was read at all. A binary file has
+    /// none, and every test that wants one says so by calling this.
+    fn read(path: &PathBuf, options: ScanOptions) -> FileReport {
+        scan_file(path, options)
+            .into_report()
+            .expect("the file was a text candidate")
+    }
+
     fn values(report: &FileReport) -> Vec<&str> {
         report.numbers.iter().map(|f| f.value.as_str()).collect()
     }
@@ -214,25 +275,69 @@ mod tests {
     #[test]
     fn an_unreadable_file_is_reported_and_does_not_end_the_run() {
         let tree = TempTree::new("scan-unreadable");
-        let report = scan_file(&tree.path().join("gone.json"), plain());
+        let report = read(&tree.path().join("gone.json"), plain());
         assert!(report.was_skipped());
         assert_eq!(report.diagnostics[0].severity, "warning");
         assert_eq!(exit_code(std::slice::from_ref(&report), false), 1);
         assert_eq!(exit_code(&[report], true), 2, "--strict is opt-in");
     }
 
+    /// Changed deliberately: a binary file used to be carried as a
+    /// `skipped` report, which meant `--strict` exited 2 on any
+    /// repository holding an image — and every repository holds one.
+    /// It is now not a report at all, and is counted instead.
     #[test]
-    fn a_binary_file_is_named_rather_than_dropped() {
+    fn a_binary_file_is_not_a_report() {
         let tree = TempTree::new("scan-binary");
-        let file = tree.path().join("logo.png");
-        std::fs::write(&file, [0x89, 0x50, 0xff, 0xfe]).expect("a file");
-        // It used to vanish from the report entirely, which reads to
-        // whoever runs this as "that file was clean".
-        let report = scan_file(&file, plain());
-        assert!(report.was_skipped());
-        assert_eq!(report.diagnostics[0].message, "not UTF-8 text");
-        assert_eq!(exit_code(std::slice::from_ref(&report), false), 1);
-        assert_eq!(exit_code(&[report], true), 2);
+        let file = tree.write_bytes("logo.png", &[0x89, 0x50, 0x4e, 0x47, 0x00, 0x1a]);
+        assert_eq!(scan_file(&file, plain()), Scanned::Binary);
+    }
+
+    /// The distinction the whole split exists for: a file that *is* text
+    /// and could not be read keeps its named diagnostic and keeps
+    /// failing `--strict`. A PNG beside it does neither.
+    #[test]
+    fn a_text_file_that_cannot_be_read_still_fails_strict_and_a_binary_one_does_not() {
+        let tree = TempTree::new("scan-strict");
+        let binary = tree.write_bytes("logo.png", &[0x89, 0x50, 0x00, 0xff]);
+        // Invalid UTF-8 with no NUL byte: it looked like text and was not.
+        let broken = tree.write_bytes("notes.txt", &[0x68, 0x69, 0xff, 0xfe]);
+        let good = tree.write("rates.env", "VAT=0.2\n");
+
+        let (reports, binaries) = partition(vec![
+            scan_file(&binary, plain()),
+            scan_file(&broken, plain()),
+            scan_file(&good, plain()),
+        ]);
+        assert_eq!(binaries, 1);
+        assert_eq!(reports.len(), 2, "the PNG produced no report line");
+
+        let named: Vec<&str> = reports.iter().map(|r| r.file.as_str()).collect();
+        assert!(named.iter().any(|file| file.ends_with("notes.txt")));
+        assert!(named.iter().any(|file| file.ends_with("rates.env")));
+        assert_eq!(reports[0].diagnostics[0].message, "not UTF-8 text");
+
+        assert_eq!(exit_code(&reports, false), 0, "the .env file has a number");
+        assert_eq!(exit_code(&reports, true), 2, "the unreadable text file");
+        let binary_only = partition(vec![scan_file(&binary, plain())]).0;
+        assert_eq!(
+            exit_code(&binary_only, true),
+            1,
+            "a binary file never fails --strict"
+        );
+    }
+
+    /// ripgrep's own test, and the reason it is that one: a NUL byte
+    /// after the first 8 KiB belongs to a file this already read as
+    /// text, and re-classifying it late would drop findings already
+    /// reported above it.
+    #[test]
+    fn binary_is_a_nul_byte_in_the_first_8_kib() {
+        let tree = TempTree::new("scan-sniff");
+        let mut late = vec![b'1'; BINARY_SNIFF_BYTES + 16];
+        late[BINARY_SNIFF_BYTES + 8] = 0;
+        let file = tree.write_bytes("late.txt", &late);
+        assert_ne!(scan_file(&file, plain()), Scanned::Binary);
     }
 
     #[test]
@@ -243,24 +348,40 @@ mod tests {
             "port = 8080
 ",
         );
-        let report = scan_file(&file, plain());
+        let report = read(&file, plain());
         assert_eq!(report.format, "toml");
         assert_eq!(values(&report), ["8080"]);
     }
 
-    /// A source file is not a format this parses, and its constants come
-    /// out anyway.
+    /// Changed deliberately in 0.2.0: a `.ts` file used to land in the
+    /// text scan, which read `u32` as the number 32 and split `0o755`
+    /// into two. It now has an extractor that knows what a literal is.
     #[test]
-    fn a_source_file_falls_back_to_a_text_scan() {
-        let tree = TempTree::new("scan-fallback");
+    fn a_source_file_is_read_by_its_language() {
+        let tree = TempTree::new("scan-source");
         let file = tree.write(
             "rates.ts",
-            "const VAT = 0.2;
+            "const VAT: number = 0.2;
 ",
         );
-        let report = scan_file(&file, plain());
-        assert_eq!(report.format, "unknown");
+        let report = read(&file, plain());
+        assert_eq!(report.format, "typescript");
         assert_eq!(values(&report), ["0.2"]);
+    }
+
+    /// Prose still goes to the text scan, which has no grammar and says
+    /// so — `v1.2.3` there is two numbers.
+    #[test]
+    fn prose_falls_back_to_a_text_scan() {
+        let tree = TempTree::new("scan-fallback");
+        let file = tree.write(
+            "NOTES.md",
+            "Released v1.2.3 at a rate of 0.2.
+",
+        );
+        let report = read(&file, plain());
+        assert_eq!(report.format, "unknown");
+        assert_eq!(values(&report), ["1.2", "0.3", "0.2"]);
     }
 
     #[test]
@@ -271,7 +392,7 @@ mod tests {
             "port = 8080
 ",
         );
-        let report = scan_file(
+        let report = read(
             &file,
             ScanOptions {
                 format: Some("toml"),

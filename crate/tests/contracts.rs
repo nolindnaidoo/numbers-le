@@ -39,6 +39,10 @@ impl Tree {
     }
 
     fn write(&self, relative: &str, contents: &str) -> PathBuf {
+        self.write_bytes(relative, contents.as_bytes())
+    }
+
+    fn write_bytes(&self, relative: &str, contents: &[u8]) -> PathBuf {
         let target = self.root.join(relative);
         if let Some(parent) = target.parent() {
             std::fs::create_dir_all(parent).expect("a parent directory");
@@ -83,13 +87,13 @@ fn reports(run: &Run) -> Vec<serde_json::Value> {
         .collect()
 }
 
-/// A typed config, an untyped one, a source file only the text scan
-/// reads, and prose with no digits in it.
+/// A typed config, an untyped one, a source file read by its language,
+/// and prose with no digits in it.
 fn audit_tree(name: &str) -> Tree {
     let tree = Tree::new(name);
     tree.write("config.json", "{\"port\":8080,\"quoted\":\"42\"}\n");
     tree.write("rates.env", "VAT=0.2\nNAME=standard\n");
-    tree.write("src/pricing.ts", "const MARKUP = 1.15;\n");
+    tree.write("src/pricing.ts", "const MARKUP: number = 1.15;\n");
     tree.write("notes.md", "no digits in this prose at all\n");
     tree
 }
@@ -145,11 +149,12 @@ fn a_quoted_number_counts_in_an_untyped_format_only() {
     assert_eq!(run.stdout.lines().collect::<Vec<_>>(), ["42"]);
 }
 
-/// The audit case: a source file is not a format this parses, and its
-/// constants come out anyway.
+/// The audit case: a source file yields its constants, and since 0.2.0
+/// it yields them through an extractor that knows what a literal is
+/// rather than through the text scan that read `u32` as the number 32.
 #[test]
-fn a_source_file_yields_its_constants_through_the_text_scan() {
-    let tree = audit_tree("fallback");
+fn a_source_file_yields_its_constants_through_its_language() {
+    let tree = audit_tree("source");
     let source = reports(&run(&[&tree.path().to_string_lossy()]))
         .into_iter()
         .find(|report| {
@@ -158,8 +163,56 @@ fn a_source_file_yields_its_constants_through_the_text_scan() {
                 .is_some_and(|file| file.ends_with("pricing.ts"))
         })
         .expect("the .ts file was read");
-    assert_eq!(source["format"], "unknown");
+    assert_eq!(source["format"], "typescript");
     assert_eq!(source["numbers"][0]["value"], "1.15");
+    assert_eq!(source["numbers"][0]["notation"], "decimal");
+    assert_eq!(
+        source["summary"]["numbers"], 1,
+        "the `number` type annotation is not the number 0"
+    );
+}
+
+/// The distinction `--strict` rests on, driven against the binary.
+///
+/// A PNG was never a text candidate: no report line, no effect on the
+/// exit code. A file that *is* text and could not be decoded keeps its
+/// named diagnostic and keeps failing `--strict`. Before this, every
+/// repository holding an image exited 2 under `--strict`, which made the
+/// flag useless in the one place it was worth having.
+#[test]
+fn a_binary_file_is_counted_and_a_broken_text_file_is_reported() {
+    let tree = Tree::new("binary");
+    tree.write("rates.env", "VAT=0.2\n");
+    tree.write_bytes("logo.png", &[0x89, 0x50, 0x4e, 0x47, 0x00, 0x1a, 0x0a]);
+
+    let clean = run(&[&tree.path().to_string_lossy()]);
+    assert_eq!(clean.code, 0, "{}", clean.stderr);
+    let scanned = reports(&clean);
+    let files: Vec<String> = scanned
+        .iter()
+        .filter_map(|report| report["file"].as_str())
+        .map(|file| file.rsplit(['/', '\\']).next().unwrap_or(file).to_string())
+        .collect();
+    assert_eq!(files, ["rates.env"], "the PNG produced no report line");
+    assert!(
+        clean.stderr.contains("1 binary file skipped"),
+        "the count is the reader's only sign coverage was narrower: {}",
+        clean.stderr
+    );
+
+    let strict = run(&["--strict", &tree.path().to_string_lossy()]);
+    assert_eq!(strict.code, 0, "a binary file never fails --strict");
+
+    // Text by name and by sniff — invalid UTF-8 with no NUL byte — so it
+    // is still a named report and still fails --strict.
+    tree.write_bytes("notes.txt", &[0x68, 0x69, 0xff, 0xfe]);
+    let broken = run(&["--strict", &tree.path().to_string_lossy()]);
+    assert_eq!(broken.code, 2, "{}", broken.stderr);
+    assert!(
+        broken.stderr.contains("not UTF-8 text"),
+        "{}",
+        broken.stderr
+    );
 }
 
 #[test]

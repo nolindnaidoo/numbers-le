@@ -5,14 +5,38 @@
 			"file": "numbers.json",
 			"fileType": "json",
 			"expected": [
-				"8080",
-				"0.0825",
-				"-325",
-				"1",
-				"2.5",
-				"1000000",
-				"1e+21",
-				"1e-7"
+				{
+					"value": "8080",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "-325",
+					"notation": "decimal"
+				},
+				{
+					"value": "1",
+					"notation": "decimal"
+				},
+				{
+					"value": "2.5",
+					"notation": "decimal"
+				},
+				{
+					"value": "1000000",
+					"notation": "decimal"
+				},
+				{
+					"value": "1e+21",
+					"notation": "decimal"
+				},
+				{
+					"value": "1e-7",
+					"notation": "decimal"
+				}
 			],
 			"errors": []
 		},
@@ -21,11 +45,26 @@
 			"file": "numbers.yaml",
 			"fileType": "yaml",
 			"expected": [
-				"8080",
-				"0.0825",
-				"26",
-				"1",
-				"2.5"
+				{
+					"value": "8080",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "26",
+					"notation": "decimal"
+				},
+				{
+					"value": "1",
+					"notation": "decimal"
+				},
+				{
+					"value": "2.5",
+					"notation": "decimal"
+				}
 			],
 			"errors": []
 		},
@@ -34,14 +73,38 @@
 			"file": "numbers.toml",
 			"fileType": "toml",
 			"expected": [
-				"8080",
-				"0.0825",
-				"26",
-				"1000",
-				"1",
-				"2",
-				"1.5",
-				"2.5"
+				{
+					"value": "8080",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "26",
+					"notation": "decimal"
+				},
+				{
+					"value": "1000",
+					"notation": "decimal"
+				},
+				{
+					"value": "1",
+					"notation": "decimal"
+				},
+				{
+					"value": "2",
+					"notation": "decimal"
+				},
+				{
+					"value": "1.5",
+					"notation": "decimal"
+				},
+				{
+					"value": "2.5",
+					"notation": "decimal"
+				}
 			],
 			"errors": []
 		},
@@ -59,9 +122,18 @@
 			"file": "numbers.ini",
 			"fileType": "ini",
 			"expected": [
-				"8080",
-				"0.0825",
-				"-1500"
+				{
+					"value": "8080",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "-1500",
+					"notation": "scientific"
+				}
 			],
 			"errors": []
 		},
@@ -70,10 +142,22 @@
 			"file": "numbers.env",
 			"fileType": "env",
 			"expected": [
-				"8080",
-				"0.0825",
-				"7",
-				"0.5"
+				{
+					"value": "8080",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "7",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.5",
+					"notation": "decimal"
+				}
 			],
 			"errors": []
 		},
@@ -82,11 +166,26 @@
 			"file": "numbers.csv",
 			"fileType": "csv",
 			"expected": [
-				"1",
-				"0.0825",
-				"2",
-				"3",
-				"-1500"
+				{
+					"value": "1",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "2",
+					"notation": "decimal"
+				},
+				{
+					"value": "3",
+					"notation": "decimal"
+				},
+				{
+					"value": "-1500",
+					"notation": "scientific"
+				}
 			],
 			"errors": []
 		},
@@ -95,11 +194,182 @@
 			"file": "numbers.txt",
 			"fileType": "unknown",
 			"expected": [
-				"1.2",
-				"0.3",
-				"0.0825",
-				"1000",
-				"-700"
+				{
+					"value": "1.2",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.3",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "1000",
+					"notation": "decimal"
+				},
+				{
+					"value": "-700",
+					"notation": "scientific"
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "numbers.py as python",
+			"file": "numbers.py",
+			"fileType": "python",
+			"expected": [
+				{
+					"value": "8080",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "255",
+					"notation": "hex"
+				},
+				{
+					"value": "10",
+					"notation": "binary"
+				},
+				{
+					"value": "493",
+					"notation": "octal"
+				},
+				{
+					"value": "1000000",
+					"notation": "decimal"
+				},
+				{
+					"value": "1e-7",
+					"notation": "scientific"
+				},
+				{
+					"value": "3",
+					"notation": "decimal"
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "numbers.rs as rust",
+			"file": "numbers.rs",
+			"fileType": "rust",
+			"expected": [
+				{
+					"value": "65535",
+					"notation": "hex"
+				},
+				{
+					"value": "10",
+					"notation": "binary"
+				},
+				{
+					"value": "493",
+					"notation": "octal"
+				},
+				{
+					"value": "1000000",
+					"notation": "decimal"
+				},
+				{
+					"value": "10",
+					"notation": "decimal"
+				},
+				{
+					"value": "2.75",
+					"notation": "decimal"
+				},
+				{
+					"value": "755",
+					"notation": "decimal"
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "numbers.go as go",
+			"file": "numbers.go",
+			"fileType": "go",
+			"expected": [
+				{
+					"value": "493",
+					"notation": "octal"
+				},
+				{
+					"value": "255",
+					"notation": "hex"
+				},
+				{
+					"value": "1000000",
+					"notation": "decimal"
+				},
+				{
+					"value": "1500",
+					"notation": "scientific"
+				},
+				{
+					"value": "42",
+					"notation": "decimal"
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "numbers.java as java",
+			"file": "numbers.java",
+			"fileType": "java",
+			"expected": [
+				{
+					"value": "493",
+					"notation": "octal"
+				},
+				{
+					"value": "1000000",
+					"notation": "decimal"
+				},
+				{
+					"value": "255",
+					"notation": "hex"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "numbers.ts as typescript",
+			"file": "numbers.ts",
+			"fileType": "typescript",
+			"expected": [
+				{
+					"value": "9007199254740992",
+					"notation": "bigint"
+				},
+				{
+					"value": "255",
+					"notation": "hex"
+				},
+				{
+					"value": "1000000",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "4",
+					"notation": "decimal"
+				}
 			],
 			"errors": []
 		}

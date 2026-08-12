@@ -9,12 +9,14 @@ pub(crate) mod locate;
 pub(crate) mod policy;
 pub(crate) mod position;
 pub(crate) mod render;
+pub(crate) mod source;
 pub(crate) mod toml;
 pub(crate) mod yaml;
 
 use serde::Serialize;
 
 pub(crate) use format::{FALLBACK_FORMAT, SUPPORTED_FORMATS, resolve_format};
+pub(crate) use policy::{Literal, Notation};
 pub(crate) use position::Position;
 pub(crate) use render::js_number;
 
@@ -27,33 +29,49 @@ pub(crate) use render::js_number;
 #[derive(Debug, Clone, Copy, Default)]
 pub(crate) struct Options;
 
-/// One extracted number, printed, and where it was found.
+/// One extracted number, printed, and how the source wrote it.
 ///
 /// `value` is text, not a JSON number. Re-encoding through a number
 /// would hand the reader whatever their parser prints, which is the one
 /// thing this crate exists to control.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub(crate) struct Number {
+    pub(crate) value: String,
+    pub(crate) notation: Notation,
+}
+
+/// One extracted number, and where it was found.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub(crate) struct Found {
     pub(crate) value: String,
+    pub(crate) notation: Notation,
     #[serde(flatten)]
     pub(crate) position: Option<Position>,
 }
 
 /// Every number in a document, printed as JavaScript would print it, in
 /// document order.
-pub(crate) fn extract(text: &str, format: &str, _options: Options) -> Vec<String> {
-    raw(text, format).into_iter().map(js_number).collect()
+pub(crate) fn extract(text: &str, format: &str, _options: Options) -> Vec<Number> {
+    raw(text, format)
+        .into_iter()
+        .map(|literal| Number {
+            value: js_number(literal.value),
+            notation: literal.notation,
+        })
+        .collect()
 }
 
-/// The doubles themselves, before rendering.
-pub(crate) fn raw(text: &str, format: &str) -> Vec<f64> {
-    match format::canonical(format) {
+/// The literals themselves, before rendering.
+pub(crate) fn raw(text: &str, format: &str) -> Vec<Literal> {
+    let key = format::canonical(format);
+    match key {
         "json" => json::extract(text),
         "yaml" => yaml::extract(text),
         "toml" => toml::extract(text),
         "ini" => ini::extract(text),
         "env" => dotenv::extract(text),
         "csv" => csv::extract(text),
+        _ if format::is_source(key) => source::extract(text, key),
         _ => fallback::extract(text),
     }
 }

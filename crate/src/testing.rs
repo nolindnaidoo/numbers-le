@@ -44,6 +44,13 @@ impl TempTree {
     }
 
     pub(crate) fn write(&self, relative: &str, contents: &str) -> PathBuf {
+        self.write_bytes(relative, contents.as_bytes())
+    }
+
+    /// Bytes rather than text, for the files that are the point: a PNG
+    /// header, a lone invalid UTF-8 sequence, a NUL past the sniff
+    /// window.
+    pub(crate) fn write_bytes(&self, relative: &str, contents: &[u8]) -> PathBuf {
         let target = self.root.join(relative);
         if let Some(parent) = target.parent() {
             std::fs::create_dir_all(parent).expect("a parent directory");

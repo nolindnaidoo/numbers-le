@@ -118,16 +118,49 @@ coerced string in INI and accepted as `26` in YAML and TOML, because
 those parsers resolve it before the policy ever sees it. Both frontends
 inherit that, and the corpus pins it.
 
+## Source languages have a literal reader
+
+`python rust go java kotlin csharp cpp c javascript typescript sql
+shellscript`, by language id or by file extension, are read by a
+numeric-literal extractor: hex `0xFF`, binary `0b1010`, octal `0o755` and
+legacy `0755`, separators `1_000_000` and `1'000`, suffixes `123n`,
+`1.5f`, `10u32`, `100L`.
+
+**Type names are not numbers.** `u32`, `i64`, `f32` and `usize` report
+nothing. Under the text scan they reported `32`, `64`, `32` — a Rust file
+yielded numbers that were never in it.
+
+**A dialect changes an answer**, so the language is not a label: `0755`
+is 493 in C, C++, Go and Java, and 755 in Rust, Python 3, Kotlin and C#.
+
 ## The text scan has no grammar
 
-For a format nothing here parses — a `.ts`, a `.sql`, a `.log` — numbers
-come from scanning the raw text. **`v1.2.3` reads as `1.2` and `0.3`.**
+For a format nothing here parses and no language claims — Markdown, a
+log, plain text — numbers come from scanning the raw text. **`v1.2.3`
+reads as `1.2` and `0.3`.**
 
 That is not a defect to report; it is what the extension does, and a scan
 with no parser cannot know a version string is one token. It is why the
-scan is only used when the format is unknown — and why it is still worth
-having, because a hardcoded constant in a source file is exactly what an
-audit is looking for.
+scan is now reserved for prose.
+
+## Notation
+
+Every finding carries how the literal was written — `decimal`, `hex`,
+`binary`, `octal`, `scientific`, `bigint` — because `0x1A` and `26` are
+the same number and not the same line of code.
+
+**It follows coercion.** A typed format hands over a number its parser
+already resolved, so JSON, YAML and TOML report `decimal`; INI, `.env`
+and CSV parse their own text and keep what it said; source languages and
+the text scan keep everything.
+
+## Binary files
+
+A NUL byte in the first 8 KiB — ripgrep's own test — and the file is
+never opened as text: no report line, no effect on the exit code, and a
+count on stderr so coverage is never overstated silently. A file that
+*is* text and could not be read keeps its named diagnostic and still
+fails `--strict`.
 
 ## Positions, and where they stop
 
@@ -151,8 +184,10 @@ Two consequences, both honest:
   best effort, and it is forward-only so it can never point above a
   number already reported.
 
-JSON and the text scan skip all of that: one walks an AST with real
-ranges, the other *is* the scanner.
+JSON, the source languages and the text scan skip all of that: JSON
+walks an AST with real ranges, and the other two *are* scanners — which
+is why a hex literal is placed in a `.rs` file and unplaced in a `.toml`
+one.
 
 ## It has no opinions
 
@@ -169,6 +204,7 @@ no flag asks for a judgment.
 --dedupe             collapse repeated values to their first occurrence
 --format <format>    force a format instead of inferring from the name;
                      an unknown name falls back to a text scan
+--strict             exit 2 if a text file could not be read
 --values             print only the numbers, one per line, for piping
 --stdin              read one document from stdin
 --hidden             walk hidden files and directories too

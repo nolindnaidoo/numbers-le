@@ -1,5 +1,26 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`extraction characterization > a source language reads its literals whole 1`] = `
+{
+  "errors": [],
+  "numbers": [
+    {
+      "notation": "octal",
+      "value": 493,
+    },
+    {
+      "notation": "decimal",
+      "value": 1000000,
+    },
+    {
+      "notation": "hex",
+      "value": 255,
+    },
+  ],
+  "success": true,
+}
+`;
+
 exports[`extraction characterization > mixed-array.toml as toml 1`] = `
 {
   "errors": [
@@ -23,8 +44,14 @@ exports[`extraction characterization > multi-doc.yaml as yaml 1`] = `
 {
   "errors": [],
   "numbers": [
-    1,
-    2,
+    {
+      "notation": "decimal",
+      "value": 1,
+    },
+    {
+      "notation": "decimal",
+      "value": 2,
+    },
   ],
   "success": true,
 }
@@ -34,15 +61,42 @@ exports[`extraction characterization > numbers.csv as csv 1`] = `
 {
   "errors": [],
   "numbers": [
-    1,
-    19.99,
-    2,
-    -3.5,
-    3,
-    4,
-    42,
-    100,
-    0.5,
+    {
+      "notation": "decimal",
+      "value": 1,
+    },
+    {
+      "notation": "decimal",
+      "value": 19.99,
+    },
+    {
+      "notation": "decimal",
+      "value": 2,
+    },
+    {
+      "notation": "decimal",
+      "value": -3.5,
+    },
+    {
+      "notation": "decimal",
+      "value": 3,
+    },
+    {
+      "notation": "decimal",
+      "value": 4,
+    },
+    {
+      "notation": "decimal",
+      "value": 42,
+    },
+    {
+      "notation": "decimal",
+      "value": 100,
+    },
+    {
+      "notation": "decimal",
+      "value": 0.5,
+    },
   ],
   "success": true,
 }
@@ -52,15 +106,42 @@ exports[`extraction characterization > numbers.csv via streaming parser 1`] = `
 {
   "errors": [],
   "numbers": [
-    1,
-    19.99,
-    2,
-    -3.5,
-    3,
-    4,
-    42,
-    100,
-    0.5,
+    {
+      "notation": "decimal",
+      "value": 1,
+    },
+    {
+      "notation": "decimal",
+      "value": 19.99,
+    },
+    {
+      "notation": "decimal",
+      "value": 2,
+    },
+    {
+      "notation": "decimal",
+      "value": -3.5,
+    },
+    {
+      "notation": "decimal",
+      "value": 3,
+    },
+    {
+      "notation": "decimal",
+      "value": 4,
+    },
+    {
+      "notation": "decimal",
+      "value": 42,
+    },
+    {
+      "notation": "decimal",
+      "value": 100,
+    },
+    {
+      "notation": "decimal",
+      "value": 0.5,
+    },
   ],
   "success": true,
 }
@@ -70,10 +151,22 @@ exports[`extraction characterization > numbers.env as env 1`] = `
 {
   "errors": [],
   "numbers": [
-    3000,
-    45.5,
-    -7,
-    99,
+    {
+      "notation": "decimal",
+      "value": 3000,
+    },
+    {
+      "notation": "decimal",
+      "value": 45.5,
+    },
+    {
+      "notation": "decimal",
+      "value": -7,
+    },
+    {
+      "notation": "decimal",
+      "value": 99,
+    },
   ],
   "success": true,
 }
@@ -83,10 +176,22 @@ exports[`extraction characterization > numbers.ini as ini 1`] = `
 {
   "errors": [],
   "numbers": [
-    8080,
-    30.5,
-    -42,
-    0.5,
+    {
+      "notation": "decimal",
+      "value": 8080,
+    },
+    {
+      "notation": "decimal",
+      "value": 30.5,
+    },
+    {
+      "notation": "decimal",
+      "value": -42,
+    },
+    {
+      "notation": "decimal",
+      "value": 0.5,
+    },
   ],
   "success": true,
 }
@@ -96,15 +201,42 @@ exports[`extraction characterization > numbers.json as json 1`] = `
 {
   "errors": [],
   "numbers": [
-    1250000,
-    -340.5,
-    1500,
-    0,
-    9007199254740992,
-    1,
-    2.5,
-    -3,
-    0.001,
+    {
+      "notation": "decimal",
+      "value": 1250000,
+    },
+    {
+      "notation": "decimal",
+      "value": -340.5,
+    },
+    {
+      "notation": "decimal",
+      "value": 1500,
+    },
+    {
+      "notation": "decimal",
+      "value": 0,
+    },
+    {
+      "notation": "decimal",
+      "value": 9007199254740992,
+    },
+    {
+      "notation": "decimal",
+      "value": 1,
+    },
+    {
+      "notation": "decimal",
+      "value": 2.5,
+    },
+    {
+      "notation": "decimal",
+      "value": -3,
+    },
+    {
+      "notation": "decimal",
+      "value": 0.001,
+    },
   ],
   "success": true,
 }
@@ -114,16 +246,46 @@ exports[`extraction characterization > numbers.toml as toml 1`] = `
 {
   "errors": [],
   "numbers": [
-    42,
-    -3.14,
-    5000,
-    100,
-    1,
-    2,
-    3,
-    2.5,
-    -0.5,
-    12345,
+    {
+      "notation": "decimal",
+      "value": 42,
+    },
+    {
+      "notation": "decimal",
+      "value": -3.14,
+    },
+    {
+      "notation": "decimal",
+      "value": 5000,
+    },
+    {
+      "notation": "decimal",
+      "value": 100,
+    },
+    {
+      "notation": "decimal",
+      "value": 1,
+    },
+    {
+      "notation": "decimal",
+      "value": 2,
+    },
+    {
+      "notation": "decimal",
+      "value": 3,
+    },
+    {
+      "notation": "decimal",
+      "value": 2.5,
+    },
+    {
+      "notation": "decimal",
+      "value": -0.5,
+    },
+    {
+      "notation": "decimal",
+      "value": 12345,
+    },
   ],
   "success": true,
 }
@@ -133,13 +295,34 @@ exports[`extraction characterization > numbers.yaml as yaml 1`] = `
 {
   "errors": [],
   "numbers": [
-    42,
-    -19.99,
-    6.02e+23,
-    26,
-    1,
-    2.5,
-    10,
+    {
+      "notation": "decimal",
+      "value": 42,
+    },
+    {
+      "notation": "decimal",
+      "value": -19.99,
+    },
+    {
+      "notation": "decimal",
+      "value": 6.02e+23,
+    },
+    {
+      "notation": "decimal",
+      "value": 26,
+    },
+    {
+      "notation": "decimal",
+      "value": 1,
+    },
+    {
+      "notation": "decimal",
+      "value": 2.5,
+    },
+    {
+      "notation": "decimal",
+      "value": 10,
+    },
   ],
   "success": true,
 }
@@ -149,12 +332,30 @@ exports[`extraction characterization > numeric-header.csv as csv 1`] = `
 {
   "errors": [],
   "numbers": [
-    2024,
-    7,
-    1,
-    19.99,
-    2,
-    -3.5,
+    {
+      "notation": "decimal",
+      "value": 2024,
+    },
+    {
+      "notation": "decimal",
+      "value": 7,
+    },
+    {
+      "notation": "decimal",
+      "value": 1,
+    },
+    {
+      "notation": "decimal",
+      "value": 19.99,
+    },
+    {
+      "notation": "decimal",
+      "value": 2,
+    },
+    {
+      "notation": "decimal",
+      "value": -3.5,
+    },
   ],
   "success": true,
 }
@@ -164,12 +365,30 @@ exports[`extraction characterization > numeric-header.csv via streaming parser (
 {
   "errors": [],
   "numbers": [
-    2024,
-    7,
-    1,
-    19.99,
-    2,
-    -3.5,
+    {
+      "notation": "decimal",
+      "value": 2024,
+    },
+    {
+      "notation": "decimal",
+      "value": 7,
+    },
+    {
+      "notation": "decimal",
+      "value": 1,
+    },
+    {
+      "notation": "decimal",
+      "value": 19.99,
+    },
+    {
+      "notation": "decimal",
+      "value": 2,
+    },
+    {
+      "notation": "decimal",
+      "value": -3.5,
+    },
   ],
   "success": true,
 }
@@ -179,14 +398,38 @@ exports[`extraction characterization > unknown file type falls back to regex sca
 {
   "errors": [],
   "numbers": [
-    123,
-    1.2,
-    0.3,
-    -5,
-    3.14,
-    0.15,
-    12,
-    0,
+    {
+      "notation": "decimal",
+      "value": 123,
+    },
+    {
+      "notation": "decimal",
+      "value": 1.2,
+    },
+    {
+      "notation": "decimal",
+      "value": 0.3,
+    },
+    {
+      "notation": "decimal",
+      "value": -5,
+    },
+    {
+      "notation": "decimal",
+      "value": 3.14,
+    },
+    {
+      "notation": "decimal",
+      "value": 0.15,
+    },
+    {
+      "notation": "decimal",
+      "value": 12,
+    },
+    {
+      "notation": "decimal",
+      "value": 0,
+    },
   ],
   "success": true,
 }

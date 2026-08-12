@@ -7,9 +7,9 @@
 
 use saphyr::{LoadableYamlNode, Scalar, Yaml};
 
-use super::policy::{Coercion, Value, collect};
+use super::policy::{Coercion, Literal, Value, collect};
 
-pub(crate) fn extract(text: &str) -> Vec<f64> {
+pub(crate) fn extract(text: &str) -> Vec<Literal> {
     let Ok(documents) = Yaml::load_from_str(text) else {
         return Vec::new();
     };
@@ -46,52 +46,59 @@ pub(crate) fn parse_error(text: &str) -> Option<String> {
 mod tests {
     use super::*;
 
+    fn values(text: &str) -> Vec<f64> {
+        extract(text)
+            .into_iter()
+            .map(|literal| literal.value)
+            .collect()
+    }
+
     #[test]
     fn integers_and_floats_are_both_numbers() {
-        assert_eq!(extract("a: 8080\nb: 0.0825"), [8080.0, 0.0825]);
+        assert_eq!(values("a: 8080\nb: 0.0825"), [8080.0, 0.0825]);
     }
 
     /// YAML has types, so a quoted number is data.
     #[test]
     fn a_quoted_number_is_not_a_number() {
-        assert_eq!(extract("a: 42\nb: \"42\""), [42.0]);
+        assert_eq!(values("a: 42\nb: \"42\""), [42.0]);
     }
 
     /// The parser resolves this before the policy sees it, which is why
     /// the same text is a number here and not in INI.
     #[test]
     fn a_hex_literal_is_resolved_by_the_parser() {
-        assert_eq!(extract("a: 0x1A"), [26.0]);
+        assert_eq!(values("a: 0x1A"), [26.0]);
     }
 
     /// Not a YAML 1.2 number, so it stays a string and the strict test
     /// rejects it.
     #[test]
     fn an_underscored_literal_is_not_a_number() {
-        assert!(extract("a: 1_000").is_empty());
+        assert!(values("a: 1_000").is_empty());
     }
 
     #[test]
     fn non_finite_scalars_are_dropped() {
-        assert!(extract("a: .inf\nb: .nan\nc: -.inf").is_empty());
+        assert!(values("a: .inf\nb: .nan\nc: -.inf").is_empty());
     }
 
     #[test]
     fn sequences_and_nesting_are_followed() {
         assert_eq!(
-            extract("list:\n  - 1\n  - 2.5\nmap:\n  x: 3"),
+            values("list:\n  - 1\n  - 2.5\nmap:\n  x: 3"),
             [1.0, 2.5, 3.0]
         );
     }
 
     #[test]
     fn every_document_in_the_file_is_read() {
-        assert_eq!(extract("a: 1\n---\nb: 2\n"), [1.0, 2.0]);
+        assert_eq!(values("a: 1\n---\nb: 2\n"), [1.0, 2.0]);
     }
 
     #[test]
     fn a_broken_document_yields_nothing_and_says_why() {
-        assert!(extract("a: [unterminated").is_empty());
+        assert!(values("a: [unterminated").is_empty());
         assert!(parse_error("a: [unterminated").is_some());
         assert!(parse_error("a: 1").is_none());
     }

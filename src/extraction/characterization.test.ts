@@ -15,6 +15,10 @@ import { extractFromCsvAsync } from './formats/csv';
  * whole string is numeric ("12abc" and "1.2.3" extract nothing); CSV
  * sync and streaming agree, with no header inference; multi-document
  * YAML extracts from every document.
+ *
+ * 0.2.0 added two things every snapshot here shows: a `notation` on
+ * every finding, and a numeric-literal reader for source languages —
+ * where the text scan used to report `u32` as the number 32.
  */
 
 const FIXTURES: ReadonlyArray<{ fixture: string; fileType: FileType }> = [
@@ -53,6 +57,15 @@ describe('extraction characterization', () => {
 		const result = await extractFromCsvAsync(
 			readFixture('numeric-header.csv'),
 			'numeric-header.csv',
+		);
+		expect(result).toMatchSnapshot();
+	});
+
+	it('a source language reads its literals whole', () => {
+		const result = extractNumber(
+			'const MODE: u32 = 0o755;\nconst BIG: usize = 1_000_000;\nconst M: u64 = 0xFF;\n',
+			'rust',
+			'limits.rs',
 		);
 		expect(result).toMatchSnapshot();
 	});

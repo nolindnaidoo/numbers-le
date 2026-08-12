@@ -1,5 +1,15 @@
 import { describe, expect, test } from 'vitest';
+import type { ExtractionResult } from '../../types';
 import { extractFromCsv } from './csv';
+
+/**
+ * The values alone. Findings carry `{ value, notation }` since 0.2.0;
+ * these tests are about which numbers come out, and the notation has its
+ * own cases in the shared corpus.
+ */
+function values(result: ExtractionResult): readonly number[] {
+	return result.numbers.map((found) => found.value);
+}
 
 describe('CSV Number Extraction', () => {
 	describe('extractFromCsv', () => {
@@ -8,8 +18,8 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(6);
-			expect(result.numbers).toEqual([1, 2, 3, 4, 5, 6]);
+			expect(values(result).length).toBe(6);
+			expect(values(result)).toEqual([1, 2, 3, 4, 5, 6]);
 		});
 
 		test('should extract numbers from CSV with headers', () => {
@@ -17,11 +27,11 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(4);
-			expect(result.numbers).toContain(25);
-			expect(result.numbers).toContain(85.5);
-			expect(result.numbers).toContain(30);
-			expect(result.numbers).toContain(92.0);
+			expect(values(result).length).toBe(4);
+			expect(values(result)).toContain(25);
+			expect(values(result)).toContain(85.5);
+			expect(values(result)).toContain(30);
+			expect(values(result)).toContain(92.0);
 		});
 
 		test('should handle decimal numbers', () => {
@@ -29,10 +39,10 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(6);
-			expect(result.numbers).toContain(1.5);
-			expect(result.numbers).toContain(2.7);
-			expect(result.numbers).toContain(3.14);
+			expect(values(result).length).toBe(6);
+			expect(values(result)).toContain(1.5);
+			expect(values(result)).toContain(2.7);
+			expect(values(result)).toContain(3.14);
 		});
 
 		test('should handle negative numbers', () => {
@@ -40,11 +50,11 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(6);
-			expect(result.numbers).toContain(-1);
-			expect(result.numbers).toContain(-2);
-			expect(result.numbers).toContain(-4);
-			expect(result.numbers).toContain(-6);
+			expect(values(result).length).toBe(6);
+			expect(values(result)).toContain(-1);
+			expect(values(result)).toContain(-2);
+			expect(values(result)).toContain(-4);
+			expect(values(result)).toContain(-6);
 		});
 
 		test('should ignore non-numeric values', () => {
@@ -52,9 +62,9 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(2);
-			expect(result.numbers).toContain(25);
-			expect(result.numbers).toContain(30);
+			expect(values(result).length).toBe(2);
+			expect(values(result)).toContain(25);
+			expect(values(result)).toContain(30);
 		});
 
 		test('should handle empty CSV', () => {
@@ -62,7 +72,7 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(0);
+			expect(values(result).length).toBe(0);
 		});
 
 		test('should handle CSV with only headers', () => {
@@ -70,7 +80,7 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(0);
+			expect(values(result).length).toBe(0);
 		});
 
 		test('should handle CSV with empty cells', () => {
@@ -78,11 +88,11 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(4);
-			expect(result.numbers).toContain(1);
-			expect(result.numbers).toContain(3);
-			expect(result.numbers).toContain(5);
-			expect(result.numbers).toContain(6);
+			expect(values(result).length).toBe(4);
+			expect(values(result)).toContain(1);
+			expect(values(result)).toContain(3);
+			expect(values(result)).toContain(5);
+			expect(values(result)).toContain(6);
 		});
 
 		test('should handle CSV with quoted values', () => {
@@ -90,8 +100,8 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(6);
-			expect(result.numbers).toEqual([1, 2, 3, 4, 5, 6]);
+			expect(values(result).length).toBe(6);
+			expect(values(result)).toEqual([1, 2, 3, 4, 5, 6]);
 		});
 
 		test('should handle CSV with mixed quoted and unquoted values', () => {
@@ -99,8 +109,8 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(6);
-			expect(result.numbers).toEqual([1, 2, 3, 4, 5, 6]);
+			expect(values(result).length).toBe(6);
+			expect(values(result)).toEqual([1, 2, 3, 4, 5, 6]);
 		});
 
 		test('should handle CSV with line breaks in quoted values', () => {
@@ -109,11 +119,11 @@ describe('CSV Number Extraction', () => {
 
 			expect(result.success).toBe(true);
 			// Should extract numbers even from values with newlines
-			expect(result.numbers).toContain(1);
-			expect(result.numbers).toContain(2);
-			expect(result.numbers).toContain(3);
-			expect(result.numbers).toContain(4);
-			expect(result.numbers).toContain(6);
+			expect(values(result)).toContain(1);
+			expect(values(result)).toContain(2);
+			expect(values(result)).toContain(3);
+			expect(values(result)).toContain(4);
+			expect(values(result)).toContain(6);
 		});
 
 		test('should handle very large numbers', () => {
@@ -121,11 +131,11 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(4);
-			expect(result.numbers).toContain(1234567890);
-			expect(result.numbers).toContain(0.000001);
-			expect(result.numbers).toContain(999999999);
-			expect(result.numbers).toContain(0.999999);
+			expect(values(result).length).toBe(4);
+			expect(values(result)).toContain(1234567890);
+			expect(values(result)).toContain(0.000001);
+			expect(values(result)).toContain(999999999);
+			expect(values(result)).toContain(0.999999);
 		});
 
 		test('should handle scientific notation', () => {
@@ -133,11 +143,11 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(4);
-			expect(result.numbers).toContain(12300);
-			expect(result.numbers).toContain(0.0567);
-			expect(result.numbers).toContain(9990);
-			expect(result.numbers).toContain(0.111);
+			expect(values(result).length).toBe(4);
+			expect(values(result)).toContain(12300);
+			expect(values(result)).toContain(0.0567);
+			expect(values(result)).toContain(9990);
+			expect(values(result)).toContain(0.111);
 		});
 
 		// NEW EDGE CASE TESTS
@@ -146,8 +156,8 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers).toContain(0);
-			expect(result.numbers).toContain(1);
+			expect(values(result)).toContain(0);
+			expect(values(result)).toContain(1);
 		});
 
 		test('should handle CSV with whitespace', () => {
@@ -155,7 +165,7 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(6);
+			expect(values(result).length).toBe(6);
 		});
 
 		test('should handle CSV with empty rows', () => {
@@ -163,7 +173,7 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(6);
+			expect(values(result).length).toBe(6);
 		});
 
 		test('should handle CSV with trailing commas', () => {
@@ -171,7 +181,7 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(6);
+			expect(values(result).length).toBe(6);
 		});
 
 		test('should handle CSV with Windows line endings', () => {
@@ -179,7 +189,7 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(6);
+			expect(values(result).length).toBe(6);
 		});
 
 		test('should handle CSV with mixed line endings', () => {
@@ -187,7 +197,7 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(9);
+			expect(values(result).length).toBe(9);
 		});
 
 		test('rejects cells where the number is embedded in text', () => {
@@ -196,7 +206,7 @@ describe('CSV Number Extraction', () => {
 
 			expect(result.success).toBe(true);
 			// Strict policy: the whole cell must be numeric.
-			expect(result.numbers.length).toBe(0);
+			expect(values(result).length).toBe(0);
 		});
 
 		test('rejects percentages (cell is not numeric in full)', () => {
@@ -204,7 +214,7 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers).toEqual([]);
+			expect(values(result)).toEqual([]);
 		});
 
 		test('should handle CSV with currency symbols', () => {
@@ -214,7 +224,7 @@ describe('CSV Number Extraction', () => {
 			expect(result.success).toBe(true);
 			// parseFloat doesn't extract numbers starting with $
 			// This is expected behavior - avoids false positives
-			expect(result.numbers.length).toBe(0);
+			expect(values(result).length).toBe(0);
 		});
 
 		test('rejects thousands-separated quoted numbers', () => {
@@ -223,7 +233,7 @@ describe('CSV Number Extraction', () => {
 
 			expect(result.success).toBe(true);
 			// "1,000" is not numeric in full (v1.x parseFloat read it as 1).
-			expect(result.numbers).toEqual([]);
+			expect(values(result)).toEqual([]);
 		});
 
 		test('should handle CSV with NaN-producing values', () => {
@@ -232,7 +242,7 @@ describe('CSV Number Extraction', () => {
 
 			expect(result.success).toBe(true);
 			// Should not include NaN values
-			expect(result.numbers.length).toBe(0);
+			expect(values(result).length).toBe(0);
 		});
 
 		test('should handle CSV with very large scientific notation', () => {
@@ -241,8 +251,8 @@ describe('CSV Number Extraction', () => {
 
 			expect(result.success).toBe(true);
 			// Should handle very large numbers
-			expect(result.numbers.length).toBe(3);
-			expect(result.numbers[0]).toBe(1e308);
+			expect(values(result).length).toBe(3);
+			expect(values(result)[0]).toBe(1e308);
 		});
 
 		test('should handle CSV with very small numbers', () => {
@@ -250,7 +260,7 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(3);
+			expect(values(result).length).toBe(3);
 		});
 
 		test('should handle CSV with integer and float mix', () => {
@@ -258,11 +268,11 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(6);
-			expect(result.numbers).toContain(1);
-			expect(result.numbers).toContain(1.5);
-			expect(result.numbers).toContain(2);
-			expect(result.numbers).toContain(2.5);
+			expect(values(result).length).toBe(6);
+			expect(values(result)).toContain(1);
+			expect(values(result)).toContain(1.5);
+			expect(values(result)).toContain(2);
+			expect(values(result)).toContain(2.5);
 		});
 
 		test('should handle CSV with only whitespace cells', () => {
@@ -270,9 +280,9 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers).toContain(1);
-			expect(result.numbers).toContain(3);
-			expect(result.numbers).toContain(5);
+			expect(values(result)).toContain(1);
+			expect(values(result)).toContain(3);
+			expect(values(result)).toContain(5);
 		});
 
 		test('should handle single column CSV', () => {
@@ -280,8 +290,8 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(5);
-			expect(result.numbers).toEqual([1, 2, 3, 4, 5]);
+			expect(values(result).length).toBe(5);
+			expect(values(result)).toEqual([1, 2, 3, 4, 5]);
 		});
 
 		test('should handle single row CSV', () => {
@@ -289,8 +299,8 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(5);
-			expect(result.numbers).toEqual([1, 2, 3, 4, 5]);
+			expect(values(result).length).toBe(5);
+			expect(values(result)).toEqual([1, 2, 3, 4, 5]);
 		});
 
 		test('should handle CSV with BOM', () => {
@@ -298,7 +308,7 @@ describe('CSV Number Extraction', () => {
 			const result = extractFromCsv(csv, 'test.csv');
 
 			expect(result.success).toBe(true);
-			expect(result.numbers.length).toBe(6);
+			expect(values(result).length).toBe(6);
 		});
 
 		test('should return immutable arrays', () => {

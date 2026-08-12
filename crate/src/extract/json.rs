@@ -14,7 +14,7 @@
 use jsonc_parser::ast::{Object, Value as Node};
 use jsonc_parser::{CollectOptions, ParseOptions, parse_to_ast};
 
-use super::policy::{Coercion, Value, collect};
+use super::policy::{Coercion, Literal, Value, collect};
 
 fn strict() -> ParseOptions {
     ParseOptions {
@@ -28,7 +28,7 @@ fn strict() -> ParseOptions {
     }
 }
 
-pub(crate) fn extract(text: &str) -> Vec<f64> {
+pub(crate) fn extract(text: &str) -> Vec<Literal> {
     collect(&parsed(text).unwrap_or(Value::Other), Coercion::Typed)
 }
 
@@ -38,7 +38,7 @@ pub(crate) fn extract(text: &str) -> Vec<f64> {
 /// place a value — which matters more here than in a string extractor,
 /// because a number's source text and its printed form are often
 /// different: `1e21` is written one way and reported another.
-pub(crate) fn extract_spanned(text: &str) -> Vec<(f64, usize)> {
+pub(crate) fn extract_spanned(text: &str) -> Vec<(Literal, usize)> {
     let Ok(result) = parse_to_ast(text, &CollectOptions::default(), &strict()) else {
         return Vec::new();
     };
@@ -50,13 +50,13 @@ pub(crate) fn extract_spanned(text: &str) -> Vec<(f64, usize)> {
     out
 }
 
-fn visit_spanned(node: &Node, out: &mut Vec<(f64, usize)>) {
+fn visit_spanned(node: &Node, out: &mut Vec<(Literal, usize)>) {
     match node {
         Node::NumberLit(literal) => {
             if let Ok(value) = literal.value.parse::<f64>()
                 && value.is_finite()
             {
-                out.push((value, literal.range.start));
+                out.push((Literal::decimal(value), literal.range.start));
             }
         }
         Node::Array(array) => {
@@ -124,28 +124,35 @@ mod tests {
     use super::*;
     use crate::extract::render::js_number;
 
+    fn values(text: &str) -> Vec<f64> {
+        extract(text)
+            .into_iter()
+            .map(|literal| literal.value)
+            .collect()
+    }
+
     #[test]
     fn numbers_are_extracted_and_keys_are_not() {
-        assert_eq!(extract(r#"{"port":8080}"#), [8080.0]);
+        assert_eq!(values(r#"{"port":8080}"#), [8080.0]);
     }
 
     /// JSON has types, so a quoted number is data.
     #[test]
     fn a_quoted_number_is_not_a_number() {
-        assert_eq!(extract(r#"{"a":42,"b":"42"}"#), [42.0]);
+        assert_eq!(values(r#"{"a":42,"b":"42"}"#), [42.0]);
     }
 
     #[test]
     fn nesting_is_followed_in_document_order() {
         assert_eq!(
-            extract(r#"{"a":1,"b":{"c":2,"d":[3,4]}}"#),
+            values(r#"{"a":1,"b":{"c":2,"d":[3,4]}}"#),
             [1.0, 2.0, 3.0, 4.0]
         );
     }
 
     #[test]
     fn booleans_and_null_are_not_numbers() {
-        assert_eq!(extract(r#"{"a":true,"b":null,"c":1}"#), [1.0]);
+        assert_eq!(values(r#"{"a":true,"b":null,"c":1}"#), [1.0]);
     }
 
     /// The reason this parses number text itself. `serde_json` reads this
@@ -153,15 +160,15 @@ mod tests {
     /// it is printed.
     #[test]
     fn a_large_integer_keeps_the_double_javascript_would_give_it() {
-        let extracted = extract(r#"{"a":123456789012345680000}"#);
+        let extracted = values(r#"{"a":123456789012345680000}"#);
         assert_eq!(js_number(extracted[0]), "123456789012345680000");
     }
 
     #[test]
     fn a_span_points_at_the_token() {
         let document = r#"{"a":8080}"#;
-        let (value, offset) = extract_spanned(document)[0];
-        assert_eq!(value, 8080.0);
+        let (literal, offset) = extract_spanned(document)[0];
+        assert_eq!(literal.value, 8080.0);
         assert_eq!(&document[offset..offset + 4], "8080");
     }
 
@@ -170,14 +177,14 @@ mod tests {
         let document = r#"{"a":1,"b":{"c":2,"d":[3,4]}}"#;
         let spanned: Vec<f64> = extract_spanned(document)
             .into_iter()
-            .map(|(v, _)| v)
+            .map(|(literal, _)| literal.value)
             .collect();
-        assert_eq!(spanned, extract(document));
+        assert_eq!(spanned, values(document));
     }
 
     #[test]
     fn a_broken_document_yields_nothing_and_says_why() {
-        assert!(extract("{not json").is_empty());
+        assert!(values("{not json").is_empty());
         assert!(parse_error("{not json").is_some());
         assert!(parse_error(r#"{"a":1}"#).is_none());
     }
