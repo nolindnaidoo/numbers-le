@@ -134,11 +134,21 @@ setTimeout(() => {
 	}
 
 	const call = byId(2)?.result;
+	// 2.3.0 moved `data.numbers` from `number[]` to `NumberFinding[]`, so a
+	// membership test on the array itself now compares against objects and
+	// reports `[object Object]` — passing only if the shape reverted.
 	const found = call?.structuredContent?.data?.numbers ?? [];
-	if (!found.includes(8080)) {
+	const values = found.map(finding => finding?.value);
+	if (!values.includes(8080)) {
 		fail(
 			'the installed server did not extract a known number',
-			`got: ${found.join(', ')}`,
+			`got: ${JSON.stringify(found).slice(0, 200)}`,
+		);
+	}
+	if (found.some(finding => finding?.notation === undefined)) {
+		fail(
+			'a finding arrived without its notation',
+			`got: ${JSON.stringify(found[0])}`,
 		);
 	}
 
