@@ -21,7 +21,7 @@ code matches a rate in a specification is an auditor, an actuary, a
 compliance reviewer — usually without a checkout and always without the
 editor open. Every decision below follows from that.
 
-**Status: built, unpublished.** All seven extractors, both surfaces and
+**Status: released.** All seven extractors, both surfaces and
 the test layers below are green. Releases go out through
 `release-crate.yml`, which is dispatch-only and refuses a version that
 crates.io already carries, has no changelog entry, would ship a tarball
