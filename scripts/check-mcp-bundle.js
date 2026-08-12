@@ -135,10 +135,21 @@ setTimeout(() => {
 	const found = call?.structuredContent?.data?.numbers ?? [];
 	// Asserting the actual values, not just "it responded" — a server that
 	// answers with an empty list would otherwise pass.
+	//
+	// 2.3.0 moved `data.numbers` from `number[]` to `NumberFinding[]`, so a
+	// membership test on the array itself compares against objects and can
+	// only pass if that shape reverts.
+	const values = found.map((finding) => finding?.value);
 	for (const expected of [8080, 1.5]) {
-		if (!found.includes(expected)) {
-			fail(`extract_numbers did not find ${expected}`, `got: ${found.join(', ')}`);
+		if (!values.includes(expected)) {
+			fail(
+				`extract_numbers did not find ${expected}`,
+				`got: ${JSON.stringify(found).slice(0, 200)}`,
+			);
 		}
+	}
+	if (found.some((finding) => finding?.notation === undefined)) {
+		fail('a finding arrived without its notation', JSON.stringify(found[0]));
 	}
 
 	if (stderr.trim()) {
