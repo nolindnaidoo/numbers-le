@@ -5,12 +5,12 @@ edition = "2024"
 rust-version = "1.88"
 license = "MIT"
 readme = "README.md"
-description = "Find every hardcoded number in a codebase so a person can check them"
+description = "Find every hardcoded number and magic number in a codebase, with the notation each was written in — hex, octal, binary, digit separators and typed literals"
 authors = ["Nolin D Naidoo"]
 homepage = "https://letools.dev/tools/numbers-le"
 repository = "https://github.com/nolindnaidoo/numbers-le"
-keywords = ["numbers", "extract", "audit", "verification", "cli"]
-categories = ["command-line-utilities", "development-tools", "text-processing"]
+keywords = ["magic-numbers", "literals", "hardcoded", "numbers", "lint"]
+categories = ["command-line-utilities", "development-tools", "value-formatting", "text-processing", "parsing"]
 # What a consumer gets, and why.
 #
 # Ships: src/, Cargo.toml, Cargo.lock, LICENSE, README.md — needed to
