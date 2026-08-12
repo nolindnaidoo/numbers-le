@@ -69,7 +69,12 @@ fn a_single_long_line_completes() {
         let _ = write!(content, "const v{index}={index}.25; ");
     }
     let report = scan(&content, "typescript");
-    assert_eq!(report["summary"]["numbers"], 100_000);
+    // One per declaration, not two. `v123` is an identifier, so 0.2.0's
+    // source reader does not take the `123` out of its name — the same
+    // rule that stopped `u32` reporting `32`. This expected 100_000 while
+    // the digits inside identifiers were still being shredded out, so it
+    // could only pass if that behaviour came back.
+    assert_eq!(report["summary"]["numbers"], 50_000);
 }
 
 /// The values a search cannot place. Every one of them walks the whole
