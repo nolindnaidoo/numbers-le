@@ -4,10 +4,11 @@ A port of the [Numbers-LE](https://github.com/nolindnaidoo/numbers-le)
 VS Code extension to a Rust CLI and MCP server: get every number out of
 a codebase so a person can check them.
 
-**Parity first.** The extension is the reference implementation. The
-numbers this produces for a given document, **the order they come in, and
-the text they are printed as**, must match what the extension produces. A
-difference is a regression until proven otherwise.
+**One answer is held equal; the surfaces are not.** The shared
+`extract_numbers` MCP tool must return the same numbers, their order, and **the text they are printed as**
+from either server — a difference there is a bug. Everything else is
+IDE-first in the extension and terminal-first here, and is meant to
+differ. See "Deliberate divergences".
 
 ## The one question
 
@@ -151,8 +152,10 @@ scan read their literals directly and keep everything.
 
 ## Deliberate divergences
 
-The extension is the reference implementation and a difference is a
-regression until it is written down here. These are the ones that are
+The shared `extract_numbers` MCP tool must answer identically from either
+server, and a difference there is a bug until it is written down here.
+The surfaces themselves — IDE-first there, terminal-first here — are meant
+to differ and are not on this list. These are the ones that are
 written down. Each is pinned by a test, and
 `scripts/differential-extraction.ts` generates around them rather than
 through them.
