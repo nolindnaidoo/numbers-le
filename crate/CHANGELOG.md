@@ -150,7 +150,6 @@ side to what it actually does.
   which were offered as formats with nothing pinning their behaviour
   against the extension.
 
-[0.2.0]: https://github.com/nolindnaidoo/numbers-le/releases/tag/crate-v0.2.0
 
 ## [0.1.0] - 2026-08-11
 
@@ -196,7 +195,6 @@ Written down rather than left to be discovered, each pinned by a test.
   best effort, and forward-only so it can never point above a number
   already reported.
 
-[0.1.0]: https://github.com/nolindnaidoo/numbers-le/releases/tag/crate-v0.1.0
 
 ### Fixed
 
@@ -218,3 +216,6 @@ Written down rather than left to be discovered, each pinned by a test.
 - **A file that is not text is named rather than dropped.** It used to
   vanish from the report entirely, which reads to whoever ran it as
   "that file was clean".
+
+[0.2.0]: https://crates.io/crates/numbers-le/0.2.0
+[0.1.0]: https://crates.io/crates/numbers-le/0.1.0
