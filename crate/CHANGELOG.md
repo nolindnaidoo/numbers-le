@@ -7,131 +7,150 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2026-08-12
+
+The numbers this reports out of a source file are now the numbers that
+are actually written in it, and a number too large for a double is
+printed exactly as it was found rather than quietly rounded.
 
 ### Added
 
-- **A numeric-literal extractor for twelve source languages** —
-  `python rust go java kotlin csharp cpp c javascript typescript sql
-  shellscript`, by language id or by file extension, including the React
-  ids. It reads hex `0xFF`, binary `0b1010`, octal `0o755` and legacy
-  `0755`, digit separators `1_000_000` and `1'000`, and suffixes `123n`,
-  `1.5f`, `10u32`, `100L`, `1.5e3f64`.
+- **Numeric literals in twelve source languages** — Python, Rust, Go,
+  Java, Kotlin, C#, C, C++, JavaScript, TypeScript, SQL and shell, by
+  language name or by file extension. Hex `0xFF`, binary `0b1010`,
+  octal `0o755` and legacy `0755`, digit separators `1_000_000` and
+  `1'000`, and suffixes `123n`, `1.5f`, `10u32`, `100L`, `1.5e3f64`.
 
-  **`u32` and `i64` are type names, not the numbers 32 and 64.** That is
-  the defect this exists for: the text scan these files used to go
-  through splits on any non-digit, so it reported `0` and `755` for
-  `0o755`, `1`,`0`,`0` for `1_000_000`, and `32`/`64` for `u32`/`u64`. A
-  Rust file yielded numbers that were never in it.
+  **`u32` is a type name, not the number 32.** A `.rs`, `.py` or `.ts`
+  file used to go through a text scan with no grammar, which splits on
+  the first character that is not a digit: `0o755` came back as `0` and
+  `755`, `1_000_000` as `1`, `0` and `0`, and `u32`, `i64`, `f32` and
+  `usize` as `32`, `64`, `32` and `64`. A source file yielded numbers
+  that were never written in it, which is the one thing a tool built for
+  checking constants cannot do.
 
-  A dialect changes an answer, so the languages resolve to their own
-  names rather than to one key: `0755` is 493 in C, C++, Go and Java and
-  755 in Rust, Python 3, Kotlin and C#; `1_000` is one thousand in Rust
-  and the number 1 in C; `123n` is a BigInt in JavaScript alone.
+  **Expect your counts to fall, and that is the fix.** On one real Rust
+  codebase the results lost 757 phantom `32`s and 402 phantom `64`s —
+  every one of them a type annotation. If you hold a baseline from an
+  earlier version, it will shrink the first time you re-run, and the
+  numbers that disappear are the ones that were never there.
 
-- **A `notation` on every finding** — `decimal`, `hex`, `binary`,
-  `octal`, `scientific`, `bigint` — on both the CLI report and the MCP
-  tool, under that one name on both.
+  A dialect changes an answer, so each language keeps its own name
+  rather than sharing one: `0755` is 493 in C, C++, Go and Java and 755
+  in Rust, Python 3, Kotlin and C#; `1_000` is one thousand in Rust and
+  the number 1 in C; `123n` is a BigInt in JavaScript and TypeScript and
+  nowhere else. Comments and strings are read too, deliberately — a
+  threshold quoted in a docstring is exactly as interesting to whoever
+  is checking it as one in an expression.
 
-- **Corpus documents for the seven languages that had none** — Kotlin,
-  C#, C++, C, JavaScript, SQL and shell. All eighteen offered formats
-  now have one, and `coverage-matrix` fails if a format is ever
-  advertised without one again: a format nothing in `fixtures/`
-  exercises is a format whose parity with the extension nobody checks,
-  however green the build is.
+- **Every finding says how it was written.** A new `notation` on each
+  number — `decimal`, `hex`, `binary`, `octal`, `scientific` or
+  `bigint` — on the CLI report and on the MCP tool, under that one name
+  on both. `0x1A` and `26` are the same number and not the same line of
+  code, and until now a report could not tell you which one you were
+  looking at.
 
-- **Six CI jobs.** `hazards` and `platform` on all three operating
-  systems; `differential`, `fuzz`, `budget` and `coverage-matrix` on
-  Linux. Each exists because something real got through: a BOM read as
-  content, a report full of `\` on Windows, a scan fifty times slower
-  than its siblings, a SIGABRT slicing a multi-byte character, two
-  frontends disagreeing about a format name. `differential` generates
-  2,500 documents and puts each through **both** MCP servers;
-  `fuzz` runs proptest against the literal scanner and the numeric
-  policy for a minute a target.
-
-### Changed
-
-- **Behaviour change: `data.numbers` in `extract_numbers` is an array of
-  `{ value, notation }` rather than an array of bare numbers.** The value
-  is still a JSON number carrying the token this crate rendered, so
-  `1e+21` is still `1e+21`. Both servers moved together and the shared
-  corpus pins the new shape.
-
-- **Behaviour change: the CLI report's `numbers[]` entries carry
-  `notation`** alongside `value`, `line` and `column`.
-
-- **Behaviour change: a source file no longer reports `format:
-  "unknown"`.** It reports its language, and its numbers come from the
-  literal reader.
-
-- **Behaviour change: a binary file produces no report line.** A NUL byte
-  in the first 8 KiB — ripgrep's own test — means the file was never a
-  text candidate: it is not opened, not reported, and never affects the
-  exit code. It is counted on stderr (`16 binary files skipped`) and in
-  the scan tool's `data.binaryFiles`, so coverage is never overstated
-  silently.
-
-  It previously came back as a `skipped` report, which made `--strict`
-  exit 2 on any repository holding an image — every repository — and so
-  made the flag useless in CI. A file that *is* text and could not be
-  read keeps its named `skipped` diagnostic and keeps failing `--strict`;
-  that distinction is the point.
+  It describes the **literal**, not the value, so it follows what the
+  document could express. JSON, YAML and TOML resolve a literal before
+  this tool sees it, so those say `decimal`; INI, `.env`, CSV, the
+  twelve source languages and the plain-text scan keep what the text
+  said.
 
 ### Fixed
 
-- **A number could come back from `extract_numbers` as a different
-  number.** The MCP envelope was assembled as a `serde_json::Value`, and
-  putting a rendered token into one re-parses it with `serde_json`'s
-  float reader — the reader this crate documents as not correctly
-  rounded and refuses to use anywhere else.
-  `123456789012345680000` came back as `1.2345678901234567e+20`: a
-  different double *and* a different token, on the one surface where
-  this server and the npm one must agree byte for byte. The reply is
-  now serialized through serde, so a raw token reaches stdout intact.
-  Found by `differential`.
+- **A very large number came back as a different number.** Asking the
+  `extract_numbers` tool for `123456789012345680000` returned
+  `1.2345678901234567e+20` — not another way of writing the same value,
+  a different one, and a different token from the one the npm server
+  writes for the same document. For a tool whose entire output is
+  numbers reported exactly, that was the worst kind of wrong: quiet, and
+  only visible to someone who already knew the answer. Every number now
+  reaches you as the text this tool rendered, untouched.
 
-- **A format name carrying a byte-order mark now resolves.** Rust's
-  `str::trim` strips U+0085 and keeps U+FEFF; JavaScript's does the
-  exact opposite, and the extension resolves a format with
-  `String.prototype.trim`. So `"﻿json"` resolved to JSON there and
-  fell through to a text scan here — and because coercion keys off the
-  resolved format, the two then disagreed about whether a quoted `"42"`
-  was a number. Every trim in this crate now goes through `extract/js.rs`,
-  which is JavaScript's set: a CSV cell, an INI value or a `.env` value
-  led by a byte-order mark is a number on both servers, and one led by
-  U+0085 is a number on neither. Found by `differential`.
+- **A format name with an invisible character at the front now
+  resolves.** A byte-order mark is what a spreadsheet export, Notepad
+  and a PowerShell redirect all leave behind, and passing
+  `format: "<BOM>json"` used to fall through to a plain text scan
+  instead of parsing JSON — which then read a quoted `"42"` as a number,
+  because quoted numbers are data in JSON and text in a `.env` file. The
+  same character at the front of a CSV cell, an INI value or a `.env`
+  value stopped it being read as a number at all. Whitespace is now
+  judged exactly as the editor extension judges it, everywhere.
 
-- **One unreadable directory no longer ends the whole audit.** A
-  directory the filesystem refused aborted the walk: exit 2, and no
-  reports at all, so a tree of ten thousand files answered nothing
-  because one of them was locked. Exit 2 means the *question* was
-  malformed. Such a path is now carried as a `skipped` report — named on
-  stderr, in the JSON, failing `--strict` — like any other file that
-  could not be read. Found by `hazards`.
+- **One unreadable directory no longer hides the whole tree.** A folder
+  the operating system refused ended the run: exit 2, and not a single
+  report line, so a scan of ten thousand files answered nothing because
+  one of them was locked. Exit 2 means the *question* was malformed — an
+  unknown flag, a path that does not exist. A directory that cannot be
+  opened is now named in the report and on stderr, counted as
+  unexamined, and left to `--strict` to turn into a failure.
 
-- **Report paths use `/` on every platform.** `to_string_lossy` gave
-  `\` on Windows, so a report produced there could not be diffed against
-  one produced anywhere else. Found by `platform`.
+- **Report paths use `/` on every platform.** They contained `\` on
+  Windows, so a report produced there could not be diffed against one
+  produced anywhere else.
+
+### Changed
+
+- **A source file reports its language, not `unknown`.** `pricing.ts`
+  comes back as `typescript`. Anything still unrecognised — Markdown, a
+  log, plain text — is a text scan as before.
+
+- **`data.numbers` from `extract_numbers` is a list of
+  `{ value, notation }` objects**, where it was a list of bare numbers.
+  A consumer reading `data.numbers[0]` as a number needs a one-line
+  change to `data.numbers[0].value`. Both servers moved together — it is
+  one tool with two implementations — and the shared corpus pins the new
+  shape. The CLI report's entries gained `notation` beside `value`,
+  `line` and `column` in the same way.
+
+- **A binary file produces no report line at all.** A NUL byte in the
+  first 8 KiB — ripgrep's own test — means the file was never a text
+  candidate: it is not opened, not reported, and cannot affect the exit
+  code. It is counted on stderr (`16 binary files skipped`) and in the
+  scan tool's `data.binaryFiles`, so you still know the scan covered
+  fewer files than the tree holds.
+
+  It used to come back as a file that could not be read, which made
+  `--strict` exit 2 on any repository holding an image — every
+  repository — and so made the flag useless in CI, the one place it is
+  most worth having. A file that genuinely *is* text and could not be
+  read still says so, and still fails `--strict`.
 
 ### Known divergences
 
-Recorded in [SPEC.md](SPEC.md) under "Deliberate divergences", each
-pinned by a test.
+Two places where this and the editor extension answer differently on
+purpose, both recorded in [SPEC.md](SPEC.md) with a test holding each
+side to what it actually does.
 
-- **A TOML integer at or above 2^53.** `@iarna/toml` returns a
-  JavaScript `BigInt`, which the extension's numeric walk does not
-  recognise, so it silently reports nothing; the `toml` crate returns an
-  `i64` and this reports the same double a JavaScript number would.
-  Past `i64` the crate refuses the document — TOML integers are 64-bit
-  signed — where `@iarna/toml` wraps it to a negative number that is not
-  in the file. Found by `differential`; the crate's answer is the one to
-  trust.
+- **A TOML integer at or above 2^53 (9,007,199,254,740,992).** The
+  extension reports nothing for one — its TOML parser hands back a value
+  its numeric walk does not recognise, and the number silently vanishes
+  from the results. This reports it, as the same double JavaScript would
+  give. **Trust this one.** Larger still, past the 64-bit range TOML
+  allows, this refuses the document and says why — that document is not
+  valid TOML — where the extension's parser wraps the value round to a
+  negative number that appears nowhere in the file, and then drops that
+  too.
 
-- **An INI value led by U+0085.** `rust-ini` strips it before the
-  numeric policy sees it and the npm `ini` package does not, so
-  `rate = <U+0085>42` is a number here and text there. A difference
-  between two parsers rather than a trim this crate performs.
+- **An INI value led by U+0085.** The two INI parsers disagree about
+  whether that character is whitespace, so `rate = <U+0085>42` is the
+  number 42 here and ordinary text there.
+
+### Internal
+
+- Six CI jobs, each because something real reached a release: hazardous
+  inputs and platform behaviour on macOS, Windows and Linux; ~2,500
+  generated documents put through both MCP servers; a fuzz net over the
+  literal reader and the numeric policy; a wall-clock budget; and a
+  check that every file type this claims to open, opens. The rounding
+  bug, the byte-order-mark bug, the unreadable directory and the Windows
+  paths above were all found by them.
+
+- Corpus documents for Kotlin, C#, C++, C, JavaScript, SQL and shell,
+  which were offered as formats with nothing pinning their behaviour
+  against the extension.
+
+[0.2.0]: https://github.com/nolindnaidoo/numbers-le/releases/tag/crate-v0.2.0
 
 ## [0.1.0] - 2026-08-11
 

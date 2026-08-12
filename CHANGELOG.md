@@ -9,7 +9,10 @@ This file covers the **VS Code extension**. The Rust CLI in `crate/` is a
 separate product on its own cadence and keeps its own
 [CHANGELOG](crate/CHANGELOG.md).
 
-## [Unreleased]
+## [2.3.0] - 2026-08-12
+
+The numbers pulled out of a source file are now the numbers that are
+actually written in it.
 
 ### Added
 
@@ -19,48 +22,87 @@ separate product on its own cadence and keeps its own
   `0o755` and legacy `0755`, digit separators `1_000_000` and `1'000`,
   and suffixes `123n`, `1.5f`, `10u32`, `100L`.
 
-  **`u32` and `i64` are type names, not the numbers 32 and 64.** These
-  files used to go through the grammar-less text scan, which splits on
-  any non-digit: it reported `0` and `755` for `0o755`, `1`,`0`,`0` for
-  `1_000_000`, and `32`/`64` for `u32`/`u64`. A Rust file yielded numbers
-  that were never in it.
+  **`u32` is a type name, not the number 32.** These files used to go
+  through a text scan with no grammar, which splits on the first
+  character that is not a digit: `0o755` came back as `0` and `755`,
+  `1_000_000` as `1`, `0` and `0`, and `u32`, `i64`, `f32` and `usize`
+  as `32`, `64`, `32` and `64`. A source file gave you numbers that were
+  never written in it.
+
+  **Expect your counts to fall, and that is the fix.** On one real Rust
+  codebase the results lost 757 phantom `32`s and 402 phantom `64`s —
+  every one of them a type annotation rather than a value anybody wrote.
+  A smaller list after upgrading is a more honest list.
 
   A dialect changes an answer, so each language keeps its own name:
   `0755` is 493 in C, C++, Go and Java and 755 in Rust, Python 3, Kotlin
-  and C#; `123n` is a BigInt in JavaScript alone.
+  and C#; `1_000` is one thousand in Rust and the number 1 in C; `123n`
+  is a BigInt in JavaScript and TypeScript and nowhere else. Comments
+  and strings are read too, on purpose — a threshold quoted in a
+  docstring is exactly as interesting as one in an expression.
 
-- **A `notation` on every finding** — `decimal`, `hex`, `binary`,
-  `octal`, `scientific`, `bigint`.
+- **Every finding says how it was written.** A new `notation` on each
+  number — `decimal`, `hex`, `binary`, `octal`, `scientific` or
+  `bigint`. `0x1A` and `26` are the same number and not the same line of
+  code, and a result list could not previously tell you which you were
+  looking at.
+
+  It describes the **literal**, not the value, so it follows what the
+  file could express: JSON, YAML and TOML resolve a literal before this
+  sees it, so those report `decimal`; INI, `.env`, CSV, the twelve
+  source languages and the plain-text scan keep what the text said.
+
+- **A command-line and agent version of the same engine**, in
+  [`crate/`](crate/README.md), published to crates.io as `numbers-le`.
+  It runs this extraction over a whole tree rather than one buffer, with
+  exit codes following grep — 0 found, 1 none found, 2 the question was
+  malformed — so checking every hardcoded number in a repository against
+  a specification is one command and a file. This extension stays the
+  reference implementation and a shared corpus holds the two together.
+
+### Fixed
+
+- **A very large number came back as a different number.** Asking the
+  `extract_numbers` MCP tool about `123456789012345680000` could return
+  `1.2345678901234567e+20` — not another way of writing the same value,
+  a different one. Both servers that offer the tool now return the
+  number exactly as it was found. For a tool whose whole output is
+  numbers, this is the fix that matters most.
+
+- **A file type given with an invisible character at the front now
+  resolves.** A byte-order mark is what a spreadsheet export, Notepad
+  and a PowerShell redirect all leave behind. One in front of a format
+  name meant JSON was scanned as plain text instead of parsed — and a
+  plain text scan reads a quoted `"42"` as a number, where JSON knows it
+  is data. The same character in front of a CSV cell or a `.env` value
+  stopped it being read as a number at all.
 
 ### Changed
 
-- **Behaviour change: `ExtractionResult.numbers` is
-  `readonly NumberFinding[]`**, each `{ value, notation }`, where it was
-  `readonly number[]`. The commands still write one number per line; the
-  notation belongs to the report surfaces.
+- **A source file is recognised by its extension.** `a.rs` is `rust`
+  rather than `unknown`, so the "which file type is this?" prompt no
+  longer appears for source files.
 
-- **Behaviour change: `data.numbers` in the `extract_numbers` MCP tool is
-  an array of `{ value, notation }`** rather than bare numbers. The Rust
-  server moved in the same commit — the tool is shared byte for byte, and
-  the shared corpus pins the new shape.
+- **`data.numbers` from the `extract_numbers` MCP tool is a list of
+  `{ value, notation }` objects**, where it was a list of bare numbers.
+  An agent or script reading `data.numbers[0]` as a number needs a
+  one-line change to `data.numbers[0].value`. Both servers moved
+  together — it is one tool with two implementations — and the shared
+  corpus pins the new shape.
 
-- **Behaviour change: `detectFileType` resolves source extensions.**
-  `a.rs` is `rust`, not `unknown`, so the file-type prompt no longer
-  appears for them.
+- **`ExtractionResult.numbers` is `readonly NumberFinding[]`**, each
+  `{ value, notation }`, where it was `readonly number[]`. The commands
+  still write one number per line; the notation belongs to the report
+  surfaces.
 
-- Characterization goldens regenerated for both changes.
+### Known divergence
 
-- A **Rust CLI and MCP server**, in [`crate/`](crate/README.md), to be
-  published to crates.io as `numbers-le`. It runs the same extraction over
-  a whole tree, with exit codes following grep — 0 found, 1 none found, 2
-  malformed question — so checking every hardcoded number in a repository
-  against a specification is one command and a file.
-
-  The extension stays the reference implementation and `crate/fixtures/`
-  is the contract, which now pins how a number is *printed* as well as
-  which numbers are found: JavaScript and Rust render the same double
-  differently, and the crate implements ECMAScript's rendering rather than
-  approximating it.
+- **A TOML integer at or above 2^53 (9,007,199,254,740,992)** is
+  silently missing from this extension's results — the TOML parser it
+  uses hands back a value the numeric walk does not recognise. The Rust
+  CLI reports it. If you are checking constants that large in a TOML
+  file, use the CLI; the difference and its reason are written down in
+  the CLI's [SPEC.md](crate/SPEC.md).
 
 ## [2.2.4] - 2026-08-07
 
