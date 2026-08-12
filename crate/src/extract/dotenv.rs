@@ -3,20 +3,24 @@
 //! **Untyped**, like INI and CSV: every value is text, so `PORT=8080`
 //! yields the number 8080.
 
+use super::js;
 use super::policy::{Literal, strict_number};
 
 pub(crate) fn extract(text: &str) -> Vec<Literal> {
     text.lines().filter_map(value_of).collect()
 }
 
+/// Every trim here is JavaScript's, not Rust's: the npm `dotenv` package
+/// the extension parses with trims `\s`, which includes U+FEFF and not
+/// U+0085 — the opposite of `str::trim` on both counts.
 fn value_of(raw_line: &str) -> Option<Literal> {
-    let line = raw_line.trim();
+    let line = js::trim(raw_line);
     if line.is_empty() || line.starts_with('#') {
         return None;
     }
-    let content = line.strip_prefix("export ").map_or(line, str::trim);
+    let content = line.strip_prefix("export ").map_or(line, js::trim);
     let (_, raw_value) = content.split_once('=')?;
-    strict_number(unquote(strip_inline_comment(raw_value.trim())))
+    strict_number(unquote(strip_inline_comment(js::trim(raw_value))))
 }
 
 /// A `#` inside a quoted value is part of the value, which is the whole
@@ -27,7 +31,7 @@ fn strip_inline_comment(value: &str) -> &str {
     }
     value
         .split_once('#')
-        .map_or(value, |(before, _)| before.trim())
+        .map_or(value, |(before, _)| js::trim(before))
 }
 
 fn unquote(value: &str) -> &str {
@@ -88,5 +92,16 @@ mod tests {
     #[test]
     fn non_numeric_values_are_skipped() {
         assert!(values("A=hello\nB=0x1A\nC=1_000\nD=").is_empty());
+    }
+
+    /// The trims are JavaScript's. A value led by a byte-order mark is a
+    /// number, and one led by U+0085 is not — the reverse of what
+    /// `str::trim` would give, and the extension's answer either way.
+    #[test]
+    fn the_trims_are_the_ones_the_extension_performs() {
+        assert_eq!(values("A=\u{feff}42"), [42.0]);
+        assert_eq!(values("\u{feff}A=42"), [42.0]);
+        assert!(values("A=\u{85}42").is_empty());
+        assert!(values("A=42\u{85}").is_empty());
     }
 }

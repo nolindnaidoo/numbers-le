@@ -72,8 +72,15 @@ static STRICT: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 /// Parse a string as a number only if the entire string is numeric.
+///
+/// The trim is JavaScript's, because `heuristics.ts` calls
+/// `String.prototype.trim` here and the two sets are not the same one:
+/// Rust strips U+0085 and keeps U+FEFF. Both characters lead real
+/// values in real files — a CSV cell copied out of a spreadsheet begins
+/// with a byte-order mark — and either spelling made a number appear on
+/// one server and not the other.
 pub(crate) fn strict_number(raw: &str) -> Option<Literal> {
-    let trimmed = raw.trim();
+    let trimmed = super::js::trim(raw);
     if !STRICT.is_match(trimmed) {
         return None;
     }
@@ -179,6 +186,17 @@ mod tests {
         assert_eq!(number("+7"), Some(7.0));
         assert_eq!(number(".5"), Some(0.5));
         assert_eq!(number("  8  "), Some(8.0));
+    }
+
+    /// The trim is JavaScript's. A byte-order mark leading a value —
+    /// which is what a spreadsheet export hands you — is whitespace, and
+    /// U+0085 is not, whatever Rust thinks of either.
+    #[test]
+    fn the_trim_is_the_one_the_extension_performs() {
+        assert_eq!(number("\u{feff}42"), Some(42.0));
+        assert_eq!(number("42\u{feff}"), Some(42.0));
+        assert_eq!(number("\u{85}42"), None);
+        assert_eq!(number("42\u{85}"), None);
     }
 
     /// An untyped format keeps what its text said, because this module

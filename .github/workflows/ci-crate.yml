@@ -194,3 +194,147 @@ jobs:
       - name: Extraction and MCP parity
         working-directory: .
         run: bun scripts/check-extraction-parity.ts
+
+  # Inputs chosen to break the reader, over a tree the test builds at
+  # runtime: Windows cannot check in a FIFO, a symlink loop or a
+  # mode-000 file, so the cases a platform cannot express skip by name
+  # rather than passing quietly. Every case asserts the same three
+  # things — no panic, no hang, and an exit of 0, 1 or 2 rather than a
+  # signal.
+  #
+  # Three of the four defects it exists for shipped: a BOM read as
+  # content emptied three crates in this family, a PNG made --strict
+  # exit 2 on every repository holding an image, and a non-UTF-8 file
+  # vanished from the report entirely.
+  hazards:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-2025, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - name: Hazardous inputs, against the built binary
+        run: cargo test --locked --test hazards -- --nocapture
+
+  # Behaviour that differs by operating system, asserted rather than
+  # hoped: report paths, TZ independence, case-insensitive filesystems,
+  # the reserved Windows filenames, and a child that refuses before it
+  # reads stdin.
+  #
+  # Run twice on purpose. TZ is honoured on macOS and Linux and ignored
+  # on Windows, so a suite that depends on it passes on two platforms
+  # and fails on the third; requiring identical results with it set and
+  # with it absent is what makes the independence a check rather than a
+  # claim.
+  platform:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-2025, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - name: Platform behaviour, with TZ set
+        env:
+          TZ: UTC
+        run: cargo test --locked --test platform -- --nocapture
+      - name: Platform behaviour, with TZ unset
+        run: cargo test --locked --test platform -- --nocapture
+
+  # The corpus pins the cases somebody thought of; this generates the
+  # ones nobody did and feeds each to BOTH MCP servers.
+  #
+  # Scoped to the shared `extract_numbers` tool. One tool name, one
+  # schema, two servers: an agent must get the same answer whichever it
+  # reaches, so a divergence there is a bug. It is deliberately not a
+  # comparison of the CLI against the extension — those are different
+  # surfaces, one terminal-first and one IDE-first, and they are meant
+  # to differ.
+  #
+  # The seed is fixed here and printed by the script, so a failure names
+  # the document, the format and the seed that produced it.
+  differential:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.13
+      - name: Install dependencies
+        working-directory: .
+        run: bun install --frozen-lockfile
+      - run: cargo build --locked --release
+      - name: Both servers, over generated documents
+        working-directory: .
+        env:
+          DIFFERENTIAL_SEED: '20260812'
+        run: bun scripts/differential-extraction.ts
+
+  # A standing net over the pure layer — the literal scanner in
+  # extract/source.rs and the strict numeric test in extract/policy.rs.
+  # Those are where this crate slices, indexes and parses bytes it did
+  # not write; everything else is handed a value a parser resolved.
+  #
+  # Time-boxed rather than run to convergence: 60 seconds a target, not
+  # a proof. Any panic, any hang, any non-finite value reaching a report
+  # is a failure, and proptest shrinks the input so a red build names
+  # the shortest document that still breaks it.
+  fuzz:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - name: Fuzz the literal scanner and the numeric policy
+        env:
+          NUMBERS_LE_FUZZ: '60'
+        run: cargo test --locked --release --bin numbers-le fuzz -- --test-threads=1 --nocapture
+
+  # A wall-clock ceiling on a fixed tree, and a linearity check beside
+  # it. secrets-le was fifty times slower than its siblings for a
+  # release because nothing measured it, and a position lookup went
+  # quadratic on one long line for the same reason.
+  #
+  # The tree is generated from a fixed seed rather than checked in; the
+  # ceiling is 10x a local measurement recorded in tests/budget.rs with
+  # the machine it came from.
+  budget:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - name: Scan a five hundred file tree inside its budget
+        env:
+          NUMBERS_LE_BUDGET: '1'
+        run: cargo test --locked --release --test budget -- --test-threads=1 --nocapture
+
+  # Does this crate open what it claims to open? One file per extension
+  # the alias table names, plus a dozen it has never heard of, in one
+  # tree. Every one must produce a report line.
+  #
+  # It is also where a format offered in the tool schema with no corpus
+  # document fails: seven languages were advertised with nothing in
+  # fixtures/ exercising them, so nothing was checking their parity with
+  # the extension however green the build was.
+  coverage-matrix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c # master
+        with:
+          toolchain: stable
+      - name: Every extension the crate names, opened
+        run: cargo test --locked --test coverage_matrix -- --nocapture

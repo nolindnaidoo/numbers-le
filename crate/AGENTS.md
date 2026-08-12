@@ -37,7 +37,8 @@ crate/src/
 ├── walk.rs      ignore-aware tree walking
 ├── scan.rs      one file end to end — the only path either surface calls
 ├── cli.rs       the terminal surface
-└── mcp/         the agent surface
+├── mcp/         the agent surface
+└── fuzz.rs      test-only: the proptest net over the pure layer
 ```
 
 - **`extract/` touches no filesystem.** It takes document text and a
@@ -48,6 +49,11 @@ crate/src/
   for one.
 - **`scan.rs` and `walk.rs` are the only modules allowed to touch the
   filesystem.**
+- **`fuzz.rs` sits outside `extract/` on purpose.** The coverage floor
+  is measured per module in `extract/`, and a test-only module in there
+  would be a file the floor has to make an exception for. It cannot go
+  in `tests/` either: an integration test can only reach the binary, and
+  a fuzz target calls the pure function directly.
 - **Both surfaces are one implementation.** `cli.rs` and `mcp/` both call
   `scan.rs`. A surface that grows its own copy of a rule is a bug, and
   a contract test asserts the two return identical reports for the same
@@ -104,6 +110,20 @@ crate/src/
   frontends inherit it from their parsers; the corpus pins it.
 - **Only finite numbers.** `NaN` and `±Infinity` are dropped wherever a
   format can express them.
+- **Whitespace is JavaScript's set, never Rust's.** `extract/js.rs`
+  defines it and every trim in this crate goes through `js::trim`.
+  `str::trim` strips U+0085 and keeps U+FEFF; `String.prototype.trim`
+  does the exact opposite, and the extension uses the latter. A format
+  name carrying a byte-order mark resolved on one server and fell
+  through on the other, and because coercion keys off the resolved
+  format the two then disagreed about whether a quoted `"42"` was a
+  number.
+- **Nothing on the MCP path may turn a number into a
+  `serde_json::Value`.** A `Value` cannot hold a raw token, so putting
+  one in re-parses it with `serde_json`'s float reader — the reader
+  `json.rs` refuses to use. The reply is serialized through serde with
+  `Box<RawValue>` intact, which is why `mcp/mod.rs` builds a `Response`
+  struct rather than a `json!`.
 - **An unrecognised format is a text scan, not a refusal**, and its name
   is `unknown` — the extension's name, and user-visible in every MCP
   answer's `fileType`.
@@ -118,7 +138,9 @@ crate/src/
   it, both returned nothing.
 - **The `toml` crate is TOML 1.0 and `@iarna/toml` is 0.5.** A mixed
   inline array is read here and refused there. Sanctioned divergence,
-  pinned by `fixtures/documents/mixed-array.toml`.
+  pinned by `fixtures/documents/mixed-array.toml`. Every sanctioned
+  divergence lives in SPEC.md under "Deliberate divergences" — read it
+  before deciding a `differential` failure is not a bug.
 - **`JSON.parse("")` throws and jsonc-parser does not**, so an empty
   document is a parse failure here by hand.
 - **Positions are found by value, not by text**, because a number's
@@ -253,10 +275,32 @@ CI additionally builds on macOS, Windows and Linux, checks the Rust 1.88
 minimum version, runs `cargo audit`, the no-inline-`#[allow]` and
 no-filesystem-in-`extract/` policy jobs, the per-module coverage floor,
 the gated scenarios, and parity — including on extension-side edits to
-`src/extraction/**`, so neither frontend can drift green. A change is
-not done because it compiles; it is done when it is tested, linted,
-documented where behavior changed (README / CHANGELOG / SPEC / this
-file), and honest — claims in docs must match the code.
+`src/extraction/**`, so neither frontend can drift green.
+
+Six more jobs exist because something real got through a green build:
+
+| job | what it runs | what it catches |
+|---|---|---|
+| `hazards` | `tests/hazards.rs`, all three OSes | a BOM read as content, a PNG failing `--strict`, a non-UTF-8 file vanishing, an unreadable directory ending the run. Every case: no panic, no hang, exit 0/1/2 and never a signal |
+| `platform` | `tests/platform.rs`, all three OSes, twice — `TZ` set and unset | `\` in a report path, a suite that depends on `TZ`, a file reported twice on a case-insensitive filesystem, a stdin test that races the refusal it asserts |
+| `differential` | `scripts/differential-extraction.ts` | the **shared `extract_numbers` tool** answering differently on the two servers, over ~2,500 generated documents. Not a CLI-against-extension comparison: those are different surfaces and are meant to differ |
+| `fuzz` | `src/fuzz.rs`, 60 s a target | a panic, a hang or a non-finite value out of the literal scanner or the numeric policy |
+| `budget` | `tests/budget.rs` | a scan an order of magnitude slower than it was, and the quadratic class — 4x the tree must not take more than 6x as long |
+| `coverage-matrix` | `tests/coverage_matrix.rs` | a format the walk skips, a format offered in the schema that does not resolve, and a format offered with no corpus document |
+
+Two of them are gated so they do not run on every push: set
+`NUMBERS_LE_BUDGET` for `budget` and `NUMBERS_LE_FUZZ` (seconds) for the
+full fuzz. A gated run that does not happen says so on stderr rather
+than passing.
+
+**Do not weaken one of these to make it green.** If a job goes red the
+bug is real until it is proven otherwise, and a genuine divergence
+between the two frontends is written down in SPEC.md under "Deliberate
+divergences" with its reason — never quietly generated around.
+
+A change is not done because it compiles; it is done when it is tested,
+linted, documented where behavior changed (README / CHANGELOG / SPEC /
+this file), and honest — claims in docs must match the code.
 
 ## Commits and pull requests
 

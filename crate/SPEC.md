@@ -149,6 +149,52 @@ An untyped format hands over text this policy parses itself, so INI,
 `.env` and CSV keep what the text said. The source languages and the text
 scan read their literals directly and keep everything.
 
+## Deliberate divergences
+
+The extension is the reference implementation and a difference is a
+regression until it is written down here. These are the ones that are
+written down. Each is pinned by a test, and
+`scripts/differential-extraction.ts` generates around them rather than
+through them.
+
+**Refusal messages are not shared.** They come from whichever parser
+refused, and `@iarna/toml` and the `toml` crate word them differently.
+A refused document is compared structurally: both refused, both said so,
+both returned nothing.
+
+**TOML 0.5 against TOML 1.0.** `@iarna/toml` is 0.5, where an inline
+array must hold one type; the `toml` crate is 1.0, where `[1, 2.5]` is
+fine. Pinned by `fixtures/documents/mixed-array.toml`.
+
+**A TOML integer at or above 2^53.** `@iarna/toml` hands back a
+JavaScript `BigInt` there, which the extension's numeric walk does not
+recognise, so it reports nothing; the `toml` crate returns an `i64`,
+which becomes the same double a JavaScript number would. Past `i64` the
+two part company again: the crate refuses the document — TOML integers
+are 64-bit signed, so it is not a valid document — where `@iarna/toml`
+wraps it silently to a negative number that is not in the file. **The
+crate's answer is the one to trust**; the extension's is a defect in the
+library it parses with, and reading its `BigInt` would mean reporting
+the wrapped value as though it were real. `toml.rs` pins both halves.
+
+**An INI value led by U+0085.** Whitespace is JavaScript's set
+everywhere this crate trims — `js.rs` defines it, because Rust's strips
+U+0085 and keeps U+FEFF and JavaScript does the exact opposite. The one
+place that is not enough is INI: `rust-ini` strips U+0085 from a value
+before the numeric policy sees it and the npm `ini` package does not, so
+`rate = <U+0085>42` is the number 42 here and text there. A difference
+between two parsers rather than a trim this crate performs, and not
+recoverable from what either hands back.
+
+**A base-prefixed literal wider than 128 bits.** `0x` followed by 33 or
+more hex digits is **consumed and not reported**, on both sides — there
+is no correctly-rounded reader for it here, and guessing a double is
+worse than reporting nothing. Consuming it is what stops the scan
+re-entering the run and reporting the digits inside as separate numbers.
+Not a divergence — both frontends do this — but it is the one place the
+tool knowingly stays silent about something numeric, so it is recorded
+next to the ones that are.
+
 ## Output contract
 
 **stdout is protocol, stderr is human.** One JSON report per line, one

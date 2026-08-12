@@ -9,9 +9,12 @@
 //! duplicating them here would add a path-traversal surface for no
 //! capability. The tool that needs a filesystem is `numbers_le_scan`.
 
+use serde::Serialize;
+use serde_json::value::RawValue;
 use serde_json::{Value, json};
 
-use crate::extract::{self, Options, SUPPORTED_FORMATS, resolve_format};
+use super::Envelope;
+use crate::extract::{self, Notation, Options, SUPPORTED_FORMATS, resolve_format};
 
 const DEFAULT_MAX_RESULTS: usize = 500;
 const MAX_MAX_RESULTS: usize = 5000;
@@ -63,7 +66,29 @@ pub(crate) fn definition() -> Value {
     })
 }
 
-pub(crate) fn run(arguments: &Value) -> Result<Value, String> {
+/// One finding, with the number as the **token this crate rendered**.
+///
+/// `Box<RawValue>` rather than a JSON number, and it must stay one all
+/// the way to stdout: `1e+21` and `1e21` are the same double and
+/// different bytes, and only one of them is what the npm server writes.
+/// Anything that turns this into a `serde_json::Value` re-parses it with
+/// `serde_json`'s float reader, which `json.rs` documents as not
+/// correctly rounded — that is how `123456789012345680000` came back
+/// from this tool as a different number.
+#[derive(Serialize)]
+pub(crate) struct Finding {
+    value: Box<RawValue>,
+    notation: Notation,
+}
+
+#[derive(Serialize)]
+pub(crate) struct Extracted {
+    numbers: Vec<Finding>,
+    #[serde(rename = "fileType")]
+    file_type: &'static str,
+}
+
+pub(crate) fn run(arguments: &Value) -> Result<Envelope<Extracted>, String> {
     let content = arguments
         .get("content")
         .and_then(Value::as_str)
@@ -91,13 +116,11 @@ pub(crate) fn run(arguments: &Value) -> Result<Value, String> {
         .into_iter()
         .collect();
 
-    let mut values: Vec<Value> = extract::extract(content, format, Options)
+    let mut values: Vec<Finding> = extract::extract(content, format, Options)
         .into_iter()
-        .map(|number| {
-            let token = serde_json::value::RawValue::from_string(number.value)
-                .map(|raw| serde_json::to_value(raw).expect("a raw token serializes"))
-                .expect("a rendered number is valid JSON");
-            json!({ "value": token, "notation": number.notation })
+        .map(|number| Finding {
+            value: RawValue::from_string(number.value).expect("a rendered number is valid JSON"),
+            notation: number.notation,
         })
         .collect();
 
@@ -106,7 +129,7 @@ pub(crate) fn run(arguments: &Value) -> Result<Value, String> {
     // numbers in a file means the distinct numbers.
     if arguments.get("dedupe").and_then(Value::as_bool) == Some(true) {
         let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
-        values.retain(|value| seen.insert(value["value"].to_string()));
+        values.retain(|finding| seen.insert(finding.value.get().to_string()));
     }
 
     // The `truncated` flag matters more than the cap: a silently
@@ -118,9 +141,12 @@ pub(crate) fn run(arguments: &Value) -> Result<Value, String> {
     let count = values.len();
     Ok(super::envelope(
         "extract_numbers",
-        &json!({ "numbers": values, "fileType": format }),
+        Extracted {
+            numbers: values,
+            file_type: format,
+        },
         count,
-        &diagnostics,
+        diagnostics,
         truncated,
     ))
 }
@@ -149,6 +175,21 @@ mod tests {
     use crate::extract::corpus::document;
 
     const CASES: &str = include_str!("../../fixtures/mcp-extract-numbers.json");
+
+    /// The envelope as text — what the server actually writes. Every
+    /// number in it is the token this crate rendered.
+    fn text(arguments: &Value) -> String {
+        serde_json::to_string(&run(arguments).expect("a result")).expect("an envelope serializes")
+    }
+
+    /// The envelope parsed back, for the assertions that index into it.
+    ///
+    /// Parsing is lossy for a number past the double's shortest
+    /// round-trip — that is the whole reason the server never parses one
+    /// — so a test that cares about the token asserts on `text` instead.
+    fn answer(arguments: &Value) -> Value {
+        serde_json::from_str(&text(arguments)).expect("an envelope is JSON")
+    }
 
     #[derive(Debug, Deserialize)]
     struct Case {
@@ -193,7 +234,7 @@ mod tests {
                 .as_ref()
                 .is_some_and(|expected| expected["ok"] == false)
             {
-                let ours = run(&arguments).expect("a result");
+                let ours = answer(&arguments);
                 if case.file.as_deref() == Some("mixed-array.toml") {
                     assert_eq!(ours["ok"], true, "this parser reads TOML 1.0");
                     assert_eq!(
@@ -218,19 +259,14 @@ mod tests {
             match (case.expected, case.expected_error) {
                 (_, Some(expected)) => {
                     assert_eq!(
-                        run(&arguments).expect_err(&case.name),
+                        run(&arguments).err().expect(&case.name),
                         expected,
                         "{}",
                         case.name
                     );
                 }
                 (Some(expected), None) => {
-                    assert_eq!(
-                        run(&arguments).expect(&case.name),
-                        expected,
-                        "{}",
-                        case.name
-                    );
+                    assert_eq!(answer(&arguments), expected, "{}", case.name);
                 }
                 (None, None) => panic!("{} pins neither a result nor an error", case.name),
             }
@@ -264,8 +300,7 @@ mod tests {
     /// extractor started reporting hex at all.
     #[test]
     fn the_shared_tool_returns_a_number_and_its_notation() {
-        let result =
-            run(&json!({ "content": r#"{"a":8080}"#, "format": "json" })).expect("a result");
+        let result = answer(&json!({ "content": r#"{"a":8080}"#, "format": "json" }));
         assert!(result["data"]["numbers"][0]["value"].is_number());
         assert_eq!(result["data"]["numbers"][0]["value"], 8080);
         assert_eq!(result["data"]["numbers"][0]["notation"], "decimal");
@@ -283,20 +318,47 @@ mod tests {
     /// held to. The *number token* is.
     #[test]
     fn a_number_keeps_the_token_javascript_would_write() {
-        let result = run(&json!({ "content": r#"{"a":1e21,"b":1e-7}"#, "format": "json" }))
-            .expect("a result");
-        let text = serde_json::to_string(&result["data"]["numbers"]).expect("serializes");
-        assert_eq!(
-            text,
-            r#"[{"notation":"decimal","value":1e+21},{"notation":"decimal","value":1e-7}]"#
+        let written = text(&json!({ "content": r#"{"a":1e21,"b":1e-7}"#, "format": "json" }));
+        assert!(
+            written.contains(r#"{"value":1e+21,"notation":"decimal"}"#),
+            "{written}"
         );
+        assert!(
+            written.contains(r#"{"value":1e-7,"notation":"decimal"}"#),
+            "{written}"
+        );
+    }
+
+    /// The regression the `differential` job found. The envelope used to
+    /// be assembled as a `serde_json::Value`, and putting a raw token
+    /// into one re-parses it with `serde_json`'s float reader — the
+    /// reader `json.rs` documents as not correctly rounded. This tool
+    /// answered `1.2345678901234567e+20` where the npm server answered
+    /// `123456789012345680000`: a different token *and* a different
+    /// double, on the one surface the two servers must share.
+    #[test]
+    fn a_large_integer_keeps_the_double_and_the_token_the_other_server_writes() {
+        for format in ["env", "ini", "csv", "json", "unknown", "rust"] {
+            let content = match format {
+                "env" => "RATE=123456789012345680000".to_string(),
+                "ini" => "[s]\nrate = 123456789012345680000".to_string(),
+                "csv" => "a,123456789012345680000".to_string(),
+                "json" => r#"{"a":123456789012345680000}"#.to_string(),
+                "rust" => "let a = 123456789012345680000;".to_string(),
+                _ => "rate 123456789012345680000".to_string(),
+            };
+            let written = text(&json!({ "content": content, "format": format }));
+            assert!(
+                written.contains(r#""value":123456789012345680000"#),
+                "{format}: {written}"
+            );
+        }
     }
 
     /// An unresolved format is a text scan, never a refusal.
     #[test]
     fn an_unknown_format_falls_back_rather_than_failing() {
-        let result =
-            run(&json!({ "content": "rate 0.0825", "format": "nonsense" })).expect("a result");
+        let result = answer(&json!({ "content": "rate 0.0825", "format": "nonsense" }));
         assert_eq!(result["data"]["fileType"], FALLBACK_FORMAT);
         assert_eq!(result["data"]["numbers"][0]["value"], 0.0825);
     }
@@ -305,11 +367,10 @@ mod tests {
     /// whole. Under the text scan `u32` was the number 32.
     #[test]
     fn a_source_language_is_routed_by_name() {
-        let result = run(&json!({
+        let result = answer(&json!({
             "content": "const MODE: u32 = 0o755;",
             "format": "rust",
-        }))
-        .expect("a result");
+        }));
         assert_eq!(result["data"]["fileType"], "rust");
         assert_eq!(
             result["data"]["numbers"],
@@ -322,7 +383,7 @@ mod tests {
     /// cannot be shared — but the shape is.
     #[test]
     fn a_broken_document_is_an_unsuccessful_envelope() {
-        let result = run(&json!({ "content": "{not json", "format": "json" })).expect("a result");
+        let result = answer(&json!({ "content": "{not json", "format": "json" }));
         assert_eq!(result["ok"], false);
         assert_eq!(result["diagnostics"][0]["code"], "parse-error");
         assert_eq!(result["data"]["numbers"], json!([]));
@@ -330,7 +391,9 @@ mod tests {
 
     #[test]
     fn a_fractional_cap_is_refused() {
-        let error = run(&json!({ "content": "x", "maxResults": 1.5 })).expect_err("a refusal");
+        let error = run(&json!({ "content": "x", "maxResults": 1.5 }))
+            .err()
+            .expect("a refusal");
         assert_eq!(error, "maxResults must be a positive integer");
     }
 }

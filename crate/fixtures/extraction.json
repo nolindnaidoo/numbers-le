@@ -372,6 +372,222 @@
 				}
 			],
 			"errors": []
+		},
+		{
+			"name": "numbers.kt as kotlin",
+			"file": "numbers.kt",
+			"fileType": "kotlin",
+			"expected": [
+				{
+					"value": "755",
+					"notation": "decimal"
+				},
+				{
+					"value": "255",
+					"notation": "hex"
+				},
+				{
+					"value": "10",
+					"notation": "binary"
+				},
+				{
+					"value": "1000000",
+					"notation": "decimal"
+				},
+				{
+					"value": "100",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "4",
+					"notation": "decimal"
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "numbers.cs as csharp",
+			"file": "numbers.cs",
+			"fileType": "csharp",
+			"expected": [
+				{
+					"value": "755",
+					"notation": "decimal"
+				},
+				{
+					"value": "255",
+					"notation": "hex"
+				},
+				{
+					"value": "10",
+					"notation": "binary"
+				},
+				{
+					"value": "1000000",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "4",
+					"notation": "decimal"
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "numbers.cpp as cpp",
+			"file": "numbers.cpp",
+			"fileType": "cpp",
+			"expected": [
+				{
+					"value": "493",
+					"notation": "octal"
+				},
+				{
+					"value": "255",
+					"notation": "hex"
+				},
+				{
+					"value": "1000000",
+					"notation": "decimal"
+				},
+				{
+					"value": "1.5",
+					"notation": "decimal"
+				},
+				{
+					"value": "4",
+					"notation": "decimal"
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "numbers.c as c",
+			"file": "numbers.c",
+			"fileType": "c",
+			"expected": [
+				{
+					"value": "493",
+					"notation": "octal"
+				},
+				{
+					"value": "255",
+					"notation": "hex"
+				},
+				{
+					"value": "100",
+					"notation": "decimal"
+				},
+				{
+					"value": "1",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "numbers.js as javascript",
+			"file": "numbers.js",
+			"fileType": "javascript",
+			"expected": [
+				{
+					"value": "9007199254740992",
+					"notation": "bigint"
+				},
+				{
+					"value": "755",
+					"notation": "decimal"
+				},
+				{
+					"value": "255",
+					"notation": "hex"
+				},
+				{
+					"value": "1000000",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "4",
+					"notation": "decimal"
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "numbers.sql as sql",
+			"file": "numbers.sql",
+			"fileType": "sql",
+			"expected": [
+				{
+					"value": "755",
+					"notation": "decimal"
+				},
+				{
+					"value": "42",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "255",
+					"notation": "hex"
+				},
+				{
+					"value": "1",
+					"notation": "decimal"
+				},
+				{
+					"value": "7",
+					"notation": "decimal"
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "numbers.sh as shellscript",
+			"file": "numbers.sh",
+			"fileType": "shellscript",
+			"expected": [
+				{
+					"value": "755",
+					"notation": "decimal"
+				},
+				{
+					"value": "255",
+					"notation": "hex"
+				},
+				{
+					"value": "1",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.0825",
+					"notation": "decimal"
+				},
+				{
+					"value": "0",
+					"notation": "decimal"
+				}
+			],
+			"errors": []
 		}
 	],
 	"rendering": [

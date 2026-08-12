@@ -121,9 +121,18 @@ pub(crate) fn is_source(format: &str) -> bool {
 /// the response. The corpus caught it on the first run.
 pub(crate) const FALLBACK_FORMAT: &str = "unknown";
 
+/// Lower-cased, with JavaScript's whitespace stripped and a leading dot
+/// dropped.
+///
+/// **`js::trim`, not `str::trim`.** Rust trims U+0085 and keeps U+FEFF;
+/// JavaScript does the opposite, and the extension resolves a format
+/// name with `String.prototype.trim`. A `format` argument carrying a
+/// byte-order mark — which is what a shell here-doc or a copied config
+/// value hands you — resolved to `json` there and fell through to the
+/// text scan here, so the shared tool disagreed about whether a quoted
+/// `"42"` was a number.
 fn normalise(value: &str) -> String {
-    value
-        .trim()
+    super::js::trim(value)
         .to_lowercase()
         .trim_start_matches('.')
         .to_string()
@@ -199,6 +208,25 @@ mod tests {
     fn a_name_is_normalised_before_it_is_matched() {
         assert_eq!(resolve_format(Some("  JSON "), None), "json");
         assert_eq!(resolve_format(Some(".toml"), None), "toml");
+    }
+
+    /// The regression the `differential` job found. A byte-order mark is
+    /// whitespace to JavaScript and not to Rust, so this name resolved
+    /// on the extension and fell through to the text scan here — and
+    /// the coercion rules key off the resolved format, so the two
+    /// servers then disagreed about whether a quoted number was one.
+    #[test]
+    fn a_byte_order_mark_around_a_name_is_whitespace_as_it_is_in_javascript() {
+        assert_eq!(resolve_format(Some("\u{feff}json"), None), "json");
+        assert_eq!(resolve_format(Some("json\u{feff}"), None), "json");
+        assert_eq!(resolve_format(Some("\u{feff}\u{feff}toml"), None), "toml");
+        // U+0085 is whitespace to Rust and not to JavaScript, so it is
+        // part of the name and the name does not resolve.
+        assert_eq!(
+            resolve_format(Some("\u{85}json"), None),
+            FALLBACK_FORMAT,
+            "a next-line character is not whitespace in JavaScript"
+        );
     }
 
     #[test]

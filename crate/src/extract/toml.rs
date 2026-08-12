@@ -69,15 +69,35 @@ mod tests {
     }
 
     /// A TOML integer is an i64 and a JavaScript number is an f64, so
-    /// past 2^53 both frontends lose the same precision. Matching that
-    /// is the point; avoiding it would be the divergence.
+    /// past 2^53 the value loses precision — the same precision a
+    /// JavaScript number loses, which is what makes it the right answer.
+    ///
+    /// **The extension does not agree here**, and the `differential` job
+    /// found it: `@iarna/toml` hands back a `BigInt` at or above 2^53
+    /// and the extension's numeric walk does not recognise one, so it
+    /// silently reports nothing. SPEC.md, "Deliberate divergences",
+    /// records which answer to trust and why.
     #[test]
-    fn an_integer_past_the_safe_range_loses_precision_the_same_way() {
+    fn an_integer_past_the_safe_range_loses_precision_rather_than_vanishing() {
         use crate::extract::render::js_number;
+        assert_eq!(
+            js_number(values("a = 9007199254740992")[0]),
+            "9007199254740992"
+        );
         assert_eq!(
             js_number(values("a = 9007199254740993")[0]),
             "9007199254740992"
         );
+    }
+
+    /// TOML integers are 64-bit signed, so one that does not fit is not
+    /// a valid document and is refused rather than guessed at.
+    /// `@iarna/toml` wraps it to a negative number that is nowhere in
+    /// the file; refusing is the answer an audit can act on.
+    #[test]
+    fn an_integer_too_large_for_toml_is_a_refusal_not_a_wrapped_value() {
+        assert!(values("a = 123456789012345680000").is_empty());
+        assert!(parse_error("a = 123456789012345680000").is_some());
     }
 
     #[test]

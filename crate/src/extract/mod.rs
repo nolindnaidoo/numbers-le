@@ -4,6 +4,7 @@ pub(crate) mod dotenv;
 pub(crate) mod fallback;
 pub(crate) mod format;
 pub(crate) mod ini;
+pub(crate) mod js;
 pub(crate) mod json;
 pub(crate) mod locate;
 pub(crate) mod policy;

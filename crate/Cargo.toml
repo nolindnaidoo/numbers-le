@@ -84,3 +84,12 @@ cast_precision_loss = "allow"
 # with one would make `0.1` and `0.10000000000000002` the same finding in
 # an audit whose whole job is telling them apart.
 float_cmp = "allow"
+
+[dev-dependencies]
+# The fuzz net in `src/fuzz.rs`. A dev dependency and nothing else: it
+# does not reach the binary, and it earns its place by shrinking a
+# failure to the shortest input that still breaks — a red build that
+# names a 4-character document is one somebody reads. `fork`, `timeout`
+# and the rest of the defaults are off; the targets are pure functions
+# with nothing to isolate.
+proptest = { version = "1", default-features = false, features = ["std"] }

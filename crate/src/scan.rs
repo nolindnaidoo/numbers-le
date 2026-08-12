@@ -125,8 +125,40 @@ fn is_binary(bytes: &[u8]) -> bool {
         .any(|byte| *byte == b'\0')
 }
 
+/// The path as the report spells it: **separated by `/` on every
+/// platform**.
+///
+/// A report is diffed against one produced on another machine and read
+/// by someone who does not have the tree. envsync-le shipped `\` on
+/// Windows for a release, which made every path in a Windows report
+/// differ from the same path in a Linux one, for no reason a reader
+/// could see.
+#[cfg(windows)]
+fn report_path(path: &StdPath) -> String {
+    path.to_string_lossy().replace('\\', "/")
+}
+
+/// The path as the report spells it. Nothing to rewrite here: `\` is a
+/// legal character in a Unix filename, and replacing it would rename
+/// the file in the report.
+#[cfg(not(windows))]
+fn report_path(path: &StdPath) -> String {
+    path.to_string_lossy().into_owned()
+}
+
+/// The report for a path the walk itself could not open — a locked
+/// directory, a loop, an entry the filesystem refused.
+///
+/// Carried rather than dropped, and a warning rather than a failure: one
+/// unreadable directory must not end an audit of everything beside it,
+/// and must not silently narrow it either. `--strict` is how a pipeline
+/// asks for zero tolerance.
+pub(crate) fn unreadable(path: &StdPath, reason: &str) -> FileReport {
+    skipped(report_path(path), format_of(path), reason)
+}
+
 pub(crate) fn scan_file(path: &PathBuf, options: ScanOptions) -> Scanned {
-    let file = path.to_string_lossy().into_owned();
+    let file = report_path(path);
     let format = options.format.unwrap_or_else(|| format_of(path));
 
     match std::fs::read(path) {
@@ -468,6 +500,30 @@ b = 0x1A
     fn the_human_line_carries_the_position_when_there_is_one() {
         let report = scan_content(r#"{"a":8080}"#, "a.json".into(), "json", plain());
         assert_eq!(describe(&report, &report.numbers[0]), "a.json:1:6  8080");
+    }
+
+    /// A path the walk itself could not open. It is a report line —
+    /// named, warned about, failing `--strict` — never a silent
+    /// narrowing of the audit and never the end of the run.
+    #[test]
+    fn a_path_the_walk_could_not_open_is_a_report_not_a_failure() {
+        let report = unreadable(StdPath::new("locked/config.toml"), "Permission denied");
+        assert!(report.was_skipped());
+        assert_eq!(report.format, "toml", "the name still resolves a format");
+        assert_eq!(exit_code(std::slice::from_ref(&report), false), 1);
+        assert_eq!(exit_code(&[report], true), 2, "--strict is opt-in");
+    }
+
+    /// Windows only, because on Unix there is nothing to rewrite: `\` is
+    /// a legal character in a filename there and replacing it would
+    /// rename the file in the report.
+    #[cfg(windows)]
+    #[test]
+    fn a_reported_path_is_separated_by_forward_slashes() {
+        assert_eq!(
+            report_path(StdPath::new(r"C:\src\pricing.toml")),
+            "C:/src/pricing.toml"
+        );
     }
 
     #[test]

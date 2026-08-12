@@ -19,6 +19,8 @@ use std::io::{BufRead, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
+use serde::Serialize;
+use serde_json::value::{RawValue, to_raw_value};
 use serde_json::{Value, json};
 
 use crate::extract::{Options, resolve_format};
@@ -30,6 +32,39 @@ const PROTOCOL_VERSION: &str = "2025-06-18";
 /// JSON-RPC error codes, from the spec.
 const INVALID_PARAMS: i64 = -32602;
 const METHOD_NOT_FOUND: i64 = -32601;
+
+/// One JSON-RPC reply, serialized through serde rather than assembled
+/// as a `Value`.
+///
+/// **That is not a style choice.** A number's JSON *token* is the
+/// contract this server shares with the npm one, and
+/// `serde_json::to_value` re-parses a raw token with `serde_json`'s own
+/// float reader — the reader `json.rs` documents as not correctly
+/// rounded. Routing a reply through a `Value` tree turned
+/// `123456789012345680000` into a different double *and* a different
+/// token, on the one surface where the two servers must agree byte for
+/// byte. A `RawValue` reaches stdout intact only if nothing on the way
+/// there parses it.
+#[derive(Serialize)]
+struct Response<'a> {
+    jsonrpc: &'a str,
+    id: &'a Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    result: Option<&'a RawValue>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error: Option<Failure>,
+}
+
+#[derive(Serialize)]
+struct Failure {
+    code: i64,
+    message: String,
+}
+
+/// A `Value` with no raw tokens in it, wrapped for the reply.
+fn raw(value: &Value) -> Box<RawValue> {
+    to_raw_value(value).expect("a value serializes")
+}
 
 pub(crate) fn serve() -> ExitCode {
     let stdin = std::io::stdin();
@@ -56,35 +91,38 @@ pub(crate) fn serve() -> ExitCode {
     ExitCode::SUCCESS
 }
 
-fn handle(request: &Value) -> Option<Value> {
+fn handle(request: &Value) -> Option<String> {
     let id = request.get("id").cloned();
     let method = request.get("method")?.as_str()?;
     // Notifications carry no id and get no reply.
-    id.as_ref()?;
+    let id = id?;
 
     let result = match method {
-        "initialize" => Ok(json!({
+        "initialize" => Ok(raw(&json!({
             "protocolVersion": PROTOCOL_VERSION,
             "capabilities": { "tools": {} },
             "serverInfo": { "name": "numbers-le", "version": env!("CARGO_PKG_VERSION") },
-        })),
-        "tools/list" => Ok(json!({ "tools": tool_definitions() })),
+        }))),
+        "tools/list" => Ok(raw(&json!({ "tools": tool_definitions() }))),
         "tools/call" => call_tool(request.get("params")),
-        "ping" => Ok(json!({})),
+        "ping" => Ok(raw(&json!({}))),
         other => Err((
             METHOD_NOT_FOUND,
             format!("this server does not implement {other}"),
         )),
     };
 
-    Some(match result {
-        Ok(result) => json!({ "jsonrpc": "2.0", "id": id, "result": result }),
-        Err((code, message)) => json!({
-            "jsonrpc": "2.0",
-            "id": id,
-            "error": { "code": code, "message": message },
-        }),
-    })
+    let (ok, failed) = match result {
+        Ok(result) => (Some(result), None),
+        Err((code, message)) => (None, Some(Failure { code, message })),
+    };
+    let response = Response {
+        jsonrpc: "2.0",
+        id: &id,
+        result: ok.as_deref(),
+        error: failed,
+    };
+    Some(serde_json::to_string(&response).expect("a response serializes"))
 }
 
 fn tool_definitions() -> Value {
@@ -136,7 +174,7 @@ fn tool_definitions() -> Value {
 /// errors; a tool that fails on its arguments returns a result carrying
 /// `isError`, so a model reads the reason and reacts rather than
 /// concluding the server is broken. Same rule as the npm server.
-fn call_tool(params: Option<&Value>) -> Result<Value, (i64, String)> {
+fn call_tool(params: Option<&Value>) -> Result<Box<RawValue>, (i64, String)> {
     let params = params.ok_or((INVALID_PARAMS, "no tool call was supplied".to_string()))?;
     let name = params
         .get("name")
@@ -163,7 +201,7 @@ fn call_tool(params: Option<&Value>) -> Result<Value, (i64, String)> {
     }
 }
 
-fn scan_tool(arguments: &Value) -> Result<Value, String> {
+fn scan_tool(arguments: &Value) -> Result<Envelope<Value>, String> {
     let inputs = requested_paths(arguments)?;
     let flag = |name: &str| {
         arguments
@@ -184,15 +222,24 @@ fn scan_tool(arguments: &Value) -> Result<Value, String> {
             .map(|name| resolve_format(Some(name), None)),
     };
 
-    let targets = walk::collect(&inputs, &walk_options)?;
-    let scanned = targets
+    let walked = walk::collect(&inputs, &walk_options)?;
+    let scanned = walked
+        .files
         .iter()
         .map(|target| scan::scan_file(target, options))
         .collect();
     // A binary file was never a text candidate, so it gets no report —
     // but the count is carried, because an agent reading `reports` as
     // the whole tree would otherwise be wrong about coverage.
-    let (read, binary) = scan::partition(scanned);
+    let (mut read, binary) = scan::partition(scanned);
+    // Same rule as the CLI, and through the same helper: a path the walk
+    // could not open is named rather than dropped or fatal.
+    read.extend(
+        walked
+            .unreadable
+            .iter()
+            .map(|(path, reason)| scan::unreadable(path, reason)),
+    );
     let reports: Vec<Value> = read
         .iter()
         .map(|report| serde_json::to_value(report).expect("a report serializes"))
@@ -236,9 +283,9 @@ fn scan_tool(arguments: &Value) -> Result<Value, String> {
     let count = reports.len();
     Ok(envelope(
         "numbers_le_scan",
-        &json!({ "reports": reports, "numbers": numbers, "binaryFiles": binary }),
+        json!({ "reports": reports, "numbers": numbers, "binaryFiles": binary }),
         count,
-        &diagnostics,
+        diagnostics,
         false,
     ))
 }
@@ -267,34 +314,77 @@ fn requested_paths(arguments: &Value) -> Result<Vec<PathBuf>, String> {
 /// yes.** A file full of broken paths is the answer, not a failure to
 /// produce one — conflating the two would have a model report a broken
 /// tool when what it actually learned is that the paths are wrong.
-pub(crate) fn envelope(
-    tool: &str,
-    data: &Value,
+///
+/// Generic over its data so a tool whose data holds pre-rendered number
+/// tokens keeps them: `Value` cannot carry a raw token, and putting one
+/// in re-parses it.
+#[derive(Serialize)]
+pub(crate) struct Envelope<D: Serialize> {
+    ok: bool,
+    data: D,
+    diagnostics: Vec<Value>,
+    meta: Meta,
+}
+
+#[derive(Serialize)]
+struct Meta {
+    tool: &'static str,
     count: usize,
-    diagnostics: &[Value],
     truncated: bool,
-) -> Value {
+}
+
+pub(crate) fn envelope<D: Serialize>(
+    tool: &'static str,
+    data: D,
+    count: usize,
+    diagnostics: Vec<Value>,
+    truncated: bool,
+) -> Envelope<D> {
     let ok = !diagnostics
         .iter()
         .any(|diagnostic| diagnostic["severity"].as_str() == Some("error"));
-    json!({
-        "ok": ok,
-        "data": data,
-        "diagnostics": diagnostics,
-        "meta": { "tool": tool, "count": count, "truncated": truncated },
-    })
+    Envelope {
+        ok,
+        data,
+        diagnostics,
+        meta: Meta {
+            tool,
+            count,
+            truncated,
+        },
+    }
 }
 
 /// An MCP tool result: the envelope as text (what a model reads) and
 /// the same envelope structured. Identical to what the npm server
 /// emits, so a caller diffing the two servers finds nothing.
-fn tool_result(envelope: &Value) -> Value {
+///
+/// Both halves are serialized from the envelope itself rather than from
+/// a `Value` of it, so a number token survives into both.
+#[derive(Serialize)]
+struct ToolResult<'a, D: Serialize> {
+    content: [Text; 1],
+    #[serde(rename = "structuredContent")]
+    structured_content: &'a Envelope<D>,
+    #[serde(rename = "isError")]
+    is_error: bool,
+}
+
+#[derive(Serialize)]
+struct Text {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    text: String,
+}
+
+fn tool_result<D: Serialize>(envelope: &Envelope<D>) -> Box<RawValue> {
     let text = serde_json::to_string_pretty(envelope).expect("an envelope serializes");
-    json!({
-        "content": [{ "type": "text", "text": text }],
-        "structuredContent": envelope,
-        "isError": false,
+    to_raw_value(&ToolResult {
+        content: [Text { kind: "text", text }],
+        structured_content: envelope,
+        is_error: false,
     })
+    .expect("a tool result serializes")
 }
 
 fn warning(code: &str, message: &str) -> Value {
@@ -303,11 +393,11 @@ fn warning(code: &str, message: &str) -> Value {
 
 /// The tool could not run on the arguments given. `isError` so a model
 /// reads the message and corrects itself.
-fn tool_failure(message: &str) -> Value {
-    json!({
+fn tool_failure(message: &str) -> Box<RawValue> {
+    raw(&json!({
         "content": [{ "type": "text", "text": message }],
         "isError": true,
-    })
+    }))
 }
 
 #[cfg(test)]
@@ -319,24 +409,30 @@ mod tests {
         json!({ "jsonrpc": "2.0", "id": 1, "method": method, "params": params })
     }
 
+    /// The reply, parsed. The server answers with text rather than a
+    /// `Value` so a number token reaches stdout intact; a test that
+    /// wants to index into it parses it back.
+    fn reply(request: &Value) -> Value {
+        serde_json::from_str(&handle(request).expect("a reply")).expect("a reply is JSON")
+    }
+
     fn call(name: &str, arguments: &Value) -> Value {
-        handle(&request(
+        reply(&request(
             "tools/call",
             &json!({ "name": name, "arguments": arguments }),
         ))
-        .expect("a reply")
     }
 
     #[test]
     fn initialize_answers_with_the_protocol_version() {
-        let response = handle(&request("initialize", &json!({}))).expect("a reply");
+        let response = reply(&request("initialize", &json!({})));
         assert_eq!(response["result"]["protocolVersion"], PROTOCOL_VERSION);
         assert_eq!(response["result"]["serverInfo"]["name"], "numbers-le");
     }
 
     #[test]
     fn tools_list_offers_both_tools() {
-        let response = handle(&request("tools/list", &json!({}))).expect("a reply");
+        let response = reply(&request("tools/list", &json!({})));
         let tools = response["result"]["tools"].as_array().expect("tools");
         let names: Vec<&str> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
         assert_eq!(names, ["extract_numbers", "numbers_le_scan"]);
@@ -350,7 +446,7 @@ mod tests {
 
     #[test]
     fn an_unknown_method_is_a_protocol_error() {
-        let response = handle(&request("does/not/exist", &json!({}))).expect("a reply");
+        let response = reply(&request("does/not/exist", &json!({})));
         assert_eq!(response["error"]["code"], METHOD_NOT_FOUND);
     }
 

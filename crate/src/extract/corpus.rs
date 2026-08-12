@@ -27,6 +27,13 @@ pub(crate) fn document(name: &str) -> &'static str {
         "numbers.go" => include_str!("../../fixtures/documents/numbers.go"),
         "numbers.java" => include_str!("../../fixtures/documents/numbers.java"),
         "numbers.ts" => include_str!("../../fixtures/documents/numbers.ts"),
+        "numbers.js" => include_str!("../../fixtures/documents/numbers.js"),
+        "numbers.kt" => include_str!("../../fixtures/documents/numbers.kt"),
+        "numbers.cs" => include_str!("../../fixtures/documents/numbers.cs"),
+        "numbers.cpp" => include_str!("../../fixtures/documents/numbers.cpp"),
+        "numbers.c" => include_str!("../../fixtures/documents/numbers.c"),
+        "numbers.sql" => include_str!("../../fixtures/documents/numbers.sql"),
+        "numbers.sh" => include_str!("../../fixtures/documents/numbers.sh"),
         other => panic!("the corpus has no document named {other}"),
     }
 }
@@ -177,12 +184,17 @@ mod document_tests {
         }
     }
 
+    /// Every format the tool schema offers, plus the text scan. Read
+    /// from `SUPPORTED_FORMATS` rather than listed here, because a list
+    /// is a thing that goes stale: seven languages were offered with no
+    /// corpus document for a release, and a hand-written list of eleven
+    /// was what let that happen.
     #[test]
     fn the_corpus_covers_every_extractor() {
+        use crate::extract::{FALLBACK_FORMAT, SUPPORTED_FORMATS};
+
         let corpus: Corpus = serde_json::from_str(CORPUS).expect("the corpus is valid JSON");
-        for format in [
-            "json", "yaml", "toml", "ini", "env", "csv", "unknown", "python", "rust", "go", "java",
-        ] {
+        for format in SUPPORTED_FORMATS.into_iter().chain([FALLBACK_FORMAT]) {
             assert!(
                 corpus.documents.iter().any(|case| case.file_type == format),
                 "no corpus case reads {format}"

@@ -33,6 +33,23 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `octal`, `scientific`, `bigint` — on both the CLI report and the MCP
   tool, under that one name on both.
 
+- **Corpus documents for the seven languages that had none** — Kotlin,
+  C#, C++, C, JavaScript, SQL and shell. All eighteen offered formats
+  now have one, and `coverage-matrix` fails if a format is ever
+  advertised without one again: a format nothing in `fixtures/`
+  exercises is a format whose parity with the extension nobody checks,
+  however green the build is.
+
+- **Six CI jobs.** `hazards` and `platform` on all three operating
+  systems; `differential`, `fuzz`, `budget` and `coverage-matrix` on
+  Linux. Each exists because something real got through: a BOM read as
+  content, a report full of `\` on Windows, a scan fifty times slower
+  than its siblings, a SIGABRT slicing a multi-byte character, two
+  frontends disagreeing about a format name. `differential` generates
+  2,500 documents and puts each through **both** MCP servers;
+  `fuzz` runs proptest against the literal scanner and the numeric
+  policy for a minute a target.
+
 ### Changed
 
 - **Behaviour change: `data.numbers` in `extract_numbers` is an array of
@@ -60,6 +77,61 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   made the flag useless in CI. A file that *is* text and could not be
   read keeps its named `skipped` diagnostic and keeps failing `--strict`;
   that distinction is the point.
+
+### Fixed
+
+- **A number could come back from `extract_numbers` as a different
+  number.** The MCP envelope was assembled as a `serde_json::Value`, and
+  putting a rendered token into one re-parses it with `serde_json`'s
+  float reader — the reader this crate documents as not correctly
+  rounded and refuses to use anywhere else.
+  `123456789012345680000` came back as `1.2345678901234567e+20`: a
+  different double *and* a different token, on the one surface where
+  this server and the npm one must agree byte for byte. The reply is
+  now serialized through serde, so a raw token reaches stdout intact.
+  Found by `differential`.
+
+- **A format name carrying a byte-order mark now resolves.** Rust's
+  `str::trim` strips U+0085 and keeps U+FEFF; JavaScript's does the
+  exact opposite, and the extension resolves a format with
+  `String.prototype.trim`. So `"﻿json"` resolved to JSON there and
+  fell through to a text scan here — and because coercion keys off the
+  resolved format, the two then disagreed about whether a quoted `"42"`
+  was a number. Every trim in this crate now goes through `extract/js.rs`,
+  which is JavaScript's set: a CSV cell, an INI value or a `.env` value
+  led by a byte-order mark is a number on both servers, and one led by
+  U+0085 is a number on neither. Found by `differential`.
+
+- **One unreadable directory no longer ends the whole audit.** A
+  directory the filesystem refused aborted the walk: exit 2, and no
+  reports at all, so a tree of ten thousand files answered nothing
+  because one of them was locked. Exit 2 means the *question* was
+  malformed. Such a path is now carried as a `skipped` report — named on
+  stderr, in the JSON, failing `--strict` — like any other file that
+  could not be read. Found by `hazards`.
+
+- **Report paths use `/` on every platform.** `to_string_lossy` gave
+  `\` on Windows, so a report produced there could not be diffed against
+  one produced anywhere else. Found by `platform`.
+
+### Known divergences
+
+Recorded in [SPEC.md](SPEC.md) under "Deliberate divergences", each
+pinned by a test.
+
+- **A TOML integer at or above 2^53.** `@iarna/toml` returns a
+  JavaScript `BigInt`, which the extension's numeric walk does not
+  recognise, so it silently reports nothing; the `toml` crate returns an
+  `i64` and this reports the same double a JavaScript number would.
+  Past `i64` the crate refuses the document — TOML integers are 64-bit
+  signed — where `@iarna/toml` wraps it to a negative number that is not
+  in the file. Found by `differential`; the crate's answer is the one to
+  trust.
+
+- **An INI value led by U+0085.** `rust-ini` strips it before the
+  numeric policy sees it and the npm `ini` package does not, so
+  `rate = <U+0085>42` is a number here and text there. A difference
+  between two parsers rather than a trim this crate performs.
 
 ## [0.1.0] - 2026-08-11
 
