@@ -97,12 +97,12 @@ actually written in it.
 
 ### Known divergence
 
-- **An integer a double cannot hold is left out of the results**, in
-  every format. `9007199254740993` is not reported by either frontend
-  now: past 2^53 the nearest double is a different number, and reporting
-  it would mean naming a value the file does not contain. The CLI used
-  to report the rounded value and no longer does, so the two agree.
-  2^53 itself is exact and is still reported.
+- **A TOML integer at or above 2^53 (9,007,199,254,740,992)** is
+  silently missing from this extension's results — the TOML parser it
+  uses hands back a value the numeric walk does not recognise. The Rust
+  CLI reports it. If you are checking constants that large in a TOML
+  file, use the CLI; the difference and its reason are written down in
+  the CLI's [SPEC.md](crate/SPEC.md).
 
 ## [2.2.4] - 2026-08-07
 

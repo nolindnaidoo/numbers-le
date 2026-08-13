@@ -10,26 +10,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.2.0] - 2026-08-12
 
 The numbers this reports out of a source file are now the numbers that
-are actually written in it, and a number a double cannot hold is left
-out rather than quietly rounded to one that is not in the file.
-
-### Fixed
-
-- **A number the file does not contain is never reported.** `big =
-  9007199254740993` came back as `9007199254740992`: past 2^53 the gap
-  between neighbouring doubles is wider than one, so the literal landed
-  on a value nobody wrote. For a tool whose whole output is numbers,
-  that is the worst answer available — worse than saying nothing. It was
-  not TOML-only either; the same literal rounded identically in JSON and
-  YAML.
-
-  Such a literal is now left out. Printing it exactly was not on the
-  table: every JavaScript number is a double, so the extension cannot
-  hold one at all, and returning the exact text here would make the
-  shared `extract_numbers` tool answer differently on the two servers.
-  Both showing nothing is the answer they can both give. **2^53 itself
-  round-trips exactly and is still reported**, as are larger even
-  numbers — the tool asks the double rather than applying a cutoff.
+are actually written in it, and a number too large for a double is
+printed exactly as it was found rather than quietly rounded.
 
 ### Added
 
@@ -136,9 +118,19 @@ out rather than quietly rounded to one that is not in the file.
 
 ### Known divergences
 
-One place where this and the editor extension answer differently on
-purpose, recorded in [SPEC.md](SPEC.md) with a test holding each side to
-what it actually does.
+Two places where this and the editor extension answer differently on
+purpose, both recorded in [SPEC.md](SPEC.md) with a test holding each
+side to what it actually does.
+
+- **A TOML integer at or above 2^53 (9,007,199,254,740,992).** The
+  extension reports nothing for one — its TOML parser hands back a value
+  its numeric walk does not recognise, and the number silently vanishes
+  from the results. This reports it, as the same double JavaScript would
+  give. **Trust this one.** Larger still, past the 64-bit range TOML
+  allows, this refuses the document and says why — that document is not
+  valid TOML — where the extension's parser wraps the value round to a
+  negative number that appears nowhere in the file, and then drops that
+  too.
 
 - **An INI value led by U+0085.** The two INI parsers disagree about
   whether that character is whitespace, so `rate = <U+0085>42` is the
