@@ -55,6 +55,9 @@ fn visit_spanned(node: &Node, out: &mut Vec<(Literal, usize)>) {
         Node::NumberLit(literal) => {
             if let Ok(value) = literal.value.parse::<f64>()
                 && value.is_finite()
+                // Past 2^53 the double is not the literal — see
+                // `policy::text_holds_exactly`.
+                && super::policy::text_holds_exactly(literal.value)
             {
                 out.push((Literal::decimal(value), literal.range.start));
             }

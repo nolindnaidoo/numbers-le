@@ -23,7 +23,15 @@ pub(crate) fn extract(text: &str) -> Vec<Literal> {
 
 fn convert(value: &Toml) -> Value {
     match value {
-        Toml::Integer(number) => Value::Number(*number as f64),
+        // Past 2^53 a double cannot say what the literal said, and the
+        // extension cannot hold it either — see `policy::holds_exactly`.
+        Toml::Integer(number) => {
+            if super::policy::holds_exactly(*number) {
+                Value::Number(*number as f64)
+            } else {
+                Value::Other
+            }
+        }
         Toml::Float(number) => Value::Number(*number),
         Toml::String(text) => Value::Text(text.clone()),
         Toml::Array(items) => Value::Seq(items.iter().map(convert).collect()),
@@ -78,15 +86,30 @@ mod tests {
     /// silently reports nothing. SPEC.md, "Deliberate divergences",
     /// records which answer to trust and why.
     #[test]
-    fn an_integer_past_the_safe_range_loses_precision_rather_than_vanishing() {
+    fn an_integer_past_the_safe_range_vanishes_rather_than_losing_precision() {
         use crate::extract::render::js_number;
+
+        // 2^53 itself is exact, so it is still a number.
         assert_eq!(
             js_number(values("a = 9007199254740992")[0]),
             "9007199254740992"
         );
+
+        // 2^53 + 1 is not, and the double nearest to it is 2^53. Reporting
+        // that was reporting a number the file does not contain — the one
+        // thing a tool whose whole output is numbers must never do. This
+        // test asserted that behaviour deliberately once; the judgement is
+        // reversed, and absent now beats wrong. See SPEC.md.
+        assert!(
+            values("a = 9007199254740993").is_empty(),
+            "a literal the double cannot hold must not be reported"
+        );
+
+        // The boundary below stays a number, so the guard is not a blanket
+        // ban on large integers.
         assert_eq!(
-            js_number(values("a = 9007199254740993")[0]),
-            "9007199254740992"
+            js_number(values("a = 9007199254740991")[0]),
+            "9007199254740991"
         );
     }
 
