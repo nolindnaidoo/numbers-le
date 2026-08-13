@@ -22,15 +22,7 @@ pub(crate) fn extract(text: &str) -> Vec<Literal> {
 fn convert(node: &Yaml<'_>) -> Value {
     match node {
         Yaml::Value(scalar) => match scalar {
-            // Past 2^53 a double cannot say what the literal said —
-            // see `policy::holds_exactly`.
-            Scalar::Integer(number) => {
-                if super::policy::holds_exactly(*number) {
-                    Value::Number(*number as f64)
-                } else {
-                    Value::Other
-                }
-            }
+            Scalar::Integer(number) => Value::Number(*number as f64),
             Scalar::FloatingPoint(number) => Value::Number(number.into_inner()),
             Scalar::String(text) => Value::Text(text.to_string()),
             // `.inf` and `.nan` are real YAML scalars and not numbers

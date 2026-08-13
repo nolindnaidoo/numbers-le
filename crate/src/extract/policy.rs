@@ -48,54 +48,6 @@ impl Literal {
     }
 }
 
-/// Whether a double still says what the integer literal said.
-///
-/// Past 2^53 the gap between neighbouring doubles is more than one, so
-/// a literal can land on a value that is not the one written. The
-/// boundary is not a single constant: 2^53 itself round-trips exactly,
-/// and so do larger even numbers, while 2^53 + 1 does not. Asking the
-/// double directly is both simpler and correct where a cutoff is not.
-///
-/// A tool whose entire output is numbers must never print a number that
-/// was not in the file. `big = 9007199254740993` parsed into a double
-/// and printed back came out `9007199254740992` — not the value, not a
-/// refusal, just quietly wrong.
-///
-/// The extension cannot hold these at all: every JavaScript number is a
-/// double, so `@iarna/toml` wraps past the i64 range and drops the
-/// value. Reporting the exact literal here would therefore make the
-/// shared `extract_numbers` tool answer differently on the two servers,
-/// which is the one thing it may not do. Both sides showing nothing is
-/// the answer they can both give, and it is the honest one: absent
-/// beats wrong.
-pub(crate) fn holds_exactly(value: i64) -> bool {
-    #[expect(
-        clippy::cast_precision_loss,
-        clippy::cast_possible_truncation,
-        reason = "the lossy cast is the question being asked, and the \
-                  round trip back to i64 is what answers it"
-    )]
-    let round_trip = (value as f64) as i64;
-    round_trip == value
-}
-
-/// The same question for a literal this module parsed from text.
-///
-/// Only plain integers are checked. A fractional or exponent literal is
-/// approximate by nature and its shortest round-trip rendering is the
-/// documented answer, so `0.1` is not a defect and must not be dropped.
-pub(crate) fn text_holds_exactly(text: &str) -> bool {
-    let digits = text.strip_prefix(['-', '+']).unwrap_or(text);
-    if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
-        return true;
-    }
-    match text.parse::<i64>() {
-        Ok(exact) => holds_exactly(exact),
-        // Wider than i64 is wider than the exact range by definition.
-        Err(_) => false,
-    }
-}
-
 /// Decimal or scientific, for a token matching the plain grammar below.
 /// Nothing else can appear there: the strict test rejects every base
 /// prefix before this is reached.
