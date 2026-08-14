@@ -95,6 +95,12 @@ actually written in it.
   still write one number per line; the notation belongs to the report
   surfaces.
 
+- **New icon artwork.** All sixteen tools were redrawn in one style, so
+  the family reads as one set wherever the listings sit side by side —
+  the Marketplace, Open VSX and letools.dev. The framing is unchanged:
+  the drawing fills 65.8% of an 800×800 canvas, and every smaller size
+  is derived from that one file rather than drawn again.
+
 ### Known divergence
 
 - **A TOML integer at or above 2^53 (9,007,199,254,740,992)** is
