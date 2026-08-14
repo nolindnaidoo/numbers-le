@@ -9,7 +9,7 @@ This file covers the **VS Code extension**. The Rust CLI in `crate/` is a
 separate product on its own cadence and keeps its own
 [CHANGELOG](crate/CHANGELOG.md).
 
-## [2.3.0] - 2026-08-12
+## [2.3.0] - 2026-08-14
 
 The numbers pulled out of a source file are now the numbers that are
 actually written in it.
