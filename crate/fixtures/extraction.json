@@ -41,6 +41,22 @@
 			"errors": []
 		},
 		{
+			"name": "numbers.jsonc as jsonc",
+			"file": "numbers.jsonc",
+			"fileType": "jsonc",
+			"expected": [
+				{
+					"value": "3",
+					"notation": "decimal"
+				},
+				{
+					"value": "1.5",
+					"notation": "decimal"
+				}
+			],
+			"errors": []
+		},
+		{
 			"name": "numbers.yaml as yaml",
 			"file": "numbers.yaml",
 			"fileType": "yaml",
@@ -185,6 +201,22 @@
 				{
 					"value": "-1500",
 					"notation": "scientific"
+				}
+			],
+			"errors": []
+		},
+		{
+			"name": "numbers.tsv as tsv",
+			"file": "numbers.tsv",
+			"fileType": "tsv",
+			"expected": [
+				{
+					"value": "8080",
+					"notation": "decimal"
+				},
+				{
+					"value": "0.25",
+					"notation": "decimal"
 				}
 			],
 			"errors": []

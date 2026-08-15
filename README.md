@@ -4,7 +4,7 @@
 <h1 align="center">Numbers-LE: Zero Hassle Number Extraction</h1>
 <p align="center">
   <b>Pull every number out of the current file in one keystroke</b><br/>
-  <i>JSON, YAML, CSV, TOML, INI, Environment files, and twelve source languages</i>
+  <i>JSON/JSONC, YAML, CSV/TSV, TOML, INI, Environment files, and twelve source languages</i>
 </p>
 
 <p align="center">

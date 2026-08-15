@@ -21,17 +21,15 @@
 ///
 /// Both a VS Code `languageId` and a file extension appear here, because
 /// the extension resolves by the first and this crate by the second.
-const ALIASES: [(&str, &str); 43] = [
+const ALIASES: [(&str, &str); 41] = [
     ("json", "json"),
-    ("jsonc", "json"),
+    ("jsonc", "jsonc"),
     ("yaml", "yaml"),
     ("yml", "yaml"),
     ("csv", "csv"),
-    ("tsv", "csv"),
+    ("tsv", "tsv"),
     ("toml", "toml"),
     ("ini", "ini"),
-    ("cfg", "ini"),
-    ("conf", "ini"),
     ("env", "env"),
     ("dotenv", "env"),
     ("python", "python"),
@@ -70,10 +68,12 @@ const ALIASES: [(&str, &str); 43] = [
 /// The formats a caller can name, for the tool schema's enum. Held equal
 /// to the alias table by a test, so a format can never be offered and
 /// then not resolve.
-pub(crate) const SUPPORTED_FORMATS: [&str; 18] = [
+pub(crate) const SUPPORTED_FORMATS: [&str; 20] = [
     "json",
+    "jsonc",
     "yaml",
     "csv",
+    "tsv",
     "toml",
     "ini",
     "env",
@@ -193,11 +193,9 @@ mod tests {
     #[test]
     fn the_extensions_aliases_are_honoured() {
         for (alias, expected) in [
-            ("jsonc", "json"),
+            ("jsonc", "jsonc"),
             ("yml", "yaml"),
-            ("tsv", "csv"),
-            ("cfg", "ini"),
-            ("conf", "ini"),
+            ("tsv", "tsv"),
             ("dotenv", "env"),
         ] {
             assert_eq!(resolve_format(Some(alias), None), expected, "{alias}");

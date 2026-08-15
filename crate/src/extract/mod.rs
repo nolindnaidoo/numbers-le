@@ -66,12 +66,14 @@ pub(crate) fn extract(text: &str, format: &str, _options: Options) -> Vec<Number
 pub(crate) fn raw(text: &str, format: &str) -> Vec<Literal> {
     let key = format::canonical(format);
     match key {
-        "json" => json::extract(text),
+        "json" => json::extract(text, false),
+        "jsonc" => json::extract(text, true),
         "yaml" => yaml::extract(text),
         "toml" => toml::extract(text),
         "ini" => ini::extract(text),
         "env" => dotenv::extract(text),
-        "csv" => csv::extract(text),
+        "csv" => csv::extract(text, csv::COMMA),
+        "tsv" => csv::extract(text, csv::TAB),
         _ if format::is_source(key) => source::extract(text, key),
         _ => fallback::extract(text),
     }
@@ -85,11 +87,13 @@ pub(crate) fn extract_located(text: &str, format: &str, _options: Options) -> Ve
 /// Why a document yielded nothing, when the reason is a parse failure.
 pub(crate) fn parse_error(text: &str, format: &str) -> Option<String> {
     match format::canonical(format) {
-        "json" => json::parse_error(text),
+        "json" => json::parse_error(text, false),
+        "jsonc" => json::parse_error(text, true),
         "yaml" => yaml::parse_error(text),
         "toml" => toml::parse_error(text),
         "ini" => ini::parse_error(text),
-        "csv" => csv::parse_error(text),
+        "csv" => csv::parse_error(text, csv::COMMA),
+        "tsv" => csv::parse_error(text, csv::TAB),
         // dotenv reads lines and the fallback scans runs; neither has a
         // shape it can reject.
         _ => None,

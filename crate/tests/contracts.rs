@@ -398,3 +398,34 @@ fn the_cli_and_the_mcp_server_report_the_same_thing() {
         .clone();
     assert_eq!(from_mcp, from_cli, "the two surfaces disagree");
 }
+
+/// **Naming a format may never find less than not naming one.**
+///
+/// `.conf` and `.cfg` named the INI reader, which takes a bare `port
+/// 6379` line as a valid document holding no values, so a redis or
+/// nginx config reported no numbers with an empty `diagnostics` and
+/// exit 1 — a file reading as one that was clean. `.tsv` named the comma
+/// reader, so a tab row was one cell and never numeric in full.
+#[test]
+fn a_named_format_never_finds_less_than_the_text_scan() {
+    let tree = Tree::new("named-vs-scan");
+    for (name, body) in [
+        ("redis.conf", "port 6379\ntimeout 300\n"),
+        ("app.cfg", "port 8080\nmaxmemory 512\n"),
+        ("limits.tsv", "id\tport\nsvc\t8080\n"),
+    ] {
+        let named = tree.write(name, body);
+        let bare = tree.write(&format!("{name}.unknown-to-this-tool"), body);
+        let values = |path: &std::path::Path| -> Vec<String> {
+            let run = run(&[&path.to_string_lossy()]);
+            reports(&run)[0]["numbers"]
+                .as_array()
+                .expect("numbers")
+                .iter()
+                .map(|n| n["value"].as_str().expect("a value").to_string())
+                .collect()
+        };
+        assert_eq!(values(&named), values(&bare), "{name}");
+        assert!(!values(&named).is_empty(), "{name} found nothing at all");
+    }
+}

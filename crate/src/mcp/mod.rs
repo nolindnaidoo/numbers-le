@@ -130,10 +130,10 @@ fn tool_definitions() -> Value {
         extract::definition(),
         {
             "name": "numbers_le_scan",
-            "description": "Extract every string value from files or directories, with the \
-                            file it came from and, where it can be located, its line and \
-                            column. Reads the filesystem; never writes to it, and never judges \
-                            a string.",
+            "description": "Extract every number from files or directories, with the file \
+                            it came from and, where it can be located, its line and column. \
+                            Reads the filesystem; never writes to it, and never judges a \
+                            number.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -146,8 +146,8 @@ fn tool_definitions() -> Value {
                     "format": {
                         "type": "string",
                         "description": "Force a format for every file instead of inferring one \
-                                        per file name. An unrecognised name falls back to \
-                                        quoted numbers.",
+                                        per file name. An unrecognised name falls back to the \
+                                        text scan, named `unknown`.",
                     },
                     "dedupe": {
                         "type": "boolean",

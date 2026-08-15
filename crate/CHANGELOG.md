@@ -7,6 +7,34 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-15
+
+### Fixed
+
+- **`.conf` and `.cfg` are scanned as text.** They named the INI reader,
+  which takes a bare `port 6379` line as a valid document holding no
+  values — so a redis or nginx config, the shape where numbers live,
+  reported none with an empty `diagnostics` and exit 1. `.properties`
+  keeps the INI reader.
+
+- **`.tsv` is read with a tab.** It named the comma reader, so a whole
+  row arrived as one cell, which is never numeric in full.
+
+- **`.jsonc` reads comments and trailing commas** instead of naming the
+  strict reader that rejects them.
+
+- **`numbers_le_scan` describes numbers.** Its MCP tool description was
+  string-le's, verbatim — "extract every **string** value … never judges
+  a **string**", with a `format` parameter promising a fallback to
+  "quoted numbers". That is the text an agent reads to decide whether to
+  call the tool.
+
+### Added
+
+- `jsonc` and `tsv` are formats in their own right, each with a corpus
+  document, and a contract test — observed failing before the fix —
+  asserting that naming a format never finds less than not naming one.
+
 ## [0.2.2] - 2026-08-15
 
 ### Added
@@ -245,6 +273,7 @@ Written down rather than left to be discovered, each pinned by a test.
   vanish from the report entirely, which reads to whoever ran it as
   "that file was clean".
 
+[0.3.0]: https://crates.io/crates/numbers-le/0.3.0
 [0.2.2]: https://crates.io/crates/numbers-le/0.2.2
 [0.2.1]: https://crates.io/crates/numbers-le/0.2.1
 [0.2.0]: https://crates.io/crates/numbers-le/0.2.0

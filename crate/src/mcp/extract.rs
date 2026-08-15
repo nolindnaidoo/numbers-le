@@ -96,7 +96,7 @@ pub(crate) fn run(arguments: &Value) -> Result<Envelope<Extracted>, String> {
     let max_results = read_max_results(arguments)?;
 
     // Never a refusal. An agent that knows nothing about a document
-    // still gets its quoted numbers, which is the whole reason a format
+    // still gets the numbers its text holds, which is the whole reason a format
     // is optional here where it is required in the sibling tools.
     let format = resolve_format(
         arguments.get("format").and_then(Value::as_str),

@@ -40,7 +40,8 @@ pub(crate) fn locate(text: &str, format_key: &str, values: &[Literal]) -> Vec<Fo
     // than threaded through, because a second scan of one document is
     // cheaper than a signature every format has to carry.
     let spans: Option<Vec<(Literal, usize)>> = match key {
-        "json" => Some(json::extract_spanned(text)),
+        "json" => Some(json::extract_spanned(text, false)),
+        "jsonc" => Some(json::extract_spanned(text, true)),
         "unknown" => Some(fallback::spanned(text)),
         _ if format::is_source(key) => Some(source::spanned(text, key)),
         _ => None,

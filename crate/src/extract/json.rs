@@ -16,11 +16,11 @@ use jsonc_parser::{CollectOptions, ParseOptions, parse_to_ast};
 
 use super::policy::{Coercion, Literal, Value, collect};
 
-fn strict() -> ParseOptions {
+fn options(comments: bool) -> ParseOptions {
     ParseOptions {
-        allow_comments: false,
+        allow_comments: comments,
         allow_loose_object_property_names: false,
-        allow_trailing_commas: false,
+        allow_trailing_commas: comments,
         allow_missing_commas: false,
         allow_single_quoted_strings: false,
         allow_hexadecimal_numbers: false,
@@ -28,8 +28,11 @@ fn strict() -> ParseOptions {
     }
 }
 
-pub(crate) fn extract(text: &str) -> Vec<Literal> {
-    collect(&parsed(text).unwrap_or(Value::Other), Coercion::Typed)
+pub(crate) fn extract(text: &str, comments: bool) -> Vec<Literal> {
+    collect(
+        &parsed(text, comments).unwrap_or(Value::Other),
+        Coercion::Typed,
+    )
 }
 
 /// The numbers, each with the byte offset of the token that produced it.
@@ -38,8 +41,8 @@ pub(crate) fn extract(text: &str) -> Vec<Literal> {
 /// place a value — which matters more here than in a string extractor,
 /// because a number's source text and its printed form are often
 /// different: `1e21` is written one way and reported another.
-pub(crate) fn extract_spanned(text: &str) -> Vec<(Literal, usize)> {
-    let Ok(result) = parse_to_ast(text, &CollectOptions::default(), &strict()) else {
+pub(crate) fn extract_spanned(text: &str, comments: bool) -> Vec<(Literal, usize)> {
+    let Ok(result) = parse_to_ast(text, &CollectOptions::default(), &options(comments)) else {
         return Vec::new();
     };
     let Some(root) = result.value else {
@@ -74,8 +77,8 @@ fn visit_spanned(node: &Node, out: &mut Vec<(Literal, usize)>) {
     }
 }
 
-fn parsed(text: &str) -> Option<Value> {
-    let result = parse_to_ast(text, &CollectOptions::default(), &strict()).ok()?;
+fn parsed(text: &str, comments: bool) -> Option<Value> {
+    let result = parse_to_ast(text, &CollectOptions::default(), &options(comments)).ok()?;
     result.value.as_ref().map(convert)
 }
 
@@ -106,8 +109,8 @@ fn convert_object(object: &Object) -> Value {
     )
 }
 
-pub(crate) fn parse_error(text: &str) -> Option<String> {
-    match parse_to_ast(text, &CollectOptions::default(), &strict()) {
+pub(crate) fn parse_error(text: &str, comments: bool) -> Option<String> {
+    match parse_to_ast(text, &CollectOptions::default(), &options(comments)) {
         Err(error) => Some(format!("Failed to parse JSON: {error}")),
         // jsonc-parser reads an empty document as a successful parse of
         // nothing; `JSON.parse("")` throws. An empty file is a parse
@@ -125,7 +128,7 @@ mod tests {
     use crate::extract::render::js_number;
 
     fn values(text: &str) -> Vec<f64> {
-        extract(text)
+        extract(text, false)
             .into_iter()
             .map(|literal| literal.value)
             .collect()
@@ -167,7 +170,7 @@ mod tests {
     #[test]
     fn a_span_points_at_the_token() {
         let document = r#"{"a":8080}"#;
-        let (literal, offset) = extract_spanned(document)[0];
+        let (literal, offset) = extract_spanned(document, false)[0];
         assert_eq!(literal.value, 8080.0);
         assert_eq!(&document[offset..offset + 4], "8080");
     }
@@ -175,7 +178,7 @@ mod tests {
     #[test]
     fn the_spanned_walk_yields_the_same_numbers_in_the_same_order() {
         let document = r#"{"a":1,"b":{"c":2,"d":[3,4]}}"#;
-        let spanned: Vec<f64> = extract_spanned(document)
+        let spanned: Vec<f64> = extract_spanned(document, false)
             .into_iter()
             .map(|(literal, _)| literal.value)
             .collect();
@@ -185,22 +188,22 @@ mod tests {
     #[test]
     fn a_broken_document_yields_nothing_and_says_why() {
         assert!(values("{not json").is_empty());
-        assert!(parse_error("{not json").is_some());
-        assert!(parse_error(r#"{"a":1}"#).is_none());
+        assert!(parse_error("{not json", false).is_some());
+        assert!(parse_error(r#"{"a":1}"#, false).is_none());
     }
 
     /// `JSON.parse("")` throws and jsonc-parser shrugs, so an empty
     /// document is a failure here by hand.
     #[test]
     fn an_empty_document_is_a_parse_failure() {
-        assert!(parse_error("").is_some());
-        assert!(parse_error("   \n ").is_some());
-        assert!(parse_error("{}").is_none());
+        assert!(parse_error("", false).is_some());
+        assert!(parse_error("   \n ", false).is_some());
+        assert!(parse_error("{}", false).is_none());
     }
 
     #[test]
     fn the_loosenings_are_off() {
-        assert!(parse_error(r#"{"a":1,}"#).is_some());
-        assert!(parse_error(r#"{"a":0x1A}"#).is_some());
+        assert!(parse_error(r#"{"a":1,}"#, false).is_some());
+        assert!(parse_error(r#"{"a":0x1A}"#, false).is_some());
     }
 }

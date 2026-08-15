@@ -21,6 +21,8 @@ pub(crate) fn document(name: &str) -> &'static str {
         "numbers.ini" => include_str!("../../fixtures/documents/numbers.ini"),
         "numbers.env" => include_str!("../../fixtures/documents/numbers.env"),
         "numbers.csv" => include_str!("../../fixtures/documents/numbers.csv"),
+        "numbers.tsv" => include_str!("../../fixtures/documents/numbers.tsv"),
+        "numbers.jsonc" => include_str!("../../fixtures/documents/numbers.jsonc"),
         "numbers.txt" => include_str!("../../fixtures/documents/numbers.txt"),
         "numbers.py" => include_str!("../../fixtures/documents/numbers.py"),
         "numbers.rs" => include_str!("../../fixtures/documents/numbers.rs"),
