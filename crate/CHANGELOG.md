@@ -7,6 +7,24 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-08-15
+
+### Fixed
+
+- **`.env.local` and its siblings are read as dotenv.** Resolution split
+  on the last dot, so `.env.local`, `.env.production` and
+  `.env.test.local` asked `local` and `production` for a format, got
+  nothing, and fell to the text scan — which has no key/value grammar
+  and no comment rule. A commented-out `# POLL=500` became a real
+  finding, while the `.env` beside it dropped it correctly. Coercion
+  changed too: the text scan and the dotenv reader disagree about what
+  counts.
+
+  The leading dot is the signal, so the check runs before `normalise`
+  strips it: `env.ts` is an ordinary TypeScript file and reading it as
+  dotenv would silence it, which is the worse mistake. `.envrc` is
+  direnv's shell script and stays out. Both are pinned.
+
 ## [0.3.0] - 2026-08-15
 
 ### Fixed
@@ -273,6 +291,7 @@ Written down rather than left to be discovered, each pinned by a test.
   vanish from the report entirely, which reads to whoever ran it as
   "that file was clean".
 
+[0.3.1]: https://crates.io/crates/numbers-le/0.3.1
 [0.3.0]: https://crates.io/crates/numbers-le/0.3.0
 [0.2.2]: https://crates.io/crates/numbers-le/0.2.2
 [0.2.1]: https://crates.io/crates/numbers-le/0.2.1
