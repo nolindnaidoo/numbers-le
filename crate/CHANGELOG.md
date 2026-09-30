@@ -7,6 +7,17 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **The shared `extract_numbers` tool reports where each number is**, as
+  its siblings do: a 1-based line and UTF-16 column for JSON, the source
+  languages and plain text, where the scanner knows the exact offset. A
+  parsed format (YAML, TOML, CSV, INI, dotenv) still carries no position:
+  its parser hands over resolved values, and placing one would be a search
+  for its digits, which can land in a key. Both servers answer the same.
+
 ## [0.3.1] - 2026-08-15
 
 ### Fixed

@@ -69,7 +69,7 @@ The same engine runs as an [MCP](https://modelcontextprotocol.io) server, so an 
 extract_numbers(content, format?, filename?, dedupe?, maxResults?)
 ```
 
-Returns the values in document order, capped at 500 by default with `meta.truncated`. A format is optional — anything unrecognised is scanned as plain text rather than refused.
+Returns the values in document order, each with the notation it was written in and — for JSON, source code and plain text, where the position is exact — its 1-based line and column; a parsed format (YAML, TOML, CSV, INI, dotenv) carries no position rather than a guessed one. Capped at 500 by default with `meta.truncated`. A format is optional — anything unrecognised is scanned as plain text rather than refused.
 
 The server takes content and returns data — it reads no files and makes no network requests of its own. Published as [`numbers-le-mcp`](https://www.npmjs.com/package/numbers-le-mcp) on npm and as `io.github.nolindnaidoo/numbers-le` in the [MCP registry](https://registry.modelcontextprotocol.io).
 
@@ -243,12 +243,12 @@ a build only tells you how busy the runner was.
 <!-- coverage:start -->
 | Metric | Coverage |
 | --- | --- |
-| Statements | 90.65% |
-| Branches | 84.08% |
-| Functions | 96.34% |
-| Lines | 92.42% |
+| Statements | 91.10% |
+| Branches | 84.12% |
+| Functions | 96.57% |
+| Lines | 92.73% |
 
-358 test cases across 23 files, plus an integration suite that runs
+362 test cases across 24 files, plus an integration suite that runs
 in a real VS Code extension host and an end-to-end test that installs the
 built `.vsix` into a clean profile.
 

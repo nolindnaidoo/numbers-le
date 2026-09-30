@@ -341,7 +341,7 @@ Order matters beyond this repo: npm must be published *before* any Zed registry 
 
 ## Known limitations (documented, not bugs)
 
-- Results are values only — no source positions. Post-processing (dedupe/sort) operates on the flat number list, not on the original document; findings carry `{ value, notation }` and the commands project to the value at that seam.
+- The editor commands work on values only, and the shared MCP tool places a number only where its position is exact (JSON, source, text), never in a parsed format. Post-processing (dedupe/sort) operates on the flat number list, not on the original document; findings carry `{ value, notation }` and the commands project to the value at that seam.
 - File type comes from the filename extension; untitled documents prompt for a type.
 - The unknown-type fallback is a grammar-less text scan: `v1.2.3` reads as `1.2` and `0.3`. It is now reserved for prose — a source language goes to `formats/source.ts`, which has a grammar.
 - `formats/source.ts` reads comments and strings as well as code. A number in a docstring is still a number in the file; skipping it would need a per-language lexer.

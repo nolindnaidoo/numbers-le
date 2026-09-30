@@ -14,6 +14,8 @@ use serde_json::value::RawValue;
 use serde_json::{Value, json};
 
 use super::Envelope;
+use crate::extract::format::{FALLBACK_FORMAT, is_source};
+use crate::extract::position::Position;
 use crate::extract::{self, Notation, Options, SUPPORTED_FORMATS, resolve_format};
 
 const DEFAULT_MAX_RESULTS: usize = 500;
@@ -28,7 +30,9 @@ pub(crate) fn definition() -> Value {
                         including hex, binary, octal, digit separators and type suffixes. \
                         Anything else is scanned as plain text, so a format is optional. \
                         Returns each number with the notation it was written in, in document \
-                        order, not its position.",
+                        order, and its 1-based line and column where the source says exactly \
+                        where it is: JSON, the source languages and plain text. Parsed formats \
+                        (YAML, TOML, CSV, INI, dotenv) carry no position.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -79,6 +83,8 @@ pub(crate) fn definition() -> Value {
 pub(crate) struct Finding {
     value: Box<RawValue>,
     notation: Notation,
+    #[serde(flatten, skip_serializing_if = "Option::is_none")]
+    position: Option<Position>,
 }
 
 #[derive(Serialize)]
@@ -86,6 +92,33 @@ pub(crate) struct Extracted {
     numbers: Vec<Finding>,
     #[serde(rename = "fileType")]
     file_type: &'static str,
+}
+
+/// Where each number starts, where that is known rather than guessed:
+/// JSON, the source languages and the plain-text scan carry the offset of
+/// every token they read. The parsed formats hand over values their parser
+/// already resolved, and placing one would be a search for its digits,
+/// which can land in a key — the reason this tool carried no positions at
+/// all before. Those still get none.
+///
+/// Attached only when the spanned list and the extracted one agree one to
+/// one; the extension's `positions.ts` applies the same rule.
+fn exact_positions(
+    content: &str,
+    format: &str,
+    numbers: &[extract::Number],
+) -> Option<Vec<Option<Position>>> {
+    let exact = matches!(format, "json" | FALLBACK_FORMAT) || is_source(format);
+    if !exact {
+        return None;
+    }
+    let located = extract::extract_located(content, format, Options);
+    let aligned = located.len() == numbers.len()
+        && located
+            .iter()
+            .zip(numbers)
+            .all(|(found, number)| found.value == number.value);
+    aligned.then(|| located.into_iter().map(|found| found.position).collect())
 }
 
 pub(crate) fn run(arguments: &Value) -> Result<Envelope<Extracted>, String> {
@@ -116,11 +149,15 @@ pub(crate) fn run(arguments: &Value) -> Result<Envelope<Extracted>, String> {
         .into_iter()
         .collect();
 
-    let mut values: Vec<Finding> = extract::extract(content, format, Options)
+    let numbers = extract::extract(content, format, Options);
+    let positions = exact_positions(content, format, &numbers);
+    let mut values: Vec<Finding> = numbers
         .into_iter()
-        .map(|number| Finding {
+        .enumerate()
+        .map(|(index, number)| Finding {
             value: RawValue::from_string(number.value).expect("a rendered number is valid JSON"),
             notation: number.notation,
+            position: positions.as_ref().and_then(|found| found[index]),
         })
         .collect();
 
@@ -171,7 +208,6 @@ mod tests {
     use serde::Deserialize;
 
     use super::*;
-    use crate::extract::FALLBACK_FORMAT;
     use crate::extract::corpus::document;
 
     const CASES: &str = include_str!("../../fixtures/mcp-extract-numbers.json");
@@ -291,7 +327,12 @@ mod tests {
     }
 
     /// The contract two servers hold: each number a JSON number with the
-    /// notation it was written in, in document order, and no positions.
+    /// notation it was written in, in document order, and where the format
+    /// knows exactly, its line and column.
+    ///
+    /// **Changed in 0.4.0**: positions, which this tool never carried
+    /// because a parsed format can only guess them. JSON, source and text
+    /// know them, and only those place a number.
     ///
     /// **Changed in 0.2.0**: `numbers` used to be a bare array of JSON
     /// numbers. It moved because this was the one crate in the family
@@ -304,9 +345,14 @@ mod tests {
         assert!(result["data"]["numbers"][0]["value"].is_number());
         assert_eq!(result["data"]["numbers"][0]["value"], 8080);
         assert_eq!(result["data"]["numbers"][0]["notation"], "decimal");
+        assert_eq!(result["data"]["numbers"][0]["line"], 1);
+        assert_eq!(result["data"]["numbers"][0]["column"], 6);
+
+        let toml = answer(&json!({ "content": "k26 = 0x1A\n", "format": "toml" }));
+        assert_eq!(toml["data"]["numbers"][0]["value"], 26);
         assert!(
-            result["data"]["numbers"][0].get("line").is_none(),
-            "the shared tool never carries positions"
+            toml["data"]["numbers"][0].get("line").is_none(),
+            "a parsed format does not guess where a value came from"
         );
     }
 
@@ -320,11 +366,11 @@ mod tests {
     fn a_number_keeps_the_token_javascript_would_write() {
         let written = text(&json!({ "content": r#"{"a":1e21,"b":1e-7}"#, "format": "json" }));
         assert!(
-            written.contains(r#"{"value":1e+21,"notation":"decimal"}"#),
+            written.contains(r#"{"value":1e+21,"notation":"decimal","line":1,"column":6}"#),
             "{written}"
         );
         assert!(
-            written.contains(r#"{"value":1e-7,"notation":"decimal"}"#),
+            written.contains(r#"{"value":1e-7,"notation":"decimal","line":1,"column":15}"#),
             "{written}"
         );
     }
@@ -374,7 +420,7 @@ mod tests {
         assert_eq!(result["data"]["fileType"], "rust");
         assert_eq!(
             result["data"]["numbers"],
-            json!([{ "value": 493, "notation": "octal" }])
+            json!([{ "value": 493, "notation": "octal", "line": 1, "column": 19 }])
         );
     }
 

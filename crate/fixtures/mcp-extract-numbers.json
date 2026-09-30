@@ -11,35 +11,51 @@
 				"numbers": [
 					{
 						"value": 8080,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 2,
+						"column": 11
 					},
 					{
 						"value": 0.0825,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 3,
+						"column": 11
 					},
 					{
 						"value": -325,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 4,
+						"column": 12
 					},
 					{
 						"value": 1,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 8,
+						"column": 26
 					},
 					{
 						"value": 2.5,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 8,
+						"column": 29
 					},
 					{
 						"value": 1000000,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 8,
+						"column": 34
 					},
 					{
 						"value": 1e+21,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 9,
+						"column": 11
 					},
 					{
 						"value": 1e-7,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 10,
+						"column": 11
 					}
 				],
 				"fileType": "json"
@@ -195,23 +211,33 @@
 				"numbers": [
 					{
 						"value": 1.2,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 1,
+						"column": 10
 					},
 					{
 						"value": 0.3,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 1,
+						"column": 13
 					},
 					{
 						"value": 0.0825,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 1,
+						"column": 31
 					},
 					{
 						"value": 1000,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 1,
+						"column": 49
 					},
 					{
 						"value": -700,
-						"notation": "scientific"
+						"notation": "scientific",
+						"line": 1,
+						"column": 63
 					}
 				],
 				"fileType": "unknown"
@@ -234,23 +260,33 @@
 				"numbers": [
 					{
 						"value": 1.2,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 1,
+						"column": 10
 					},
 					{
 						"value": 0.3,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 1,
+						"column": 13
 					},
 					{
 						"value": 0.0825,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 1,
+						"column": 31
 					},
 					{
 						"value": 1000,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 1,
+						"column": 49
 					},
 					{
 						"value": -700,
-						"notation": "scientific"
+						"notation": "scientific",
+						"line": 1,
+						"column": 63
 					}
 				],
 				"fileType": "unknown"
@@ -318,15 +354,21 @@
 				"numbers": [
 					{
 						"value": 8080,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 2,
+						"column": 11
 					},
 					{
 						"value": 0.0825,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 3,
+						"column": 11
 					},
 					{
 						"value": -325,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 4,
+						"column": 12
 					}
 				],
 				"fileType": "json"
@@ -403,31 +445,45 @@
 				"numbers": [
 					{
 						"value": 65535,
-						"notation": "hex"
+						"notation": "hex",
+						"line": 1,
+						"column": 19
 					},
 					{
 						"value": 10,
-						"notation": "binary"
+						"notation": "binary",
+						"line": 2,
+						"column": 20
 					},
 					{
 						"value": 493,
-						"notation": "octal"
+						"notation": "octal",
+						"line": 3,
+						"column": 19
 					},
 					{
 						"value": 1000000,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 4,
+						"column": 23
 					},
 					{
 						"value": 10,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 5,
+						"column": 20
 					},
 					{
 						"value": 2.75,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 6,
+						"column": 19
 					},
 					{
 						"value": 755,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 7,
+						"column": 20
 					}
 				],
 				"fileType": "rust"
@@ -452,23 +508,33 @@
 				"numbers": [
 					{
 						"value": 493,
-						"notation": "octal"
+						"notation": "octal",
+						"line": 1,
+						"column": 14
 					},
 					{
 						"value": 255,
-						"notation": "hex"
+						"notation": "hex",
+						"line": 2,
+						"column": 14
 					},
 					{
 						"value": 1000000,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 3,
+						"column": 16
 					},
 					{
 						"value": 1500,
-						"notation": "scientific"
+						"notation": "scientific",
+						"line": 4,
+						"column": 21
 					},
 					{
 						"value": 42,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 5,
+						"column": 19
 					}
 				],
 				"fileType": "go"
@@ -493,23 +559,33 @@
 				"numbers": [
 					{
 						"value": 9007199254740992,
-						"notation": "bigint"
+						"notation": "bigint",
+						"line": 1,
+						"column": 15
 					},
 					{
 						"value": 255,
-						"notation": "hex"
+						"notation": "hex",
+						"line": 2,
+						"column": 14
 					},
 					{
 						"value": 1000000,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 3,
+						"column": 16
 					},
 					{
 						"value": 0.0825,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 4,
+						"column": 22
 					},
 					{
 						"value": 4,
-						"notation": "decimal"
+						"notation": "decimal",
+						"line": 5,
+						"column": 42
 					}
 				],
 				"fileType": "typescript"

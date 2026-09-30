@@ -104,7 +104,7 @@ function walk(
  * fallback has no grammar to know better, which is why it is reserved
  * for prose. A source language goes to extractFromSource instead.
  */
-const TEXT_NUMBER_RE = /[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/g;
+export const TEXT_NUMBER_RE = /[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/g;
 
 export function scanTextForNumbers(text: string): readonly NumberFinding[] {
 	const numbers: NumberFinding[] = [];
