@@ -9,6 +9,17 @@ This file covers the **VS Code extension**. The Rust CLI in `crate/` is a
 separate product on its own cadence and keeps its own
 [CHANGELOG](crate/CHANGELOG.md).
 
+## [Unreleased]
+
+### Added
+
+- **The shared `extract_numbers` tool reports where each number is**, as
+  its siblings do: a 1-based line and UTF-16 column for JSON, the source
+  languages and plain text, where the scanner knows the exact offset. A
+  parsed format (YAML, TOML, CSV, INI, dotenv) still carries no position:
+  its parser hands over resolved values, and placing one would be a search
+  for its digits, which can land in a key. Both servers answer the same.
+
 ## [2.3.1] - 2026-08-16
 
 ### Changed

@@ -227,7 +227,9 @@ numbers-le mcp
 
 Two tools, both returning `{ ok, data, diagnostics, meta }`:
 
-- **`extract_numbers`** — content in, numbers out, no positions. Touches
+- **`extract_numbers`** — content in, numbers out, with line and column
+  where the format knows them exactly (JSON, source, text) and none where
+  it could only guess (YAML, TOML, CSV, INI, dotenv). Touches
   no filesystem. The npm server ships the same tool with byte-identical
   output, tokens included; one corpus runs against both.
 - **`numbers_le_scan`** — files or directories in, the same reports the

@@ -94,8 +94,18 @@ export function scanSourceForNumbers(
 	text: string,
 	language: string,
 ): readonly NumberFinding[] {
+	return Object.freeze(
+		scanSourceSpanned(text, language).map((spanned) => spanned.finding),
+	);
+}
+
+/** The same numbers, each with the UTF-16 offset its literal starts at. */
+export function scanSourceSpanned(
+	text: string,
+	language: string,
+): readonly { finding: NumberFinding; offset: number }[] {
 	const dialect = DIALECTS[language] ?? PLAIN;
-	const found: NumberFinding[] = [];
+	const found: { finding: NumberFinding; offset: number }[] = [];
 	let at = 0;
 
 	while (at < text.length) {
@@ -104,10 +114,12 @@ export function scanSourceForNumbers(
 			at += 1;
 			continue;
 		}
-		if (token.finding !== undefined) found.push(token.finding);
+		if (token.finding !== undefined) {
+			found.push({ finding: token.finding, offset: at });
+		}
 		at = token.end;
 	}
-	return Object.freeze(found);
+	return found;
 }
 
 type Token = Readonly<{

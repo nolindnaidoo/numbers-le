@@ -30,7 +30,9 @@ const SOURCE_LANGUAGES: readonly SourceLanguage[] = Object.freeze([
 	'shellscript',
 ]);
 
-function isSourceLanguage(fileType: FileType): fileType is SourceLanguage {
+export function isSourceLanguage(
+	fileType: FileType,
+): fileType is SourceLanguage {
 	return (SOURCE_LANGUAGES as readonly string[]).includes(fileType);
 }
 
