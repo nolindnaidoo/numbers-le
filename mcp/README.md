@@ -90,7 +90,7 @@ If that prints the tool name, the server works.
 | argument | type | |
 |---|---|---|
 | `content` | string | **required.** The document text to scan. |
-| `format` | string | `json`, `yaml`, `csv`, `toml`, `ini` or `env`, or a source language: `python`, `rust`, `go`, `java`, `kotlin`, `csharp`, `cpp`, `c`, `javascript`, `typescript`, `sql`, `shellscript`. Optional — anything else, or nothing, scans the text directly. |
+| `format` | string | `json`, `jsonc`, `yaml`, `csv`, `tsv`, `toml`, `ini` or `env`, or a source language: `python`, `rust`, `go`, `java`, `kotlin`, `csharp`, `cpp`, `c`, `javascript`, `typescript`, `sql`, `shellscript`. Optional — anything else, or nothing, scans the text directly. |
 | `filename` | string | Used to infer `format` when it is absent — `config.toml` resolves to `toml`. |
 | `dedupe` | boolean | Collapse repeated values to their first occurrence. Default `false`. |
 | `maxResults` | number | Default `500`, ceiling `5000`. |

@@ -19,15 +19,13 @@ import type { FileType } from '../types';
  */
 const ALIASES: Readonly<Record<string, FileType>> = Object.freeze({
 	json: 'json',
-	jsonc: 'json',
+	jsonc: 'jsonc',
 	yaml: 'yaml',
 	yml: 'yaml',
 	csv: 'csv',
-	tsv: 'csv',
+	tsv: 'tsv',
 	toml: 'toml',
 	ini: 'ini',
-	cfg: 'ini',
-	conf: 'ini',
 	env: 'env',
 	dotenv: 'env',
 	python: 'python',
@@ -66,8 +64,10 @@ const ALIASES: Readonly<Record<string, FileType>> = Object.freeze({
 /** The formats a caller can name, for the tool schema's enum. */
 export const SUPPORTED_FORMATS: readonly string[] = Object.freeze([
 	'json',
+	'jsonc',
 	'yaml',
 	'csv',
+	'tsv',
 	'toml',
 	'ini',
 	'env',
