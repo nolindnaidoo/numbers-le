@@ -36,9 +36,13 @@ const PARSE_OPTIONS = Object.freeze({
 export function extractFromCsv(
 	text: string,
 	filepath: string,
+	delimiter = ',',
 ): ExtractionResult {
 	try {
-		const records = parseSync(text, PARSE_OPTIONS) as string[][];
+		const records = parseSync(text, {
+			...PARSE_OPTIONS,
+			delimiter,
+		}) as string[][];
 		const numbers: NumberFinding[] = [];
 
 		for (const record of records) {

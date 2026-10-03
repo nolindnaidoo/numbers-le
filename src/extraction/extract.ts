@@ -3,6 +3,7 @@ import { extractFromCsv } from './formats/csv';
 import { extractFromEnv } from './formats/env';
 import { extractFromIni } from './formats/ini';
 import { extractFromJson } from './formats/json';
+import { stripJsonc } from './formats/jsonc';
 import { extractFromSource } from './formats/source';
 import { extractFromToml } from './formats/toml';
 import { extractFromYaml } from './formats/yaml';
@@ -48,10 +49,14 @@ export function extractNumber(
 	switch (fileType) {
 		case 'json':
 			return extractFromJson(text, filepath);
+		case 'jsonc':
+			return extractFromJson(stripJsonc(text), filepath);
 		case 'yaml':
 			return extractFromYaml(text, filepath);
 		case 'csv':
 			return extractFromCsv(text, filepath);
+		case 'tsv':
+			return extractFromCsv(text, filepath, '\t');
 		case 'toml':
 			return extractFromToml(text, filepath);
 		case 'ini':
@@ -85,15 +90,13 @@ function extractFromFallback(
  */
 const EXTENSIONS: Readonly<Record<string, FileType>> = Object.freeze({
 	json: 'json',
-	jsonc: 'json',
+	jsonc: 'jsonc',
 	yaml: 'yaml',
 	yml: 'yaml',
 	csv: 'csv',
-	tsv: 'csv',
+	tsv: 'tsv',
 	toml: 'toml',
 	ini: 'ini',
-	cfg: 'ini',
-	conf: 'ini',
 	env: 'env',
 	py: 'python',
 	rs: 'rust',

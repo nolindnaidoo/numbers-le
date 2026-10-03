@@ -37,8 +37,10 @@ export interface ParseError {
 
 export type FileType =
 	| 'json'
+	| 'jsonc'
 	| 'yaml'
 	| 'csv'
+	| 'tsv'
 	| 'toml'
 	| 'ini'
 	| 'env'
