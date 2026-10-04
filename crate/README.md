@@ -240,7 +240,7 @@ Two tools, both returning `{ ok, data, diagnostics, meta }`:
 | Where | What you get | Install |
 |---|---|---|
 | **VS Code** | The same extraction, in your editor, on a keystroke | [Marketplace](https://marketplace.visualstudio.com/items?itemName=nolindnaidoo.numbers-le) |
-| **Cursor, VSCodium, Windsurf** | The same extension | [Open VSX](https://open-vsx.org/extension/OffensiveEdge/numbers-le) |
+| **Cursor, VSCodium, Windsurf** | The same extension | [Open VSX](https://open-vsx.org/extension/nolindnaidoo/numbers-le) |
 | **Any MCP agent, via Node** | `extract_numbers` over stdio | `npx numbers-le-mcp` · [npm](https://www.npmjs.com/package/numbers-le-mcp) |
 | **Zed** | The MCP server as a context server | [add it by hand](https://zed.dev/docs/ai/mcp) *(no listing yet)* |
 
