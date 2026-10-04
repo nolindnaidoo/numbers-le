@@ -215,6 +215,9 @@ async function processAndOutputResults(
 		count: String(finalNumbers.length),
 		type: fileType,
 	});
+	// Not awaited: it resolves when the toast is answered, and a command that
+	// waited on that would stay pending for as long as the toast is ignored.
+	void deps.ratingPrompt.recordSuccess();
 
 	deps.statusBar.flash(
 		clipboardSuccess
