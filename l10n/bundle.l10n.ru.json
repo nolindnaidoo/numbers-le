@@ -1,5 +1,9 @@
 {
 	"Run Numbers-LE: Extract": "Run Numbers-LE: Извлечение",
+	"Enjoying {0}? A rating helps other developers find it.": "Нравится {0}? Оценка помогает другим разработчикам найти это расширение.",
+	"Rate": "Оценить",
+	"Later": "Позже",
+	"Don't Ask Again": "Больше не спрашивать",
 	"All columns": "Все колонки",
 	"Extract from all columns": "Извлечь данные из всех столбцов",
 	"(Column {0})": "(Колонка «{0}»)",

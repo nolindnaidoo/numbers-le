@@ -1,5 +1,9 @@
 {
 	"Run Numbers-LE: Extract": "Run Numbers-LE: 추출",
+	"Enjoying {0}? A rating helps other developers find it.": "{0}이(가) 마음에 드시나요? 평점을 남기면 다른 개발자가 찾는 데 도움이 됩니다.",
+	"Rate": "평가하기",
+	"Later": "나중에",
+	"Don't Ask Again": "다시 묻지 않기",
 	"All columns": "모든 열",
 	"Extract from all columns": "모든 열에서 추출",
 	"(Column {0})": "({0} 칼럼)",

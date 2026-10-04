@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { readConfig } from '../config/config';
 import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
+import type { RatingPrompt } from '../ui/ratingPrompt';
 import type { StatusBar } from '../ui/statusBar';
 import { dedupeNumbers } from './dedupe';
 import { extractNumbers } from './extract';
@@ -9,6 +10,7 @@ import { sortNumbers } from './sort';
 
 export interface CommandDependencies {
 	notifier: Notifier;
+	ratingPrompt: RatingPrompt;
 	statusBar: StatusBar;
 	telemetry: Telemetry;
 }

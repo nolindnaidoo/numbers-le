@@ -1,5 +1,9 @@
 {
 	"Run Numbers-LE: Extract": "Run Numbers-LE: Auszug",
+	"Enjoying {0}? A rating helps other developers find it.": "Gefällt Ihnen {0}? Eine Bewertung hilft anderen Entwicklern, es zu finden.",
+	"Rate": "Bewerten",
+	"Later": "Später",
+	"Don't Ask Again": "Nicht mehr fragen",
 	"All columns": "Alle Spalten",
 	"Extract from all columns": "Auszug aus allen Spalten",
 	"(Column {0})": "(Kolumne „{0}“)",
