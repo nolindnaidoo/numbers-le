@@ -9,6 +9,7 @@ import type { Configuration, SortMode } from '../types';
  * two drifting apart. The export is the seam that test needs.
  */
 export const CONFIG_DEFAULTS = Object.freeze({
+	clipboardIncludesPositions: false,
 	copyToClipboardEnabled: false,
 	csvStreamingEnabled: false,
 	dedupeEnabled: false,
@@ -22,6 +23,7 @@ export const CONFIG_DEFAULTS = Object.freeze({
 	showParseErrors: false,
 	sortEnabled: false,
 	sortMode: 'off' as const,
+	showPositions: false,
 	statusBarEnabled: true,
 	telemetryEnabled: false,
 });
@@ -30,6 +32,11 @@ export function readConfig(): Configuration {
 	const config = vscode.workspace.getConfiguration('numbers-le');
 
 	return Object.freeze({
+		clipboardIncludesPositions: readBoolean(
+			config,
+			'clipboardIncludesPositions',
+			CONFIG_DEFAULTS.clipboardIncludesPositions,
+		),
 		copyToClipboardEnabled: readBoolean(
 			config,
 			'copyToClipboardEnabled',
@@ -90,6 +97,11 @@ export function readConfig(): Configuration {
 			CONFIG_DEFAULTS.sortEnabled,
 		),
 		sortMode: readSortMode(config),
+		showPositions: readBoolean(
+			config,
+			'showPositions',
+			CONFIG_DEFAULTS.showPositions,
+		),
 		statusBarEnabled: readBoolean(
 			config,
 			'statusBar.enabled',

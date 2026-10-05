@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { readConfig } from '../config/config';
 import { detectFileType, extractNumber } from '../extraction/extract';
+import { bareValue } from '../utils/positions';
 import type { CommandDependencies } from './index';
 
 /**
@@ -33,7 +34,7 @@ export function collectNumbers(
 		const numbers = Object.freeze(
 			text
 				.split('\n')
-				.map((line) => Number(line.trim()))
+				.map((line) => Number(bareValue(line.trim())))
 				.filter((n) => !Number.isNaN(n) && Number.isFinite(n)),
 		);
 		if (numbers.length === 0) {

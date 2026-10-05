@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { detectFileType } from '../extraction/extract';
+import { bareValue, onValues } from '../utils/positions';
 import { type SortMode, sortNumber } from '../utils/sort';
 import type { CommandDependencies } from './index';
 import { collectNumbers, writeResult } from './postProcessShared';
@@ -17,7 +18,7 @@ export async function sortNumbers(deps: CommandDependencies): Promise<void> {
 		lines.length > 0 &&
 		lines.every((line) => {
 			const trimmed = line.trim();
-			return trimmed === '' || !Number.isNaN(Number(trimmed));
+			return trimmed === '' || !Number.isNaN(Number(bareValue(trimmed)));
 		});
 
 	const numbers = collectNumbers(editor, isNumbersFile, deps, (fileType) =>
@@ -54,7 +55,15 @@ export async function sortNumbers(deps: CommandDependencies): Promise<void> {
 	if (!selected) return;
 
 	const sortedNumbers = sortNumber(numbers, selected.value);
-	const output = sortedNumbers.join('\n');
+	// A position shown on a line travels with its number.
+	const output = (
+		isNumbersFile
+			? onValues(
+					lines.map((line) => line.trim()),
+					() => sortedNumbers.map(String),
+				)
+			: sortedNumbers
+	).join('\n');
 
 	await writeResult(editor, output, deps, {
 		newDocument: vscode.l10n.t(

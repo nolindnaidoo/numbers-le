@@ -87,6 +87,57 @@ describe('numbers-le.extractNumbers', () => {
 		expect(_clipboardText()).toBe('1\n2\n3');
 	});
 
+	it('leads each number with its position when asked, on screen and in the copy separately', async () => {
+		const { deps } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.copyToClipboardEnabled', true);
+		_setConfig('numbers-le.showPositions', true);
+		_setActiveEditor(
+			_createDocument({ content: '[1, 2, 3]', fileName: '/mock/data.json' }),
+		);
+		await runCommand('numbers-le.extractNumbers');
+
+		const opened = _openedDocuments();
+		expect(opened[opened.length - 1]?.getText()).toBe('1:2\t1\n1:5\t2\n1:8\t3');
+		// The clipboard has its own setting, and that one is still off.
+		expect(_clipboardText()).toBe('1\n2\n3');
+	});
+
+	it('keeps the first position of a number through dedupe and sort settings', async () => {
+		const { deps } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.showPositions', true);
+		_setConfig('numbers-le.dedupeEnabled', true);
+		_setConfig('numbers-le.sortEnabled', true);
+		_setConfig('numbers-le.sortMode', 'numeric-asc');
+		_setActiveEditor(
+			_createDocument({ content: '[3, 1, 3]', fileName: '/mock/data.json' }),
+		);
+		await runCommand('numbers-le.extractNumbers');
+
+		const opened = _openedDocuments();
+		expect(opened[opened.length - 1]?.getText()).toBe('1:5\t1\n1:2\t3');
+	});
+
+	it('says so, and shows bare numbers, where the file type has no positions', async () => {
+		const { deps } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.notificationsLevel', 'all');
+		_setConfig('numbers-le.showPositions', true);
+		_setActiveEditor(
+			_createDocument({ content: 'a: 1\nb: 2\n', fileName: '/mock/data.yaml' }),
+		);
+		await runCommand('numbers-le.extractNumbers');
+
+		const opened = _openedDocuments();
+		expect(opened[opened.length - 1]?.getText()).toBe('1\n2');
+		expect(
+			_shownMessages().some(
+				(m) => m.message === 'Positions are not available for this file type.',
+			),
+		).toBe(true);
+	});
+
 	it('surfaces parse errors only when showParseErrors is on', async () => {
 		const { deps } = makeDeps();
 		registerCommands(makeContext(), deps);
@@ -142,6 +193,23 @@ describe('numbers-le.postProcess.dedupe', () => {
 		expect(opened[opened.length - 1]?.getText()).toBe('1\n2\n3');
 	});
 
+	it('dedupes by number when positions are shown, keeping the first, and says so', async () => {
+		const { deps } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.notificationsLevel', 'all');
+		_setActiveEditor(_createDocument({ content: '1:1\t5\n2:1\t6\n9:4\t5' }));
+		await runCommand('numbers-le.postProcess.dedupe');
+
+		// Read as a file to extract from, this would have yielded 1, 1, 5, 2...
+		const opened = _openedDocuments();
+		expect(opened[opened.length - 1]?.getText()).toBe('1:1\t5\n2:1\t6');
+		expect(
+			_shownMessages().some((m) =>
+				m.message.endsWith('. Each number shows its first position only.'),
+			),
+		).toBe(true);
+	});
+
 	it('replaces in place when postProcess.openInNewFile is off', async () => {
 		const { deps } = makeDeps();
 		registerCommands(makeContext(), deps);
@@ -179,6 +247,25 @@ describe('numbers-le.postProcess.sort', () => {
 
 		const opened = _openedDocuments();
 		expect(opened[opened.length - 1]?.getText()).toBe('1\n2\n3');
+	});
+
+	it('sorts by number when positions are shown, and each keeps its own', async () => {
+		const { deps } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setActiveEditor(
+			_createDocument({ content: '1:1\t30\n2:1\t10\n10:1\t20' }),
+		);
+		_respondToQuickPick((items) =>
+			(items as Array<{ value: string }>).find(
+				(item) => item.value === 'numeric-asc',
+			),
+		);
+		await runCommand('numbers-le.postProcess.sort');
+
+		const opened = _openedDocuments();
+		expect(opened[opened.length - 1]?.getText()).toBe(
+			'2:1\t10\n10:1\t20\n1:1\t30',
+		);
 	});
 
 	it('sorts by magnitude descending in place', async () => {

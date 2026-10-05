@@ -41,5 +41,6 @@
 	"Deduplicating numbers from {0} file...": "Удаление дубликатов чисел из файла «{0}»...",
 	"No duplicate numbers found": "Повторяющихся номеров не обнаружено",
 	"Enter valid column indexes separated by commas, or leave empty": "Введите допустимые индексы столбцов, разделённые запятыми, или оставьте поле пустым",
-	"Large file detected ({0} bytes). Extraction may take longer.": "Обнаружен большой файл ({0} байт). Распаковка может занять больше времени."
+	"Large file detected ({0} bytes). Extraction may take longer.": "Обнаружен большой файл ({0} байт). Распаковка может занять больше времени.",
+	"Positions are not available for this file type.": "Для этого типа файлов позиции недоступны."
 }
