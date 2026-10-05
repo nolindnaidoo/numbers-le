@@ -1,10 +1,16 @@
 import * as vscode from 'vscode';
 import { readConfig } from '../config/config';
-import { detectFileType, extractNumber } from '../extraction/extract';
+import {
+	detectFileType,
+	extractNumber,
+	isSourceLanguage,
+} from '../extraction/extract';
+import { exactPositions } from '../extraction/positions';
 import type { FileType } from '../types';
 import { chooseLargeOutputAction } from '../ui/largeOutput';
 import type { CsvPromptOptions } from '../ui/prompts';
 import { promptCsvOptionsIfNeeded, promptForFileType } from '../ui/prompts';
+import { onValues, positioned, withPosition } from '../utils/positions';
 import { dedupeNumber, sortNumber } from '../utils/sort';
 import {
 	handleCsvMultiColumnExtraction,
@@ -97,10 +103,28 @@ async function handleNormalExtraction(
 	// report surfaces (the CLI and both MCP servers), and the editor
 	// output is one number per line.
 	const values = result.numbers.map((found) => found.value);
-	const dedupedNumbers = shouldDedupe ? dedupeNumber(values) : values;
-	const finalNumbers = sortEnabled
-		? sortNumber(dedupedNumbers, sortMode)
-		: dedupedNumbers;
+	// Where each number starts, for the file types that know it rather than
+	// guess. Dedupe and sort still work on the values: `onValues` carries each
+	// position through, and a duplicate keeps its first.
+	const wanted = config.showPositions || config.clipboardIncludesPositions;
+	const positions = wanted
+		? exactPositions(text, fileType, result.numbers, isSourceLanguage(fileType))
+		: undefined;
+	if (wanted && positions === undefined && values.length > 0) {
+		deps.notifier.warn(
+			vscode.l10n.t('Positions are not available for this file type.'),
+		);
+	}
+	const finalNumbers = onValues(
+		values.map((value, i) => withPosition(String(value), positions?.[i])),
+		(written) => {
+			const numbers = written.map(Number);
+			const dedupedNumbers = shouldDedupe ? dedupeNumber(numbers) : numbers;
+			return (
+				sortEnabled ? sortNumber(dedupedNumbers, sortMode) : dedupedNumbers
+			).map(String);
+		},
+	);
 
 	if (finalNumbers.length === 0) {
 		deps.notifier.info(vscode.l10n.t('No numbers found'));
@@ -117,7 +141,7 @@ async function handleNormalExtraction(
 
 // Handle final output processing
 async function processAndOutputResults(
-	finalNumbers: readonly number[],
+	finalNumbers: readonly string[],
 	context: ExtractionContext,
 	token: vscode.CancellationToken,
 ): Promise<void> {
@@ -153,7 +177,7 @@ async function processAndOutputResults(
 	if (openDoc) {
 		try {
 			const resultDocument = await vscode.workspace.openTextDocument({
-				content: finalNumbers.join('\n'),
+				content: positioned(finalNumbers.join('\n'), config.showPositions),
 				language: 'plaintext',
 			});
 			await vscode.window.showTextDocument(
@@ -172,7 +196,9 @@ async function processAndOutputResults(
 	let clipboardSuccess = false;
 	if (copyRequested || (config.copyToClipboardEnabled && fileType !== 'csv')) {
 		try {
-			await vscode.env.clipboard.writeText(finalNumbers.join('\n'));
+			await vscode.env.clipboard.writeText(
+				positioned(finalNumbers.join('\n'), config.clipboardIncludesPositions),
+			);
 			clipboardSuccess = true;
 		} catch {
 			deps.notifier.warn(vscode.l10n.t('Could not copy to clipboard'));

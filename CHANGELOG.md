@@ -11,6 +11,18 @@ separate product on its own cadence and keeps its own
 
 ## [Unreleased]
 
+### Added
+
+- Positions are now a setting. `numbers-le.showPositions` decides whether the
+  output gives the line and column of each number, and
+  `numbers-le.clipboardIncludesPositions` decides the same for the copy on the
+  clipboard. Both are off by default, so the output is what it was. Positions
+  are known for JSON, source code and plain text. For TOML, YAML, INI, CSV and
+  dotenv there are none to show, and the extension says so rather than guess.
+  With positions shown, Sort still orders by the number and keeps each
+  position with it, and Dedupe keeps the first occurrence of a number, with
+  that occurrence's position.
+
 ### Changed
 
 - No command is bound to a key by default any more. The one default this

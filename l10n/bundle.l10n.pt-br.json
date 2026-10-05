@@ -41,5 +41,6 @@
 	"Deduplicating numbers from {0} file...": "Removendo números duplicados de um arquiv{0}...",
 	"No duplicate numbers found": "Não foram encontrados números duplicados",
 	"Enter valid column indexes separated by commas, or leave empty": "Insira índices de coluna válidos separados por vírgulas ou deixe em branco",
-	"Large file detected ({0} bytes). Extraction may take longer.": "Foi detectado um arquivo grande ({0} bytes). A extração pode demorar mais tempo."
+	"Large file detected ({0} bytes). Extraction may take longer.": "Foi detectado um arquivo grande ({0} bytes). A extração pode demorar mais tempo.",
+	"Positions are not available for this file type.": "As posições não estão disponíveis para este tipo de arquivo."
 }

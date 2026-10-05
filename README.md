@@ -178,7 +178,9 @@ No command is bound to a key by default. Give any of them one under **Keyboard S
 |---|---|---|
 | `numbers-le.openResultsSideBySide` | `true` | Open results beside the current editor |
 | `numbers-le.postProcess.openInNewFile` | `true` | Dedupe/Sort write to a new file instead of replacing the editor content |
+| `numbers-le.showPositions` | `false` | Show the line and column of each number |
 | `numbers-le.copyToClipboardEnabled` | `false` | Also copy results to the clipboard (non-CSV) |
+| `numbers-le.clipboardIncludesPositions` | `false` | Include the line and column in that copy |
 | `numbers-le.dedupeEnabled` | `false` | Deduplicate automatically during extraction |
 | `numbers-le.sortEnabled` | `false` | Sort automatically during extraction |
 | `numbers-le.sortMode` | `off` | `numeric-asc/desc`, `magnitude-asc/desc` |
@@ -243,12 +245,12 @@ a build only tells you how busy the runner was.
 <!-- coverage:start -->
 | Metric | Coverage |
 | --- | --- |
-| Statements | 86.29% |
-| Branches | 78.28% |
-| Functions | 95.48% |
-| Lines | 88.10% |
+| Statements | 86.63% |
+| Branches | 79.02% |
+| Functions | 95.78% |
+| Lines | 88.40% |
 
-368 test cases across 25 files, plus an integration suite that runs
+382 test cases across 26 files, plus an integration suite that runs
 in a real VS Code extension host and an end-to-end test that installs the
 built `.vsix` into a clean profile.
 

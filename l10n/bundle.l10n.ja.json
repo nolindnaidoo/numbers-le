@@ -41,5 +41,6 @@
 	"Deduplicating numbers from {0} file...": "{0}ファイルから重複する数値を削除中...",
 	"No duplicate numbers found": "重複する番号は見つかりませんでした",
 	"Enter valid column indexes separated by commas, or leave empty": "有効な列インデックスをコンマで区切って入力するか、空欄のままにしてください",
-	"Large file detected ({0} bytes). Extraction may take longer.": "大容量のファイルが検出されました（{0}バイト）。解凍に時間がかかる場合があります。"
+	"Large file detected ({0} bytes). Extraction may take longer.": "大容量のファイルが検出されました（{0}バイト）。解凍に時間がかかる場合があります。",
+	"Positions are not available for this file type.": "このファイル形式では位置を表示できません。"
 }

@@ -41,5 +41,6 @@
 	"Deduplicating numbers from {0} file...": "Duplikate aus der Datei „{0}“ entfernen...",
 	"No duplicate numbers found": "Es wurden keine doppelten Nummern gefunden.",
 	"Enter valid column indexes separated by commas, or leave empty": "Geben Sie gültige Spaltenindizes durch Kommas getrennt ein oder lassen Sie das Feld leer",
-	"Large file detected ({0} bytes). Extraction may take longer.": "Es wurde eine große Datei erkannt ({0}-Bytes). Das Entpacken kann etwas länger dauern."
+	"Large file detected ({0} bytes). Extraction may take longer.": "Es wurde eine große Datei erkannt ({0}-Bytes). Das Entpacken kann etwas länger dauern.",
+	"Positions are not available for this file type.": "Für diesen Dateityp sind keine Positionen verfügbar."
 }

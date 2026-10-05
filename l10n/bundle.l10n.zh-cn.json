@@ -41,5 +41,6 @@
 	"Deduplicating numbers from {0} file...": "正在从{0}文件中去除重复的数字……",
 	"No duplicate numbers found": "未找到重复的数字",
 	"Enter valid column indexes separated by commas, or leave empty": "请输入以逗号分隔的有效列索引，或留空",
-	"Large file detected ({0} bytes). Extraction may take longer.": "检测到大文件（{0}字节）。解压可能需要更长时间。"
+	"Large file detected ({0} bytes). Extraction may take longer.": "检测到大文件（{0}字节）。解压可能需要更长时间。",
+	"Positions are not available for this file type.": "此文件类型无法提供位置。"
 }

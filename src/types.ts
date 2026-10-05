@@ -78,6 +78,8 @@ export type SortMode =
 	| 'magnitude-desc';
 
 export interface Configuration {
+	/** Whether the copy on the clipboard carries positions, whatever the screen shows. */
+	readonly clipboardIncludesPositions: boolean;
 	readonly copyToClipboardEnabled: boolean;
 	readonly csvStreamingEnabled: boolean;
 	readonly dedupeEnabled: boolean;
@@ -91,6 +93,8 @@ export interface Configuration {
 	readonly showParseErrors: boolean;
 	readonly sortEnabled: boolean;
 	readonly sortMode: SortMode;
+	/** Whether the output gives the line and column of each number. */
+	readonly showPositions: boolean;
 	readonly statusBarEnabled: boolean;
 	readonly telemetryEnabled: boolean;
 }

@@ -41,5 +41,6 @@
   "Extracting numbers...": "Extracting numbers...",
   "Large file detected ({0} bytes). Extraction may take longer.": "Large file detected ({0} bytes). Extraction may take longer.",
   "Deduplicating numbers from {0} file...": "Deduplicating numbers from {0} file...",
-  "No duplicate numbers found": "No duplicate numbers found"
+  "No duplicate numbers found": "No duplicate numbers found",
+  "Positions are not available for this file type.": "Positions are not available for this file type."
 }

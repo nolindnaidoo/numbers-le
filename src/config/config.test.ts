@@ -24,6 +24,7 @@ describe('config defaults parity with package.json', () => {
 	const props = manifest.contributes.configuration.properties;
 
 	const KEY_MAP: Record<string, keyof typeof CONFIG_DEFAULTS> = {
+		'numbers-le.clipboardIncludesPositions': 'clipboardIncludesPositions',
 		'numbers-le.copyToClipboardEnabled': 'copyToClipboardEnabled',
 		'numbers-le.csv.streamingEnabled': 'csvStreamingEnabled',
 		'numbers-le.dedupeEnabled': 'dedupeEnabled',
@@ -38,6 +39,7 @@ describe('config defaults parity with package.json', () => {
 		'numbers-le.showParseErrors': 'showParseErrors',
 		'numbers-le.sortEnabled': 'sortEnabled',
 		'numbers-le.sortMode': 'sortMode',
+		'numbers-le.showPositions': 'showPositions',
 		'numbers-le.statusBar.enabled': 'statusBarEnabled',
 		'numbers-le.telemetryEnabled': 'telemetryEnabled',
 	};

@@ -41,5 +41,6 @@
 	"Deduplicating numbers from {0} file...": "Đang loại bỏ các bản trùng lặp trong tệp{0}...",
 	"No duplicate numbers found": "Không tìm thấy số trùng lặp",
 	"Enter valid column indexes separated by commas, or leave empty": "Nhập các chỉ mục cột hợp lệ, cách nhau bằng dấu phẩy, hoặc để trống",
-	"Large file detected ({0} bytes). Extraction may take longer.": "Đã phát hiện tệp có dung lượng lớn ({0} byte). Quá trình giải nén có thể mất nhiều thời gian hơn."
+	"Large file detected ({0} bytes). Extraction may take longer.": "Đã phát hiện tệp có dung lượng lớn ({0} byte). Quá trình giải nén có thể mất nhiều thời gian hơn.",
+	"Positions are not available for this file type.": "Vị trí không khả dụng cho loại tệp này."
 }

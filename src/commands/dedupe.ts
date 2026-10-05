@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { detectFileType } from '../extraction/extract';
+import { bareValue, hasPosition, onValues } from '../utils/positions';
 import { dedupeNumber } from '../utils/sort';
 import type { CommandDependencies } from './index';
 import { collectNumbers, writeResult } from './postProcessShared';
@@ -17,7 +18,7 @@ export async function dedupeNumbers(deps: CommandDependencies): Promise<void> {
 		lines.length > 0 &&
 		lines.every((line) => {
 			const trimmed = line.trim();
-			return trimmed === '' || !Number.isNaN(Number(trimmed));
+			return trimmed === '' || !Number.isNaN(Number(bareValue(trimmed)));
 		});
 
 	const numbers = collectNumbers(editor, isNumbersFile, deps, (fileType) =>
@@ -33,11 +34,21 @@ export async function dedupeNumbers(deps: CommandDependencies): Promise<void> {
 		return;
 	}
 
-	const output = dedupedNumbers.join('\n');
+	// A number found five times has five positions, and only one can stay.
+	const shown = lines.map((line) => line.trim());
+	const firstOnly =
+		isNumbersFile && shown.some(hasPosition)
+			? '. Each number shows its first position only.'
+			: '';
+	const output = (
+		isNumbersFile
+			? onValues(shown, () => dedupedNumbers.map(String))
+			: dedupedNumbers
+	).join('\n');
 
 	await writeResult(editor, output, deps, {
-		newDocument: `Removed ${duplicatesRemoved} duplicates (${dedupedNumbers.length} unique numbers remaining)`,
-		inPlace: `Removed ${duplicatesRemoved} duplicates (${dedupedNumbers.length} unique numbers remaining) in current editor`,
+		newDocument: `Removed ${duplicatesRemoved} duplicates (${dedupedNumbers.length} unique numbers remaining)${firstOnly}`,
+		inPlace: `Removed ${duplicatesRemoved} duplicates (${dedupedNumbers.length} unique numbers remaining) in current editor${firstOnly}`,
 	});
 
 	deps.telemetry.event('numbers.deduped', {

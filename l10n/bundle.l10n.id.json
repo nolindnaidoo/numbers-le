@@ -41,5 +41,6 @@
 	"Deduplicating numbers from {0} file...": "Sedang menghapus duplikat angka dari berk{0}...",
 	"No duplicate numbers found": "Tidak ditemukan nomor yang sama",
 	"Enter valid column indexes separated by commas, or leave empty": "Masukkan indeks kolom yang valid, dipisahkan dengan koma, atau biarkan kosong",
-	"Large file detected ({0} bytes). Extraction may take longer.": "Terdeteksi berkas berukuran besar ({0} byte). Proses ekstraksi mungkin akan memakan waktu lebih lama."
+	"Large file detected ({0} bytes). Extraction may take longer.": "Terdeteksi berkas berukuran besar ({0} byte). Proses ekstraksi mungkin akan memakan waktu lebih lama.",
+	"Positions are not available for this file type.": "Posisi tidak tersedia untuk jenis file ini."
 }
