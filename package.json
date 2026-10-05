@@ -128,14 +128,6 @@
 				"category": "%manifest.command.category%"
 			}
 		],
-		"keybindings": [
-			{
-				"command": "numbers-le.extractNumbers",
-				"key": "ctrl+alt+n",
-				"mac": "cmd+alt+n",
-				"when": "editorTextFocus"
-			}
-		],
 		"menus": {
 			"editor/context": [
 				{
