@@ -38,7 +38,7 @@
 
 ## What it does
 
-Open a file, press `Ctrl+Alt+N` (`Cmd+Alt+N` on Mac), and every numeric value in the document lands in a new editor — deduplicate and sort it from there. Works in VS Code and in VS Code–based editors like Cursor and VSCodium (installable from Open VSX).
+Open a file, run `Numbers-LE: Extract Numbers`, and every numeric value in the document lands in a new editor — deduplicate and sort it from there. Works in VS Code and in VS Code–based editors like Cursor and VSCodium (installable from Open VSX).
 
 - **Data validation** — pull the numbers out of a config or fixture and eyeball ranges at a glance
 - **Config audits** — compare ports, thresholds, and limits across INI/TOML/.env files
@@ -163,12 +163,14 @@ was malformed.
 
 | Command | Description |
 |---|---|
-| `Numbers-LE: Extract Numbers` (`Ctrl+Alt+N` / `Cmd+Alt+N`) | Extract all numbers from the active document |
+| `Numbers-LE: Extract Numbers` | Extract all numbers from the active document |
 | `Numbers-LE: Deduplicate Numbers` | Remove duplicate numbers from the results |
 | `Numbers-LE: Sort Numbers` | Sort results numerically or by magnitude |
 | `Numbers-LE: Toggle CSV Streaming` | Flip `csv.streamingEnabled` for large CSV files |
 | `Numbers-LE: Open Settings` | Open Numbers-LE settings |
 | `Numbers-LE: Help & Troubleshooting` | Built-in documentation |
+
+No command is bound to a key by default. Give any of them one under **Keyboard Shortcuts** in the editor.
 
 ## Settings
 

@@ -57,9 +57,7 @@ function generateHelpContent(): string {
 	lines.push(
 		'1. Open any supported file (JSON, YAML, CSV, TOML, INI, or .ENV)',
 	);
-	lines.push(
-		'2. Press `Ctrl+Alt+N` (Mac: `Cmd+Alt+N`) or use the command palette',
-	);
+	lines.push('2. Run "Numbers-LE: Extract Numbers" from the command palette');
 	lines.push(
 		'3. Run **"Numbers-LE: Extract Numbers"** to extract all numeric values',
 	);
@@ -71,7 +69,7 @@ function generateHelpContent(): string {
 	// Commands
 	lines.push('## Available Commands');
 	lines.push('');
-	lines.push('### Extract Numbers (`Ctrl+Alt+N` / `Cmd+Alt+N`)');
+	lines.push('### Extract Numbers');
 	lines.push(
 		'Extracts all numeric values from the active file in document order.',
 	);
