@@ -332,7 +332,7 @@
 	"dependencies": {
 		"@iarna/toml": "^2.2.5",
 		"csv-parse": "^7.0.3",
-		"dotenv": "^18.0.4",
+		"dotenv": "^18.0.5",
 		"ini": "^7.0.0",
 		"js-yaml": "^5.4.2"
 	}
