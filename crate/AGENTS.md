@@ -154,8 +154,9 @@ crate/src/
   and nothing holding this code equal to the similar files in the
   sibling repos.
 - **stdout is protocol, stderr is human. There is no `--json` flag.**
-- **Parity scope is extraction and rendering** — `src/extraction/**`.
-  Positions are outside it; the extension has none.
+- **Parity scope is extraction and rendering** — `src/extraction/**`,
+  positions included where the shared tool carries them: exact or
+  absent, on both servers.
 
 ## Control-flow style
 
