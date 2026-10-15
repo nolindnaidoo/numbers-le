@@ -142,7 +142,7 @@ in [`crate/`](crate/README.md), sharing one corpus with the extension —
 document differently.
 
 ```bash
-numbers-le .                     # every number in the tree, as JSON
+numbers-le .                     # every number in the tree; JSON on stdout when piped
 numbers-le --values config/      # just the numbers, one per line
 numbers-le mcp                   # the same extraction over MCP on stdio
 
