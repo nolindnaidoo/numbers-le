@@ -15,6 +15,8 @@
   </a>
 </p>
 
+![An agent in Claude Code calling the numbers-le MCP server](https://raw.githubusercontent.com/nolindnaidoo/numbers-le/main/assets/demos/mcp.gif)
+
 An [MCP](https://modelcontextprotocol.io) server that extracts every number from
 configuration, data files and source code — the extraction engine behind the
 [Numbers-LE](https://letools.dev/tools/numbers-le)
