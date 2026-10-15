@@ -146,14 +146,14 @@ numbers-le .                     # every number in the tree, as JSON
 numbers-le --values config/      # just the numbers, one per line
 numbers-le mcp                   # the same extraction over MCP on stdio
 
-<p align="center">
-  <img src="assets/demos/cli.gif" alt="numbers-le in a terminal" style="max-width: 100%; height: auto;" />
-</p>
-
 # the point of the whole thing:
 numbers-le --values --dedupe src/ | sort -n > after.txt
 diff before.txt after.txt        # what constants moved this release
 ```
+
+<p align="center">
+  <img src="assets/demos/cli.gif" alt="numbers-le in a terminal" style="max-width: 100%; height: auto;" />
+</p>
 
 **Somebody has to verify that the rate in the code is the rate in the
 specification.** A tax percentage, a retention window, a rounding
