@@ -200,8 +200,13 @@ next to the ones that are.
 
 ## Output contract
 
-**stdout is protocol, stderr is human.** One JSON report per line, one
-line per file.
+**stdout is protocol, stderr is human.** When stdout is a pipe, a file or
+a subprocess it carries one JSON report per line, one line per file, or
+with `--values` one number per line. When it is a terminal it carries
+nothing, because the stderr listing already shows every number a person
+reads there. At a terminal `--values` lists its numbers on stderr
+instead. No script can tell the difference, since a script is never a
+terminal.
 
 ```json
 {
@@ -242,7 +247,8 @@ Options:
   --format <format>    force a format instead of inferring it from the
                        file name; an unknown name falls back to a text
                        scan rather than failing
-  --values             print only the numbers, one per line, for piping
+  --values             print only the numbers, one per line, for piping;
+                       at a terminal they are listed on stderr instead
   --stdin              read one document from stdin
   --hidden             walk hidden files and directories too
   --no-ignore          walk files that .gitignore excludes

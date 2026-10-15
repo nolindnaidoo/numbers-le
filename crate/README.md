@@ -54,7 +54,7 @@ numbers-le --values src/ > numbers.txt
 ## Sixty seconds
 
 ```bash
-numbers-le .                     # every number in the tree, as JSON
+numbers-le .                     # every number in the tree; JSON on stdout when piped
 numbers-le --values config/      # just the numbers, one per line
 numbers-le --dedupe --values .   # each distinct number once
 cat rates.toml | numbers-le --stdin --format toml
@@ -213,7 +213,8 @@ no flag asks for a judgment.
 --format <format>    force a format instead of inferring from the name;
                      an unknown name falls back to a text scan
 --strict             exit 2 if a text file could not be read
---values             print only the numbers, one per line, for piping
+--values             print only the numbers, one per line, for piping;
+                     at a terminal they are listed on stderr instead
 --stdin              read one document from stdin
 --hidden             walk hidden files and directories too
 --no-ignore          walk files that .gitignore excludes
