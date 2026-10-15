@@ -7,7 +7,7 @@ this repository release on their own cadence.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.3] - 2026-10-15
 
 ### Changed
 
@@ -331,6 +331,7 @@ Written down rather than left to be discovered, each pinned by a test.
   vanish from the report entirely, which reads to whoever ran it as
   "that file was clean".
 
+[0.4.3]: https://crates.io/crates/numbers-le/0.4.3
 [0.4.2]: https://crates.io/crates/numbers-le/0.4.2
 [0.4.1]: https://crates.io/crates/numbers-le/0.4.1
 [0.4.0]: https://crates.io/crates/numbers-le/0.4.0
