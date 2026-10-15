@@ -28,7 +28,7 @@
 ---
 
 <p align="center">
-  <img src="src/assets/images/demo.gif" alt="Numbers-LE Demo" style="max-width: 100%; height: auto;" />
+  <img src="assets/demos/editor.gif" alt="Numbers-LE in VS Code" style="max-width: 100%; height: auto;" />
 </p>
 
 > **Useful?** A star or rating is how other developers find it —
@@ -62,6 +62,10 @@ The same engine runs as an [MCP](https://modelcontextprotocol.io) server, so an 
 | **VS Code** 1.101+ | Nothing to install — the extension registers `extract_numbers` with agent mode |
 | **Claude Code** | `claude mcp add numbers-le -- npx -y numbers-le-mcp` |
 | **Cursor, Windsurf, anything else** | point it at `npx numbers-le-mcp` |
+
+<p align="center">
+  <img src="assets/demos/mcp.gif" alt="An agent in Claude Code calling the numbers-le MCP server" style="max-width: 100%; height: auto;" />
+</p>
 
 ```
 extract_numbers(content, format?, filename?, dedupe?, maxResults?)
@@ -141,6 +145,10 @@ document differently.
 numbers-le .                     # every number in the tree, as JSON
 numbers-le --values config/      # just the numbers, one per line
 numbers-le mcp                   # the same extraction over MCP on stdio
+
+<p align="center">
+  <img src="assets/demos/cli.gif" alt="numbers-le in a terminal" style="max-width: 100%; height: auto;" />
+</p>
 
 # the point of the whole thing:
 numbers-le --values --dedupe src/ | sort -n > after.txt

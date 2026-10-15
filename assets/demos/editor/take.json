@@ -1,0 +1,16 @@
+{
+  "files": [
+    "limits.toml"
+  ],
+  "steps": [
+    {
+      "wait": 1500
+    },
+    {
+      "command": "Numbers-LE: Extract Numbers"
+    },
+    {
+      "wait": 5000
+    }
+  ]
+}
