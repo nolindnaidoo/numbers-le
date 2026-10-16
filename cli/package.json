@@ -1,0 +1,49 @@
+{
+	"name": "numbers-le",
+	"version": "2.6.0",
+	"description": "Extract every hardcoded number in a codebase, so a person can check them.",
+	"keywords": [
+		"magic-numbers",
+		"numbers",
+		"literals",
+		"hardcoded",
+		"constants",
+		"audit",
+		"json",
+		"yaml",
+		"cli",
+		"numbers-le",
+		"nolindnaidoo",
+		"letools"
+	],
+	"license": "MIT",
+	"author": {
+		"name": "Nolin Naidoo",
+		"url": "https://nolindnaidoo.com"
+	},
+	"homepage": "https://letools.dev/tools/numbers-le",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nolindnaidoo/numbers-le.git",
+		"directory": "cli"
+	},
+	"bugs": {
+		"url": "https://github.com/nolindnaidoo/numbers-le/issues"
+	},
+	"type": "commonjs",
+	"bin": {
+		"numbers-le": "cli.js"
+	},
+	"files": [
+		"cli.js",
+		"README.md",
+		"LICENSE"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	}
+}

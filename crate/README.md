@@ -79,9 +79,11 @@ question was malformed. Finding none is an answer, not an error.
 | Route | Command | Worth knowing |
 |---|---|---|
 | **cargo** | `cargo install numbers-le` | Any platform, needs **Rust 1.88+**. |
+| **npm** | `npm install -g numbers-le` or `npx numbers-le` | Needs **Node 20+**. The same command, held to this one byte for byte apart from a parser's own error wording. |
 | **From source** | `git clone https://github.com/nolindnaidoo/numbers-le`<br>`cd numbers-le/crate && cargo build --release` | The same build CI runs. |
 
-No runtime, no network, nothing written.
+The cargo build needs no runtime. Neither one touches the network or
+writes a file.
 
 ## How a number is printed is the contract
 

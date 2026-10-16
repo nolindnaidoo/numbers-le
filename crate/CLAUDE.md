@@ -44,6 +44,13 @@ with its own `CLAUDE.md`.
   divergences" is the bar for a new one.
 - Write regression tests for every bug you fix; keep unit tests free of
   clocks, randomness, and the filesystem outside `walk`/`scan`.
+- **The command line has a twin.** The npm package `numbers-le`, built
+  from the extension's `src/cli/`, mirrors `cli.rs`, `scan.rs`,
+  `walk.rs`, `extract/format.rs`, `extract/locate.rs` and `mcp/` byte
+  for byte, and `bun ../scripts/check-cli-parity.ts` fails on any
+  difference. A change to a flag, a message, the walk, a format name, a
+  position, an exit code or an MCP reply changes `src/cli/` in the same
+  commit.
 - **Run the binary, not only the tests.** Four divergences here were
   caught by the corpus and a fifth by a 20,000-value scenario, none by
   reading the code.

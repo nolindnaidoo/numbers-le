@@ -60,7 +60,7 @@ function spannedValues(
 }
 
 /** Every number token of a document `JSON.parse` accepts, strings skipped. */
-function jsonNumbers(text: string): { value: number; offset: number }[] {
+export function jsonNumbers(text: string): { value: number; offset: number }[] {
 	const out: { value: number; offset: number }[] = [];
 	let i = 0;
 	while (i < text.length) {
