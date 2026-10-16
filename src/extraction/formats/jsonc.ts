@@ -40,8 +40,10 @@ export function stripJsonc(text: string): string {
 		if (ch === '/' && next === '*') {
 			const close = text.indexOf('*/', at + 2);
 			if (close === -1) return text;
-			for (const blanked of text.slice(at, close + 2))
-				out.push(blanked === '\n' ? '\n' : ' ');
+			// Per UTF-16 unit, not per code point: an emoji in a comment is two
+			// units, and blanking it to one space would shift every offset after.
+			for (let unit = at; unit < close + 2; unit++)
+				out.push(text.charAt(unit) === '\n' ? '\n' : ' ');
 			at = close + 1;
 			continue;
 		}

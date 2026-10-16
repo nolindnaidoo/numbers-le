@@ -253,6 +253,19 @@ Options:
   --no-ignore          walk files that .gitignore excludes
 ```
 
+**Held equal: this surface and the npm one.** The npm package
+`numbers-le` installs a command of the same name, built from the
+extension's `src/cli/` over the extension's engine, and nobody running
+`numbers-le` can tell which one they have. It is held to everything in
+this section byte for byte — flags, walk, positions, exit codes,
+stdout, stderr, and every reply `numbers-le mcp` writes — by
+`scripts/check-cli-parity.ts`. A change to this surface changes
+`src/cli/` in the same commit. That includes `--version`: every surface
+in the repository carries one version. Two exceptions, both under
+"Deliberate divergences": the words after `Failed to parse <FORMAT>: `
+when a parser refuses a document, and the documents the extension's
+parsers read differently, which the npm CLI reads as the extension does.
+
 ## The MCP surface
 
 - **`extract_numbers` belongs to both servers**: same schema, same
