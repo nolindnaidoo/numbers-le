@@ -175,8 +175,13 @@ describe('walk', () => {
 	});
 
 	it('refuses a named path that is not there', () => {
+		// Each platform's own wording, as Rust's io::Error prints it.
+		const reason =
+			process.platform === 'win32'
+				? 'The system cannot find the path specified. (os error 3)'
+				: 'No such file or directory (os error 2)';
 		expect(() => collect(['/no/such/place'], DEFAULT_WALK)).toThrow(
-			'/no/such/place: No such file or directory (os error 2)',
+			`/no/such/place: ${reason}`,
 		);
 	});
 });
