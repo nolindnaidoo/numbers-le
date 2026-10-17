@@ -30,7 +30,10 @@ describe('exactPositions', () => {
 		expect(place('k26 = 0x1A\n', 'toml')).toBeUndefined();
 	});
 
-	it('places nothing when a repeated key makes the lists disagree', () => {
-		expect(place('{"a": 1, "a": 2}', 'json')).toBeUndefined();
+	it('places both values of a repeated key, as the crate counts both', () => {
+		expect(place('{"a": 1, "a": 2}', 'json')).toEqual([
+			{ line: 1, column: 7 },
+			{ line: 1, column: 15 },
+		]);
 	});
 });

@@ -11,7 +11,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
 import { afterEach, describe, expect, it } from 'vitest';
-import { stripJsonc } from '../extraction/formats/jsonc';
 import { parse } from './args';
 import { resolveFormat } from './format';
 import { examine } from './locate';
@@ -116,10 +115,13 @@ describe('examine', () => {
 	});
 });
 
-describe('stripJsonc', () => {
-	it('keeps every offset, an astral character in a comment included', () => {
+describe('jsonc positions', () => {
+	it('places a number after an astral character in a comment', () => {
 		const text = '/* \u{1F3AF} */ {"a": 1}';
-		expect(stripJsonc(text)).toHaveLength(text.length);
+		expect(examine(text, 'jsonc').found[0]?.position).toEqual({
+			line: 1,
+			column: 16,
+		});
 	});
 });
 

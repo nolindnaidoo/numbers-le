@@ -159,16 +159,6 @@ mod document_tests {
         assert!(!corpus.documents.is_empty(), "the corpus is empty");
 
         for case in corpus.documents {
-            // The mixed-array TOML is the one sanctioned divergence: the
-            // extension's parser is TOML 0.5 and refuses it, this one is
-            // 1.0 and reads it. SPEC.md says so and toml.rs tests it.
-            if case.file == "mixed-array.toml" {
-                assert!(
-                    !case.errors.is_empty(),
-                    "the divergence has stopped being one"
-                );
-                continue;
-            }
             let expected: Vec<Number> = case
                 .expected
                 .into_iter()
@@ -180,6 +170,16 @@ mod document_tests {
             assert_eq!(
                 extract(document(&case.file), &case.file_type, Options),
                 expected,
+                "{}",
+                case.name
+            );
+            // The refusal too, word for word: both sides read with the
+            // same parsers, so a refused document is refused alike.
+            assert_eq!(
+                crate::extract::parse_error(document(&case.file), &case.file_type)
+                    .into_iter()
+                    .collect::<Vec<_>>(),
+                case.errors,
                 "{}",
                 case.name
             );

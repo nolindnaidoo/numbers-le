@@ -1,11 +1,8 @@
-//! TOML, read with `toml` where the extension reads with `@iarna/toml`.
-//!
-//! **The two follow different TOML versions and the corpus says so.**
-//! `@iarna/toml` implements 0.5, where an inline array must hold one
-//! type; the `toml` crate implements 1.0, where `[1, 2.5]` is fine. A
-//! document with a mixed array is a parse failure there and eight
-//! numbers here, and `fixtures/documents/mixed-array.toml` pins it
-//! rather than letting it surface as a mystery.
+//! TOML, read with `toml`. The extension reads with a transcription of
+//! the same crate (`src/parsers/toml/`), so a mixed inline array, an
+//! integer past 2^53 and an integer past `i64` are read, or refused, the
+//! same way on both sides; `fixtures/documents/mixed-array.toml` pins the
+//! first.
 
 use toml::Value as Toml;
 
@@ -71,12 +68,8 @@ mod tests {
     /// A TOML integer is an i64 and a JavaScript number is an f64, so
     /// past 2^53 the value loses precision — the same precision a
     /// JavaScript number loses, which is what makes it the right answer.
-    ///
-    /// **The extension does not agree here**, and the `differential` job
-    /// found it: `@iarna/toml` hands back a `BigInt` at or above 2^53
-    /// and the extension's numeric walk does not recognise one, so it
-    /// silently reports nothing. SPEC.md, "Deliberate divergences",
-    /// records which answer to trust and why.
+    /// The extension used to report nothing here, from a parser that
+    /// handed back a `BigInt`; it now reads the same `i64` this does.
     #[test]
     fn an_integer_past_the_safe_range_loses_precision_rather_than_vanishing() {
         use crate::extract::render::js_number;
@@ -118,10 +111,9 @@ mod tests {
         );
     }
 
-    /// The version divergence, asserted rather than assumed. The `toml`
-    /// crate is 1.0 and reads this; `@iarna/toml` is 0.5 and refuses it.
+    /// TOML 1.0 allows an inline array of mixed types, and so this reads it.
     #[test]
-    fn a_mixed_inline_array_parses_here_and_not_in_the_extension() {
+    fn a_mixed_inline_array_parses() {
         assert_eq!(values("limits = [1, 2.5]"), [1.0, 2.5]);
         assert!(parse_error("limits = [1, 2.5]").is_none());
     }

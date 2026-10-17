@@ -1,10 +1,9 @@
 import type { FileType, NumberFinding } from '../types';
+import { jsonNumberSpans } from './formats/json';
 import { scanSourceSpanned } from './formats/source';
 import { TEXT_NUMBER_RE } from './heuristics';
 
 export type Position = Readonly<{ line: number; column: number }>;
-
-const JSON_NUMBER = /-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/y;
 
 /**
  * Where each extracted number starts, where that is known rather than
@@ -47,7 +46,7 @@ function spannedValues(
 			offset: s.offset,
 		}));
 	}
-	if (fileType === 'json') return jsonNumbers(text);
+	if (fileType === 'json') return jsonNumberSpans(text, false);
 	if (fileType === 'unknown') {
 		const out: { value: number; offset: number }[] = [];
 		for (const match of text.matchAll(TEXT_NUMBER_RE)) {
@@ -59,32 +58,6 @@ function spannedValues(
 	return undefined;
 }
 
-/** Every number token of a document `JSON.parse` accepts, strings skipped. */
-export function jsonNumbers(text: string): { value: number; offset: number }[] {
-	const out: { value: number; offset: number }[] = [];
-	let i = 0;
-	while (i < text.length) {
-		const c = text[i] as string;
-		if (c === '"') {
-			i += 1;
-			while (i < text.length && text[i] !== '"') i += text[i] === '\\' ? 2 : 1;
-			i += 1;
-			continue;
-		}
-		if (c === '-' || (c >= '0' && c <= '9')) {
-			JSON_NUMBER.lastIndex = i;
-			const token = JSON_NUMBER.exec(text)?.[0] ?? c;
-			const value = Number(token);
-			if (Number.isFinite(value)) out.push({ value, offset: i });
-			i += token.length;
-			continue;
-		}
-		i += 1;
-	}
-	return out;
-}
-
-/** UTF-16 offset to 1-based line and UTF-16 column, as an editor counts. */
 function positionIndex(text: string): (offset: number) => Position {
 	const starts = [0];
 	for (let i = 0; i < text.length; i++)

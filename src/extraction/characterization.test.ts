@@ -3,7 +3,6 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { FileType } from '../types';
 import { extractNumber } from './extract';
-import { extractFromCsvAsync } from './formats/csv';
 
 /**
  * Characterization tests: pin the extraction output per format.
@@ -13,7 +12,7 @@ import { extractFromCsvAsync } from './formats/csv';
  * The 2.0 policy pinned here (see extraction/heuristics.ts): finite
  * numbers only; string coercion only in INI/.env/CSV and only when the
  * whole string is numeric ("12abc" and "1.2.3" extract nothing); CSV
- * sync and streaming agree, with no header inference; multi-document
+ * no header inference; multi-document
  * YAML extracts from every document.
  *
  * 0.2.0 added two things every snapshot here shows: a `notation` on
@@ -44,22 +43,6 @@ describe('extraction characterization', () => {
 			expect(result).toMatchSnapshot();
 		});
 	}
-
-	it('numbers.csv via streaming parser', async () => {
-		const result = await extractFromCsvAsync(
-			readFixture('numbers.csv'),
-			'numbers.csv',
-		);
-		expect(result).toMatchSnapshot();
-	});
-
-	it('numeric-header.csv via streaming parser (agrees with sync)', async () => {
-		const result = await extractFromCsvAsync(
-			readFixture('numeric-header.csv'),
-			'numeric-header.csv',
-		);
-		expect(result).toMatchSnapshot();
-	});
 
 	it('a source language reads its literals whole', () => {
 		const result = extractNumber(

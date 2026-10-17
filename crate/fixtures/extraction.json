@@ -128,10 +128,17 @@
 			"name": "mixed-array.toml as toml",
 			"file": "mixed-array.toml",
 			"fileType": "toml",
-			"expected": [],
-			"errors": [
-				"Failed to parse TOML: Inline lists must be a single type, not a mix of integer and float at row 1, col 18, pos 17:\n1> limits = [1, 2.5]\n                    ^\n2: \n\n"
-			]
+			"expected": [
+				{
+					"value": "1",
+					"notation": "decimal"
+				},
+				{
+					"value": "2.5",
+					"notation": "decimal"
+				}
+			],
+			"errors": []
 		},
 		{
 			"name": "numbers.ini as ini",

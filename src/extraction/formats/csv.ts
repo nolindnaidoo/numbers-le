@@ -1,122 +1,35 @@
-import { parse } from 'csv-parse';
-import { parse as parseSync } from 'csv-parse/sync';
-import type { ExtractionResult, NumberFinding, ParseError } from '../../types';
-import { errorMessage } from '../../utils/errors';
-import { parseStrictNumber } from '../heuristics';
-
-/** Every strictly-numeric cell in one parsed record. */
-function numbersInRecord(record: unknown): readonly NumberFinding[] {
-	if (!Array.isArray(record)) return [];
-
-	const found: NumberFinding[] = [];
-	for (const value of record) {
-		if (typeof value !== 'string') continue;
-		const num = parseStrictNumber(value);
-		if (num !== undefined) found.push(num);
-	}
-	return found;
-}
-
 /**
- * All CSV handling goes through csv-parse. v1.x had three hand-rolled
- * splitters (two in this module, one in ui/prompts.ts) that mishandled
- * escaped quotes ("") and disagreed with the streaming path, which
- * silently consumed the first row as a header. Sync and streaming now
- * produce identical results: every row is data, no header inference.
+ * The crate's `csv.rs`: the blanks around quoted fields trimmed, then the
+ * csv crate's records, flexible and headerless. Every cell that reads
+ * strictly as a number is one.
  */
-const PARSE_OPTIONS = Object.freeze({
-	bom: true,
-	columns: false,
-	relax_column_count: true,
-	relax_quotes: true,
-	skip_empty_lines: true,
-	trim: true,
-});
+
+import { csvRows, trimAroundQuotes } from '../../parsers/csv';
+import type { ExtractionResult } from '../../types';
+import { parseStrictNumber } from '../heuristics';
+import { answer } from './typed';
 
 export function extractFromCsv(
 	text: string,
 	filepath: string,
 	delimiter = ',',
 ): ExtractionResult {
-	try {
-		const records = parseSync(text, {
-			...PARSE_OPTIONS,
-			delimiter,
-		}) as string[][];
-		const numbers: NumberFinding[] = [];
-
-		for (const record of records) {
-			for (const value of record) {
-				const num = parseStrictNumber(value);
-				if (num !== undefined) numbers.push(num);
-			}
-		}
-
-		return {
-			success: true,
-			numbers: Object.freeze(numbers),
-			errors: Object.freeze([]),
-		};
-	} catch (error) {
-		return {
-			success: false,
-			numbers: Object.freeze([]),
-			errors: Object.freeze([
-				{
-					type: 'parse-error',
-					message: `CSV parse error: ${errorMessage(error)}`,
-					filepath,
-				},
-			]),
-		};
-	}
+	const trimmed = trimAroundQuotes(text);
+	if (trimmed === undefined)
+		return answer(
+			[],
+			'Failed to parse CSV: quoted field is never closed',
+			filepath,
+		);
+	const numbers = csvRows(trimmed, delimiter)
+		.flat()
+		.flatMap((cell) => parseStrictNumber(cell) ?? []);
+	return answer(numbers, undefined, filepath);
 }
 
-export function extractFromCsvAsync(
-	text: string,
-	filepath: string,
-): Promise<ExtractionResult> {
-	return new Promise((resolve) => {
-		const numbers: NumberFinding[] = [];
-		const errors: ParseError[] = [];
-
-		const parser = parse(PARSE_OPTIONS);
-
-		parser.on('readable', () => {
-			let record: unknown = parser.read();
-			while (record !== null) {
-				numbers.push(...numbersInRecord(record));
-				record = parser.read();
-			}
-		});
-
-		parser.on('error', (error) => {
-			errors.push({
-				type: 'parse-error',
-				message: `CSV parse error: ${error.message}`,
-				filepath,
-			});
-		});
-
-		parser.on('end', () => {
-			resolve({
-				success: errors.length === 0,
-				numbers: Object.freeze(numbers),
-				errors: Object.freeze(errors),
-			});
-		});
-
-		parser.write(text);
-		parser.end();
-	});
-}
-
-/** Split a single CSV line into cells with the same parser and options. */
+/** The first record's cells, for the column picker; empty when none parse. */
 export function parseCsvLine(line: string): readonly string[] {
-	try {
-		const records = parseSync(line, PARSE_OPTIONS) as string[][];
-		return Object.freeze(records[0] ?? []);
-	} catch {
-		return Object.freeze([]);
-	}
+	const trimmed = trimAroundQuotes(line);
+	if (trimmed === undefined) return Object.freeze([]);
+	return Object.freeze(csvRows(trimmed, ',')[0] ?? []);
 }
