@@ -3,7 +3,6 @@ import { extractFromCsv } from './formats/csv';
 import { extractFromEnv } from './formats/env';
 import { extractFromIni } from './formats/ini';
 import { extractFromJson } from './formats/json';
-import { stripJsonc } from './formats/jsonc';
 import { extractFromSource } from './formats/source';
 import { extractFromToml } from './formats/toml';
 import { extractFromYaml } from './formats/yaml';
@@ -50,7 +49,7 @@ export function extractNumber(
 		case 'json':
 			return extractFromJson(text, filepath);
 		case 'jsonc':
-			return extractFromJson(stripJsonc(text), filepath);
+			return extractFromJson(text, filepath, true);
 		case 'yaml':
 			return extractFromYaml(text, filepath);
 		case 'csv':

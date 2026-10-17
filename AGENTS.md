@@ -21,9 +21,14 @@ extraction/extract.ts   dispatcher: FileType (from filename extension) -> extrac
                         unrecognised -> the regex fallback
 extraction/heuristics.ts  THE single numeric policy: collectNumbers walker,
                         parseStrictNumber, plainNotation, scanTextForNumbers
-extraction/formats/*.ts   one thin extractor per format: parse -> collectNumbers.
-                        csv.ts owns ALL CSV parsing (csv-parse, sync + streaming
-                        + parseCsvLine) — nothing else splits CSV.
+extraction/formats/*.ts   one thin extractor per format: the crate's parser -> the
+                        crate's numbers. csv.ts owns ALL CSV reading (and
+                        parseCsvLine) — nothing else splits CSV.
+parsers/                jsonc-parser, saphyr, toml, rust-ini and csv, transcribed:
+                        the crate's own parsers, so a document parses, or is
+                        refused in the same words, on both sides. Shared byte
+                        for byte with units-le, string-le, paths-le and urls-le
+                        and held there by letools-site's fleet check
                         source.ts is the numeric-literal reader: hex/binary/octal,
                         digit separators, suffixes, and the boundary rule that
                         keeps `u32` a type name rather than the number 32
@@ -48,7 +53,7 @@ Conventions: factory functions + `Object.freeze` (no classes), guard clauses, de
 - Finite numbers only: NaN and ±Infinity are never extracted, even where the format can express them (YAML `.inf`, TOML `inf`).
 - String coercion is opt-in per format: on for INI/.env/CSV (values there are inherently strings), off for JSON/YAML/TOML (`"42"` is data, not a number).
 - A coerced string must be numeric **in full** — `12abc`, `1.2.3`, `1,000`, `0x1A` extract nothing.
-- CSV: no header inference; every row is data; sync and streaming paths must produce identical results.
+- CSV: no header inference; every row is data. CSV streaming is an output mode, results straight into an editor; it reads the document the same way.
 - Dates are leaves, not traversable objects.
 
 ## Code style
@@ -354,5 +359,3 @@ because skipping one is how the numbers drift apart again.
 - The unknown-type fallback is a grammar-less text scan: `v1.2.3` reads as `1.2` and `0.3`. It is now reserved for prose — a source language goes to `formats/source.ts`, which has a grammar.
 - `formats/source.ts` reads comments and strings as well as code. A number in a docstring is still a number in the file; skipping it would need a per-language lexer.
 - `notation` follows coercion: JSON/YAML/TOML report `decimal` because their parsers resolved the token first, INI/.env/CSV keep what their text said, and source/fallback keep everything.
-- `@iarna/toml` rejects mixed int/float inline arrays (`[1, 2.5, 3]`) per TOML 0.5 — the file reports a parse error rather than extracting partially.
-- CSV streaming mode still buffers the document text it is given (the streaming is per-record parsing, not file I/O streaming).

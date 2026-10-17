@@ -8,15 +8,10 @@
  * positions, the exit codes, stdout and stderr byte for byte, and every reply
  * `numbers-le mcp` writes, byte for byte too.
  *
- * One thing is not compared, and SPEC.md names it: the words a parser uses to
- * refuse a document. Both binaries report the same file as unparsed under the
- * same `Failed to parse <FORMAT>: ` prefix, and what follows is jsonc-parser,
- * saphyr or the `toml` crate on one side and `JSON.parse`, js-yaml or
- * `@iarna/toml` on the other. That text is cut back to its prefix, wherever
- * it appears, before comparing.
- *
- * The tree stays clear of the places the two engines are known to read a
- * document differently, which SPEC.md lists under "Deliberate divergences".
+ * Nothing is masked: the extension reads JSON, YAML, TOML, INI and CSV with
+ * transcriptions of the crate's own parsers, so a refused document is
+ * refused in the same words, and the tree holds broken documents of each
+ * format to prove it.
  *
  * Run: bun run build:cli && cargo build --locked --manifest-path crate/Cargo.toml
  *      bun scripts/check-cli-parity.ts
@@ -91,27 +86,46 @@ function file(relative: string, content: string | Buffer): void {
 
 const canLock = process.platform !== 'win32' && process.getuid?.() !== 0;
 
-/**
- * Corpus documents the two engines read differently on purpose, each one a
- * divergence SPEC.md names. The corpus pins them, so they are not compared
- * here a second time.
- */
-const DIVERGENT: Readonly<Record<string, string>> = Object.freeze({
-	'mixed-array.toml': 'TOML 0.5 against TOML 1.0',
-});
-
-/** The shared corpus, copied in without the documents named above. */
+/** The shared corpus, every document of it. */
 function corpus(): void {
 	const source = join(ROOT, 'crate', 'fixtures', 'documents');
 	dir('corpus');
 	for (const name of readdirSync(source)) {
-		if (Object.hasOwn(DIVERGENT, name)) continue;
 		file(`corpus/${name}`, readFileSync(join(source, name)));
+	}
+}
+
+/** One document of each parsed format that its parser refuses, plus near misses. */
+function broken(): void {
+	dir('broken');
+	const documents: Record<string, string> = {
+		'a.json': '{"a": 1,',
+		'b.json': '{"a": 1, "b": }',
+		'empty.json': '',
+		'dup.json': '{"a": 1, "a": 2}',
+		'a.jsonc': '{\n  // c\n  "a": 1,,\n}',
+		'a.yaml': 'a: [1\n',
+		'b.yaml': 'a: b: c\n',
+		'c.yml': '\t- 1\n',
+		'a.toml': '[a\nb = 1\n',
+		'b.toml': 'a = \n',
+		'mixed.toml': 'a = [1, 2.5, "x"]\nbig = 9007199254740993\n',
+		'wide.toml': 'a = 9223372036854775808\n',
+		'a.csv': 'a,b\n"1,2\n',
+		'b.csv': ' "1" , 2 \n3,"4"x\n',
+		'a.tsv': 'a\tb\n"x\n',
+		'a.ini': '[a\nb=1\n',
+		'b.ini': 'rate = \u008542\nbare\n',
+		'a.env': 'A="unterminated\nB=1\nB=2\nexport C = 3 # c\n',
+	};
+	for (const [name, content] of Object.entries(documents)) {
+		file(`broken/${name}`, content);
 	}
 }
 
 function build(): void {
 	corpus();
+	broken();
 	dir('repo');
 	dir('repo/.git');
 	dir('repo/.git/info');
@@ -286,52 +300,12 @@ function cases(): readonly Case[] {
 				]
 			: []),
 		{ args: ['corpus'] },
+		{ args: ['broken'] },
+		{ args: ['broken', '--strict'] },
 		{ args: ['corpus', '--dedupe'] },
 		{ args: ['corpus', '--values'] },
 		{ args: [join(ROOT, 'samples')] },
 	];
-}
-
-const PREFIX = /^Failed to parse [A-Z.]+: /;
-
-/** A parser's own words cut back to the prefix both binaries share. */
-function shared(message: string): string {
-	const prefix = PREFIX.exec(message)?.[0];
-	return prefix ? `${prefix}<parser's words>` : message;
-}
-
-/** The forms a message takes in a JSON line, and nested once more in MCP text. */
-function masked(text: string, messages: readonly string[]): string {
-	let out = text;
-	for (const message of messages) {
-		const once = JSON.stringify(message).slice(1, -1);
-		const twice = JSON.stringify(once).slice(1, -1);
-		const short = JSON.stringify(shared(message)).slice(1, -1);
-		out = out
-			.replaceAll(twice, JSON.stringify(short).slice(1, -1))
-			.replaceAll(once, short)
-			.replaceAll(message, shared(message));
-	}
-	return out;
-}
-
-/** Every parse refusal anywhere in a JSON value. */
-function refusals(value: unknown): string[] {
-	if (Array.isArray(value)) return value.flatMap(refusals);
-	if (typeof value !== 'object' || value === null) return [];
-	return Object.entries(value).flatMap(([key, item]) => {
-		if (key === 'message' && typeof item === 'string' && PREFIX.test(item)) {
-			return [item];
-		}
-		return refusals(item);
-	});
-}
-
-function jsonLines(text: string): unknown[] {
-	return text
-		.split('\n')
-		.filter((line) => line.startsWith('{'))
-		.map((line) => JSON.parse(line));
 }
 
 function run(command: readonly string[], testCase: Case): Outcome {
@@ -347,30 +321,11 @@ function run(command: readonly string[], testCase: Case): Outcome {
 	};
 }
 
-/** The refusals a binary reported for a case, read from its own reports. */
-function caseRefusals(command: readonly string[], testCase: Case): string[] {
-	const reports = run(command, {
-		...testCase,
-		args: testCase.args.filter((arg) => arg !== '--values'),
-	}).stdout;
-	return refusals(jsonLines(reports));
-}
-
-function comparableOutcome(command: readonly string[], testCase: Case): Outcome {
-	const outcome = run(command, testCase);
-	const messages = caseRefusals(command, testCase);
-	return {
-		status: outcome.status,
-		stdout: masked(outcome.stdout, messages),
-		stderr: masked(outcome.stderr, messages),
-	};
-}
-
 function compareCli(): string[] {
 	const failures: string[] = [];
 	for (const testCase of cases()) {
-		const rust = comparableOutcome([RUST], testCase);
-		const node = comparableOutcome([NODE, NODE_CLI], testCase);
+		const rust = run([RUST], testCase);
+		const node = run([NODE, NODE_CLI], testCase);
 		for (const field of ['status', 'stdout', 'stderr'] as const) {
 			if (rust[field] === node[field]) continue;
 			failures.push(
@@ -459,12 +414,6 @@ function serve(command: readonly string[], input: string | Buffer): Outcome {
 	};
 }
 
-function comparableServe(command: readonly string[], input: string | Buffer): Outcome {
-	const outcome = serve(command, input);
-	const messages = refusals(jsonLines(outcome.stdout));
-	return { ...outcome, stdout: masked(outcome.stdout, messages) };
-}
-
 function compareMcp(): string[] {
 	const failures: string[] = [];
 	const lines = mcpLines();
@@ -481,8 +430,8 @@ function compareMcp(): string[] {
 		],
 	];
 	for (const [label, input] of sessions) {
-		const rust = comparableServe([RUST], input);
-		const node = comparableServe([NODE, NODE_CLI], input);
+		const rust = serve([RUST], input);
+		const node = serve([NODE, NODE_CLI], input);
 		for (const field of ['status', 'stdout', 'stderr'] as const) {
 			if (rust[field] === node[field]) continue;
 			failures.push(

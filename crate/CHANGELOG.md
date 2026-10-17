@@ -8,6 +8,17 @@ in this repository carries one version and releases from one tag.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-10-17
+
+### Changed
+
+- The four "Deliberate divergences" from the extension are closed: it now
+  parses with transcriptions of this crate's parsers. The corpus test
+  compares each document's refusal word for word, the MCP fixture test
+  compares refused documents whole, and the fixtures hold this crate's
+  answers for `mixed-array.toml` and the empty JSON document. No behaviour
+  of this crate changed.
+
 ## [2.6.2] - 2026-10-17
 
 ### Changed

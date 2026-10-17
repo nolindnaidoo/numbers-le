@@ -132,17 +132,16 @@ crate/src/
 - **A parse failure is a warning, not an exit 2.** Only an unreadable
   *file* is a 2. One malformed config must not fail an audit of ten
   thousand files.
-- **Refusal messages cannot be shared.** They come from whichever parser
-  refused, and `@iarna/toml` and the `toml` crate word them differently.
-  The corpus compares refusals structurally: both refused, both reported
-  it, both returned nothing.
-- **The `toml` crate is TOML 1.0 and `@iarna/toml` is 0.5.** A mixed
-  inline array is read here and refused there. Sanctioned divergence,
-  pinned by `fixtures/documents/mixed-array.toml`. Every sanctioned
-  divergence lives in SPEC.md under "Deliberate divergences" — read it
-  before deciding a `differential` failure is not a bug.
-- **`JSON.parse("")` throws and jsonc-parser does not**, so an empty
-  document is a parse failure here by hand.
+- **Refusal messages are shared.** The extension reads every parsed
+  format with a transcription of the parser this crate uses
+  (`src/parsers/`), so a refused document is refused in the same words,
+  and the corpus, the differential and the CLI parity compare them
+  exactly. A refusal that differs is a bug in the transcription.
+- **jsonc-parser reads an empty document as no value**, so an empty
+  document is a parse failure here by hand, and there by the same hand.
+- Every sanctioned divergence lives in SPEC.md under "Deliberate
+  divergences" — read it before deciding a `differential` failure is not
+  a bug.
 - **Positions are found by value, not by text**, because a number's
   source and its printed form differ. A run in a key can take the match;
   that is written down in `locate.rs` rather than left to be discovered.

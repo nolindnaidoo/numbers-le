@@ -1,6 +1,6 @@
 {
 	"name": "numbers-le",
-	"version": "2.6.2",
+	"version": "2.7.0",
 	"description": "Extract every hardcoded number in a codebase, so a person can check them.",
 	"keywords": [
 		"magic-numbers",

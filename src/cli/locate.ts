@@ -9,10 +9,9 @@
  * as TOML's `0x1A`, has no position.
  */
 import { extractNumber, isSourceLanguage } from '../extraction/extract';
-import { stripJsonc } from '../extraction/formats/jsonc';
+import { jsonNumberSpans } from '../extraction/formats/json';
 import { scanSourceSpanned } from '../extraction/formats/source';
 import { plainNotation } from '../extraction/heuristics';
-import { jsonNumbers } from '../extraction/positions';
 import type {
 	ExtractionResult,
 	FileType,
@@ -99,7 +98,7 @@ function refusal(text: string, key: FileType): string | null {
 function crateWording(result: ExtractionResult, key: FileType): string | null {
 	const first = result.errors[0];
 	if (!first || !PARSED.includes(key)) return null;
-	return first.message.replace(/^CSV parse error: /, 'Failed to parse CSV: ');
+	return first.message;
 }
 
 /** Bit equality, as the crate compares: `-0` and `0` are different runs. */
@@ -123,8 +122,12 @@ function located(finding: NumberFinding, position: Position | null): Located {
 }
 
 function spanned(text: string, key: FileType): readonly Spanned[] | undefined {
-	if (key === 'json') return jsonSpans(text);
-	if (key === 'jsonc') return jsonSpans(stripJsonc(text));
+	if (key === 'json' || key === 'jsonc') {
+		return jsonNumberSpans(text, key === 'jsonc').map(({ value, offset }) => ({
+			finding: { value, notation: 'decimal' },
+			offset,
+		}));
+	}
 	if (key === 'unknown') return textRuns(text);
 	if (isSourceLanguage(key)) return scanSourceSpanned(text, key);
 	return undefined;
@@ -135,19 +138,6 @@ function spanned(text: string, key: FileType): readonly Spanned[] | undefined {
  * included, because the crate walks the syntax tree rather than the object
  * `JSON.parse` builds from it. A document it refuses has none.
  */
-function jsonSpans(text: string): readonly Spanned[] {
-	try {
-		JSON.parse(text);
-	} catch {
-		// The refusal is reported by the caller as a parse diagnostic.
-		return [];
-	}
-	return jsonNumbers(text).map(({ value, offset }) => ({
-		finding: { value, notation: 'decimal' },
-		offset,
-	}));
-}
-
 function textRuns(text: string): readonly Spanned[] {
 	const runs: Spanned[] = [];
 	for (const match of text.matchAll(TEXT_NUMBER)) {

@@ -30,11 +30,9 @@
  *      checked against this file's own table rather than against either
  *      implementation — a value can be right while the notation lies.
  *
- * Generated cases stay inside the space where the two are contractually
- * identical. The sanctioned divergences — `@iarna/toml` being TOML 0.5
- * where the `toml` crate is 1.0, above all — are pinned by hand in
- * `crate/fixtures/` and listed in `crate/SPEC.md`; generating around them
- * would be generating known-red cases.
+ * Nothing is generated around: the extension reads every parsed format
+ * with a transcription of the crate's own parser, so a refused document is
+ * compared whole, its message included, like any other answer.
  *
  * Run: bun scripts/differential-extraction.ts
  * Env: DIFFERENTIAL_SEED (default 20260812), NUMBERS_LE_BIN
@@ -318,19 +316,17 @@ function cases(): Case[] {
 			content: `rate: ${token}\n`,
 			expected: [decimal(value)],
 		});
-		// TOML integers at or above 2^53 are a documented divergence —
-		// `@iarna/toml` hands back a JavaScript BigInt there and wraps at
-		// i64, the `toml` crate returns an i64 and refuses what does not
-		// fit. See "Deliberate divergences" in crate/SPEC.md; generating
-		// around it would be generating known-red cases.
-		if (Math.abs(value) < 2 ** 53) {
-			out.push({
-				name: `toml: ${token}`,
-				format: 'toml',
-				content: `rate = ${token}\n`,
-				expected: [decimal(value)],
-			});
-		}
+		// A TOML integer is an i64, so one past it is not a valid document.
+		const integer = /^[+-]?\d+$/.test(token);
+		const fits =
+			!integer ||
+			(BigInt(token) >= -(2n ** 63n) && BigInt(token) < 2n ** 63n);
+		out.push({
+			name: `toml: ${token}`,
+			format: 'toml',
+			content: `rate = ${token}\n`,
+			expected: fits ? [decimal(value)] : [],
+		});
 
 		// A quoted number in a typed format is data, never a number.
 		out.push({
@@ -408,22 +404,15 @@ function whitespaceCases(): Case[] {
 			content: wrap(`42${BOM}`),
 			expected: [decimal(42)],
 		});
-		// U+0085 is not whitespace to JavaScript, so it stays part of
-		// the value and the value is not numeric in full.
-		//
-		// INI is left out: `rust-ini` strips U+0085 from a value before
-		// the numeric policy ever sees it and the npm `ini` package does
-		// not, which is a difference between two parsers rather than a
-		// trim this crate performs. Recorded under "Deliberate
-		// divergences" in crate/SPEC.md.
-		if (format !== 'ini') {
-			out.push({
-				name: `${format}: a value led by a next-line character`,
-				format,
-				content: wrap(`${NEL}42`),
-				expected: [],
-			});
-		}
+		// U+0085 is not whitespace to JavaScript, so a value it leads is
+		// not numeric in full — except in INI, where rust-ini strips it
+		// before the numeric policy sees the value, on both sides alike.
+		out.push({
+			name: `${format}: a value led by a next-line character`,
+			format,
+			content: wrap(`${NEL}42`),
+			expected: format === 'ini' ? [decimal(42)] : [],
+		});
 	}
 
 	return out;
@@ -559,17 +548,6 @@ type Envelope = Readonly<{
 	diagnostics: readonly { code: string }[];
 }>;
 
-/** Both refused, both said so, and both returned nothing. */
-function refusedAlike(crate: Envelope, extension: Envelope): boolean {
-	return (
-		crate.ok === extension.ok &&
-		crate.data.numbers.length === 0 &&
-		extension.data.numbers.length === 0 &&
-		crate.diagnostics.some((one) => one.code === 'parse-error') ===
-			extension.diagnostics.some((one) => one.code === 'parse-error')
-	);
-}
-
 const failures: string[] = [];
 
 function fail(testCase: Case, detail: string): void {
@@ -609,26 +587,6 @@ async function main(): Promise<void> {
 			content: testCase.content,
 			format: testCase.format,
 		})) as Envelope;
-
-		// A refused document is compared by shape, not by text. The
-		// message comes from whichever parser did the refusing —
-		// `@iarna/toml` and the `toml` crate word them differently and
-		// neither is wrong — so what has to match is that both refused,
-		// both said so, and both returned nothing.
-		if (fromCrate.ok === false || fromExtension.ok === false) {
-			if (!refusedAlike(fromCrate, fromExtension)) {
-				fail(
-					testCase,
-					'one server refused the document and the other read it\n' +
-						`  crate:     ok=${fromCrate.ok} ${JSON.stringify(fromCrate.data.numbers)}\n` +
-						`  extension: ok=${fromExtension.ok} ${JSON.stringify(fromExtension.data.numbers)}\n` +
-						'  This is the SHARED tool: either the parsers genuinely differ — in which\n' +
-						'  case it belongs in "Deliberate divergences" in crate/SPEC.md — or one of\n' +
-						'  the two is wrong.',
-				);
-			}
-			continue;
-		}
 
 		// 1. The whole envelope, key order aside. A divergence here is a
 		//    divergence in the tool BOTH servers offer — one name, one

@@ -255,43 +255,6 @@ mod tests {
                 arguments["content"] = json!(content);
             }
 
-            // A refused document is compared by shape, not by text. The
-            // message comes from whichever parser did the refusing —
-            // `@iarna/toml` and the `toml` crate word it differently, and
-            // neither is wrong — so what has to match is that both
-            // refused, both reported it, and both returned nothing.
-            //
-            // One case is a refusal *only* on the extension's side:
-            // `@iarna/toml` is TOML 0.5 and rejects a mixed inline array
-            // where the `toml` crate reads it. That divergence is in
-            // SPEC.md and pinned in toml.rs.
-            if case
-                .expected
-                .as_ref()
-                .is_some_and(|expected| expected["ok"] == false)
-            {
-                let ours = answer(&arguments);
-                if case.file.as_deref() == Some("mixed-array.toml") {
-                    assert_eq!(ours["ok"], true, "this parser reads TOML 1.0");
-                    assert_eq!(
-                        ours["data"]["numbers"],
-                        json!([
-                            { "value": 1, "notation": "decimal" },
-                            { "value": 2.5, "notation": "decimal" },
-                        ])
-                    );
-                } else {
-                    assert_eq!(ours["ok"], false, "{}", case.name);
-                    assert_eq!(
-                        ours["diagnostics"][0]["code"], "parse-error",
-                        "{}",
-                        case.name
-                    );
-                    assert_eq!(ours["data"]["numbers"], json!([]), "{}", case.name);
-                }
-                continue;
-            }
-
             match (case.expected, case.expected_error) {
                 (_, Some(expected)) => {
                     assert_eq!(

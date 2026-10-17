@@ -155,39 +155,15 @@ scan read their literals directly and keep everything.
 The shared `extract_numbers` MCP tool must answer identically from either
 server, and a difference there is a bug until it is written down here.
 The surfaces themselves — IDE-first there, terminal-first here — are meant
-to differ and are not on this list. These are the ones that are
-written down. Each is pinned by a test, and
-`scripts/differential-extraction.ts` generates around them rather than
-through them.
+to differ and are not on this list.
 
-**Refusal messages are not shared.** They come from whichever parser
-refused, and `@iarna/toml` and the `toml` crate word them differently.
-A refused document is compared structurally: both refused, both said so,
-both returned nothing.
-
-**TOML 0.5 against TOML 1.0.** `@iarna/toml` is 0.5, where an inline
-array must hold one type; the `toml` crate is 1.0, where `[1, 2.5]` is
-fine. Pinned by `fixtures/documents/mixed-array.toml`.
-
-**A TOML integer at or above 2^53.** `@iarna/toml` hands back a
-JavaScript `BigInt` there, which the extension's numeric walk does not
-recognise, so it reports nothing; the `toml` crate returns an `i64`,
-which becomes the same double a JavaScript number would. Past `i64` the
-two part company again: the crate refuses the document — TOML integers
-are 64-bit signed, so it is not a valid document — where `@iarna/toml`
-wraps it silently to a negative number that is not in the file. **The
-crate's answer is the one to trust**; the extension's is a defect in the
-library it parses with, and reading its `BigInt` would mean reporting
-the wrapped value as though it were real. `toml.rs` pins both halves.
-
-**An INI value led by U+0085.** Whitespace is JavaScript's set
-everywhere this crate trims — `js.rs` defines it, because Rust's strips
-U+0085 and keeps U+FEFF and JavaScript does the exact opposite. The one
-place that is not enough is INI: `rust-ini` strips U+0085 from a value
-before the numeric policy sees it and the npm `ini` package does not, so
-`rate = <U+0085>42` is the number 42 here and text there. A difference
-between two parsers rather than a trim this crate performs, and not
-recoverable from what either hands back.
+None is open today. The extension used to parse with npm libraries —
+`@iarna/toml`, js-yaml, `ini`, csv-parse and `JSON.parse` — and four
+differences followed from that: refusals in other words, TOML 0.5 against
+1.0, a TOML integer past 2^53 reported as nothing, and an INI value led by
+U+0085 read as text. It now parses with transcriptions of this crate's own
+parsers, and all four are gone; the corpus, the differential and the CLI
+parity compare refusals word for word.
 
 **A base-prefixed literal wider than 128 bits.** `0x` followed by 33 or
 more hex digits is **consumed and not reported**, on both sides — there
@@ -261,10 +237,8 @@ this section byte for byte — flags, walk, positions, exit codes,
 stdout, stderr, and every reply `numbers-le mcp` writes — by
 `scripts/check-cli-parity.ts`. A change to this surface changes
 `src/cli/` in the same commit. That includes `--version`: every surface
-in the repository carries one version. Two exceptions, both under
-"Deliberate divergences": the words after `Failed to parse <FORMAT>: `
-when a parser refuses a document, and the documents the extension's
-parsers read differently, which the npm CLI reads as the extension does.
+in the repository carries one version, and so are the words a parser
+refuses a document in.
 
 ## The MCP surface
 

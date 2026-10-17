@@ -52,7 +52,7 @@
 						"column": 11
 					},
 					{
-						"value": 1e-7,
+						"value": 1e-07,
 						"notation": "decimal",
 						"line": 10,
 						"column": 11
@@ -383,7 +383,6 @@
 	},
 	{
 		"name": "a document that will not parse",
-		"file": "mixed-array.toml",
 		"arguments": {
 			"format": "toml"
 		},
@@ -397,7 +396,7 @@
 				{
 					"severity": "error",
 					"code": "parse-error",
-					"message": "Failed to parse TOML: Inline lists must be a single type, not a mix of integer and float at row 1, col 18, pos 17:\n1> limits = [1, 2.5]\n                    ^\n2: \n\n"
+					"message": "Failed to parse TOML: TOML parse error at line 1, column 17\n  |\n1 | limits = [1, 2.5\n  |                 ^\nunclosed array, expected `]`\n"
 				}
 			],
 			"meta": {
@@ -405,7 +404,8 @@
 				"count": 0,
 				"truncated": false
 			}
-		}
+		},
+		"content": "limits = [1, 2.5"
 	},
 	{
 		"name": "nothing to find",
@@ -423,7 +423,7 @@
 				{
 					"severity": "error",
 					"code": "parse-error",
-					"message": "Failed to parse JSON: JSON Parse error: Unexpected EOF"
+					"message": "Failed to parse JSON: unexpected end of input"
 				}
 			],
 			"meta": {
@@ -748,6 +748,35 @@
 			"meta": {
 				"tool": "extract_numbers",
 				"count": 10,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "a mixed inline array is TOML 1.0, and reads",
+		"file": "mixed-array.toml",
+		"arguments": {
+			"format": "toml"
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"numbers": [
+					{
+						"value": 1,
+						"notation": "decimal"
+					},
+					{
+						"value": 2.5,
+						"notation": "decimal"
+					}
+				],
+				"fileType": "toml"
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_numbers",
+				"count": 2,
 				"truncated": false
 			}
 		}

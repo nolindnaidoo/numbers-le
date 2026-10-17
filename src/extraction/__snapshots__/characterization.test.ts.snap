@@ -23,20 +23,22 @@ exports[`extraction characterization > a source language reads its literals whol
 
 exports[`extraction characterization > mixed-array.toml as toml 1`] = `
 {
-  "errors": [
+  "errors": [],
+  "numbers": [
     {
-      "filepath": "mixed-array.toml",
-      "message": "Failed to parse TOML: Inline lists must be a single type, not a mix of integer and float at row 1, col 17, pos 16:
-1> array = [1, 2.5, 3]
-                   ^
-2: 
-
-",
-      "type": "parse-error",
+      "notation": "decimal",
+      "value": 1,
+    },
+    {
+      "notation": "decimal",
+      "value": 2.5,
+    },
+    {
+      "notation": "decimal",
+      "value": 3,
     },
   ],
-  "numbers": [],
-  "success": false,
+  "success": true,
 }
 `;
 
@@ -58,51 +60,6 @@ exports[`extraction characterization > multi-doc.yaml as yaml 1`] = `
 `;
 
 exports[`extraction characterization > numbers.csv as csv 1`] = `
-{
-  "errors": [],
-  "numbers": [
-    {
-      "notation": "decimal",
-      "value": 1,
-    },
-    {
-      "notation": "decimal",
-      "value": 19.99,
-    },
-    {
-      "notation": "decimal",
-      "value": 2,
-    },
-    {
-      "notation": "decimal",
-      "value": -3.5,
-    },
-    {
-      "notation": "decimal",
-      "value": 3,
-    },
-    {
-      "notation": "decimal",
-      "value": 4,
-    },
-    {
-      "notation": "decimal",
-      "value": 42,
-    },
-    {
-      "notation": "decimal",
-      "value": 100,
-    },
-    {
-      "notation": "decimal",
-      "value": 0.5,
-    },
-  ],
-  "success": true,
-}
-`;
-
-exports[`extraction characterization > numbers.csv via streaming parser 1`] = `
 {
   "errors": [],
   "numbers": [
@@ -329,39 +286,6 @@ exports[`extraction characterization > numbers.yaml as yaml 1`] = `
 `;
 
 exports[`extraction characterization > numeric-header.csv as csv 1`] = `
-{
-  "errors": [],
-  "numbers": [
-    {
-      "notation": "decimal",
-      "value": 2024,
-    },
-    {
-      "notation": "decimal",
-      "value": 7,
-    },
-    {
-      "notation": "decimal",
-      "value": 1,
-    },
-    {
-      "notation": "decimal",
-      "value": 19.99,
-    },
-    {
-      "notation": "decimal",
-      "value": 2,
-    },
-    {
-      "notation": "decimal",
-      "value": -3.5,
-    },
-  ],
-  "success": true,
-}
-`;
-
-exports[`extraction characterization > numeric-header.csv via streaming parser (agrees with sync) 1`] = `
 {
   "errors": [],
   "numbers": [
