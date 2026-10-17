@@ -113,11 +113,6 @@
 				"category": "%manifest.command.category%"
 			},
 			{
-				"command": "numbers-le.csv.toggleStreaming",
-				"title": "%manifest.command.csv.toggle-streaming.title%",
-				"category": "%manifest.command.category%"
-			},
-			{
 				"command": "numbers-le.openSettings",
 				"title": "%manifest.command.settings.title%",
 				"category": "%manifest.command.category%"
@@ -147,9 +142,6 @@
 					"command": "numbers-le.postProcess.sort"
 				},
 				{
-					"command": "numbers-le.csv.toggleStreaming"
-				},
-				{
 					"command": "numbers-le.openSettings"
 				},
 				{
@@ -169,11 +161,6 @@
 					"type": "boolean",
 					"default": false,
 					"description": "%manifest.settings.copy.clipboard.desc%"
-				},
-				"numbers-le.csv.streamingEnabled": {
-					"type": "boolean",
-					"default": false,
-					"description": "%manifest.settings.csv.streaming.desc%"
 				},
 				"numbers-le.dedupeEnabled": {
 					"type": "boolean",

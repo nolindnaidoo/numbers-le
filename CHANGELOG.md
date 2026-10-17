@@ -12,8 +12,27 @@ version and releases from one tag.
 
 ## [2.7.0] - 2026-10-17
 
+### Removed
+
+- **The `numbers-le.csv.streamingEnabled` setting and the Toggle CSV
+  Streaming command.** They promised incremental CSV parsing for large files
+  and never delivered it: both paths read the whole document, parsed it the
+  same way and wrote each result in one edit. Turned on, the setting left an
+  empty tab for a column with no numbers, skipped the large-output prompt for
+  a single-column extraction, and reported errors untranslated. CSV
+  extraction now always takes the path the default already used, and the
+  help no longer recommends the setting for large files.
+
 ### Fixed
 
+- **Choosing one CSV column extracts that column.** The picker's single
+  choice, by header name or by index, was never read: the extraction returned
+  every number in the file, header row included. It now returns the chosen
+  column's numbers, below the header when the column was picked by name.
+- **Extracting several CSV columns reads a quoted field that holds a line
+  break as one cell.** The document was split on newlines before parsing,
+  which cut such a record in two and could read a number out of its second
+  half. It is now read as records with the shared CSV parser.
 - **`mcp` no longer ends the session on a frame that is not UTF-8**, in
   the crate or the npm package. Such a frame is dropped like one that is not
   JSON, and the requests after it are served. The npm server reads frames

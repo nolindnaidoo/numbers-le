@@ -1,19 +1,20 @@
 import * as vscode from 'vscode';
-import { extractNumber } from '../extraction/extract';
-import { parseCsvLine } from '../extraction/formats/csv';
 import { parseStrictNumber } from '../extraction/heuristics';
+import { csvRows, trimAroundQuotes } from '../parsers/csv';
 import { confirmManyDocuments } from '../ui/largeOutput';
-import type { CsvPromptOptions } from '../ui/prompts';
 import { dedupeNumber, sortNumber } from '../utils/sort';
 import { type ExtractionContext, getShowDocumentOptions } from './extract';
 
 /**
- * CSV extraction: multi-column selection and the streaming path.
+ * CSV extraction across several columns, one results document per column.
  *
  * Lifted out of extract.ts, which held command orchestration, CSV handling,
  * the normal extraction path and output routing in one 509-line file. CSV is
- * the part with its own prompts, its own streaming reader and its own error
- * reporting, so it is the natural seam.
+ * the part with its own prompts and its own error reporting, so it is the
+ * natural seam.
+ *
+ * The document is read as records, not lines: a quoted field may hold a line
+ * break, and splitting on newlines first cut such a record in two.
  */
 
 // Handle CSV multi-column fan-out extraction
@@ -31,21 +32,18 @@ export async function handleCsvMultiColumnExtraction(
 		return false; // Not multi-column
 	}
 
-	// Determine target column indexes
-	const firstNonEmptyLine =
-		text.split(/\r?\n/).find((l) => l.trim().length > 0) ?? '';
-	const columnCount = parseCsvLine(firstNonEmptyLine).length;
+	const records = readRecords(text);
+	if (records === undefined) {
+		deps.notifier.error(vscode.l10n.t('Extraction failed'));
+		return true; // Handled (with error)
+	}
+	const rows = csvOptions.csvHasHeader ? records.slice(1) : records;
+	const columnCount = records[0]?.length ?? 0;
 	const targetIndexes: readonly number[] = csvOptions.selectAllColumns
 		? Array.from({ length: columnCount }, (_, i) => i)
 		: (csvOptions.csvColumnIndexes ?? []);
 
-	// Estimate total output lines for safety warning
-	const totalLinesInDoc = text.split(/\r?\n/).length;
-	const rowsEstimate = Math.max(
-		totalLinesInDoc - (csvOptions.csvHasHeader ? 1 : 0),
-		0,
-	);
-	const estimatedTotal = rowsEstimate * targetIndexes.length;
+	const estimatedTotal = rows.length * targetIndexes.length;
 
 	if (
 		config.safetyEnabled &&
@@ -56,90 +54,21 @@ export async function handleCsvMultiColumnExtraction(
 		if (!ok) return true; // Handled (cancelled)
 	}
 
-	const streamingEnabled = config.csvStreamingEnabled;
-
-	const handleMultiColumn = streamingEnabled
-		? handleStreamingMultiColumn
-		: handleNonStreamingMultiColumn;
-	await handleMultiColumn(context, targetIndexes, token);
+	await openColumnResults(context, rows, targetIndexes, token);
 
 	deps.telemetry.event('extracted', { count: 'multi', type: 'csv' });
 	deps.statusBar.flash('CSV opened (no auto‑copy)');
 	return true; // Handled
 }
 
-// Streaming multi-column helper
-async function handleStreamingMultiColumn(
+/** One results document per column, skipping a column with no numbers. */
+async function openColumnResults(
 	context: ExtractionContext,
+	rows: readonly (readonly string[])[],
 	targetIndexes: readonly number[],
 	token: vscode.CancellationToken,
 ): Promise<void> {
-	const { text, csvOptions, config, deps } = context;
-
-	try {
-		for (const idx of targetIndexes) {
-			if (token.isCancellationRequested) break;
-
-			try {
-				const doc = await vscode.workspace.openTextDocument({
-					content: '',
-					language: 'plaintext',
-				});
-				const editorForResults = await vscode.window.showTextDocument(
-					doc,
-					getShowDocumentOptions(config, {
-						preview: false,
-						preserveFocus: true,
-					}),
-				);
-
-				// Extract numbers from this column
-				const columnNumbers = extractColumnNumbers(text, idx, csvOptions);
-
-				// Apply post-processing
-				const shouldDedupe = config.dedupeEnabled;
-				const sortEnabled = config.sortEnabled;
-				const sortMode = config.sortMode;
-
-				let processedNumbers = shouldDedupe
-					? dedupeNumber(columnNumbers)
-					: columnNumbers;
-				processedNumbers = sortEnabled
-					? sortNumber(processedNumbers, sortMode)
-					: processedNumbers;
-
-				if (processedNumbers.length === 0) continue;
-
-				// Stream results to editor
-				const content = processedNumbers.join('\n');
-				await editorForResults.edit((eb) => {
-					const end = new vscode.Position(
-						editorForResults.document.lineCount,
-						0,
-					);
-					eb.insert(end, content);
-				});
-			} catch (error: unknown) {
-				if (error instanceof Error) {
-					deps.notifier.error(
-						`Column ${idx} streaming failed: ${error.message}`,
-					);
-				}
-				// Continue with next column
-			}
-		}
-	} finally {
-		// Cleanup handled by VS Code
-	}
-}
-
-// Non-streaming multi-column helper
-async function handleNonStreamingMultiColumn(
-	context: ExtractionContext,
-	targetIndexes: readonly number[],
-	token: vscode.CancellationToken,
-): Promise<void> {
-	const { text, csvOptions, config, deps } = context;
+	const { config, deps } = context;
 	const shouldDedupe = config.dedupeEnabled;
 	const sortEnabled = config.sortEnabled;
 	const sortMode = config.sortMode;
@@ -147,7 +76,7 @@ async function handleNonStreamingMultiColumn(
 	for (const idx of targetIndexes) {
 		if (token.isCancellationRequested) return;
 
-		const columnNumbers = extractColumnNumbers(text, idx, csvOptions);
+		const columnNumbers = columnNumbersOf(rows, idx);
 		const deduped = shouldDedupe ? dedupeNumber(columnNumbers) : columnNumbers;
 		const finalForColumn = sortEnabled
 			? sortNumber(deduped, sortMode)
@@ -175,93 +104,40 @@ async function handleNonStreamingMultiColumn(
 	}
 }
 
-// Extract numbers from a specific CSV column
-function extractColumnNumbers(
+/**
+ * The document's records as the extraction reads them: blanks around quoted
+ * fields trimmed, then the csv crate's flexible records. Undefined when a
+ * quoted field never closes.
+ */
+function readRecords(text: string): readonly (readonly string[])[] | undefined {
+	const trimmed = trimAroundQuotes(text);
+	if (trimmed === undefined) return undefined;
+	return csvRows(trimmed, ',');
+}
+
+/**
+ * The strict numbers in the one column the picker chose, header skipped when
+ * it named one. Undefined when a quoted field never closes.
+ */
+export function csvColumnValues(
 	text: string,
 	columnIndex: number,
-	csvOptions: CsvPromptOptions,
+	hasHeader: boolean,
+): readonly number[] | undefined {
+	const records = readRecords(text);
+	if (records === undefined) return undefined;
+	return columnNumbersOf(hasHeader ? records.slice(1) : records, columnIndex);
+}
+
+/** The strict numbers in one column, in row order. */
+function columnNumbersOf(
+	rows: readonly (readonly string[])[],
+	columnIndex: number,
 ): readonly number[] {
-	const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
-	const numbers: number[] = [];
-	const startRow = csvOptions.csvHasHeader ? 1 : 0;
-
-	for (let i = startRow; i < lines.length; i++) {
-		const line = lines[i];
-		if (!line) continue;
-		const cells = parseCsvLine(line);
-		if (columnIndex < cells.length) {
-			const cellValue = cells[columnIndex];
-			if (cellValue) {
-				const found = parseStrictNumber(cellValue);
-				if (found !== undefined) {
-					numbers.push(found.value);
-				}
-			}
-		}
-	}
-
+	const numbers = rows.flatMap((cells) => {
+		const cell = cells[columnIndex];
+		const found = cell ? parseStrictNumber(cell) : undefined;
+		return found === undefined ? [] : [found.value];
+	});
 	return Object.freeze(numbers);
 }
-
-// Handle CSV single streaming extraction
-export async function handleCsvStreamingExtraction(
-	context: ExtractionContext,
-	_token: vscode.CancellationToken,
-): Promise<boolean> {
-	const { text, config, deps, fileType } = context;
-
-	if (fileType !== 'csv' || !config.csvStreamingEnabled) {
-		return false; // Not streaming CSV
-	}
-
-	try {
-		const doc = await vscode.workspace.openTextDocument({
-			content: '',
-			language: 'plaintext',
-		});
-		const editorForResults = await vscode.window.showTextDocument(
-			doc,
-			getShowDocumentOptions(config, {
-				preview: false,
-			}),
-		);
-
-		// Extract numbers (simplified streaming for now)
-		const result = extractNumber(text, fileType, context.document.fileName);
-		if (!result.success) {
-			deps.notifier.error(vscode.l10n.t('Extraction failed'));
-			return true;
-		}
-
-		let numbers: readonly number[] = result.numbers.map((found) => found.value);
-		if (config.dedupeEnabled) {
-			numbers = dedupeNumber(numbers);
-		}
-		if (config.sortEnabled && config.sortMode !== 'off') {
-			numbers = sortNumber(numbers, config.sortMode);
-		}
-
-		const content = numbers.join('\n');
-		await editorForResults.edit((eb) => {
-			const end = new vscode.Position(editorForResults.document.lineCount, 0);
-			eb.insert(end, content);
-		});
-
-		deps.telemetry.event('extracted', { count: 'stream', type: 'csv' });
-		deps.statusBar.flash('CSV opened (no auto‑copy)');
-		return true; // Handled
-	} catch (error: unknown) {
-		if (error instanceof Error) {
-			deps.notifier.error(
-				vscode.l10n.t('CSV streaming failed: {0}', error.message),
-			);
-			return true; // Handled (with error)
-		}
-		deps.notifier.error(
-			vscode.l10n.t('CSV streaming failed with unknown error'),
-		);
-		return true; // Handled (with error)
-	}
-}
-
-// Handle normal (non-CSV or non-streaming) extraction

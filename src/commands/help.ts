@@ -98,12 +98,6 @@ function generateHelpContent(): string {
 	);
 	lines.push('');
 
-	lines.push('### Toggle CSV Streaming');
-	lines.push(
-		'Enable/disable incremental streaming mode for large CSV files (recommended for files >10MB).',
-	);
-	lines.push('');
-
 	lines.push('### Open Settings');
 	lines.push('Opens the Numbers-LE settings panel for configuration.');
 	lines.push('');
@@ -118,9 +112,6 @@ function generateHelpContent(): string {
 	);
 	lines.push(
 		'- **`numbers-le.copyToClipboardEnabled`** - Auto-copy results to clipboard (default: `false`)',
-	);
-	lines.push(
-		'- **`numbers-le.csv.streamingEnabled`** - Enable CSV streaming for large files (default: `false`)',
 	);
 	lines.push('');
 
@@ -165,9 +156,7 @@ function generateHelpContent(): string {
 	lines.push('');
 	lines.push('### Working with Large Files');
 	lines.push('');
-	lines.push('1. **Enable CSV Streaming** for files >10MB');
-	lines.push('   - Set `numbers-le.csv.streamingEnabled: true`');
-	lines.push('   - Select specific columns to reduce data volume');
+	lines.push('1. **Select specific CSV columns** to reduce data volume');
 	lines.push('');
 
 	lines.push('2. **Disable Automatic Processing**');
@@ -204,7 +193,7 @@ function generateHelpContent(): string {
 
 	lines.push('### Performance Issues');
 	lines.push('');
-	lines.push('- **Large files:** Enable CSV streaming or reduce file size');
+	lines.push('- **Large files:** Select fewer CSV columns or reduce file size');
 	lines.push(
 		'- **Slow post-processing:** Disable automatic dedupe/sort and run manually',
 	);
@@ -217,9 +206,6 @@ function generateHelpContent(): string {
 	);
 	lines.push(
 		'- **Mixed data:** Ensure selected columns contain numeric values',
-	);
-	lines.push(
-		'- **Streaming mode:** Enable for files >10MB to avoid memory issues',
 	);
 	lines.push('');
 

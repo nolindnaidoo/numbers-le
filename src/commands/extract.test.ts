@@ -26,7 +26,7 @@ import { registerCommands } from './index';
  * `commands.test.ts` covers the happy paths; this covers the settings and
  * user-choice branches, which is where the file's uncovered branches were
  * concentrated — side-by-side output, the large-output prompt, CSV column
- * selection, the streaming toggle, and the safety thresholds. Each of these is
+ * selection and the safety thresholds. Each of these is
  * reachable only by a specific combination of settings and prompt answers, so
  * none of them were exercised by the default-config tests.
  */
@@ -283,6 +283,31 @@ describe('extract: CSV column selection', () => {
 		expect(_openedDocuments().length).toBeGreaterThan(0);
 	});
 
+	it('extracts only the column picked by its header', async () => {
+		_setActiveEditor(
+			_createDocument({
+				content: 'year,price\n2024,10\n2025,12\n',
+				fileName: '/mock/data.csv',
+			}),
+		);
+		_respondToQuickPick((items) =>
+			items.find((item) => (item as { label?: string }).label === 'price'),
+		);
+		await runExtract();
+		const opened = _openedDocuments();
+		expect(opened[opened.length - 1]?.getText()).toBe('10\n12');
+	});
+
+	it('extracts only the one column given by index', async () => {
+		_setActiveEditor(
+			_createDocument({ content: '1,2,3\n4,5,6\n', fileName: '/mock/n.csv' }),
+		);
+		_respondToInputBox(() => '1');
+		await runExtract();
+		const opened = _openedDocuments();
+		expect(opened[opened.length - 1]?.getText()).toBe('2\n5');
+	});
+
 	it('falls back to default options when the column prompt is dismissed', async () => {
 		// Dismissing returns an empty options object rather than cancelling, so
 		// extraction proceeds over the whole file.
@@ -295,30 +320,19 @@ describe('extract: CSV column selection', () => {
 	});
 });
 
-describe('extract: streaming toggle', () => {
-	it('produces the same numbers with streaming on as off', async () => {
-		const CSV = 'a,b\n1,2\n3,4\n';
-
-		_setConfig('numbers-le.csv.streamingEnabled', false);
+describe('extract: CSV records', () => {
+	it('reads a quoted field holding a line break as one cell', async () => {
 		_setActiveEditor(
-			_createDocument({ content: CSV, fileName: '/mock/data.csv' }),
+			_createDocument({
+				content: '"1\n2",5\n3,6\n',
+				fileName: '/mock/n.csv',
+			}),
 		);
-		_respondToQuickPick((items) => items[0]);
+		_respondToInputBox(() => '0,1');
 		await runExtract();
-		const withoutStreaming = _openedDocuments().map((d) => d.getText());
-
-		_resetMockState();
-		_setConfig('numbers-le.notificationsLevel', 'all');
-		_setConfig('numbers-le.csv.streamingEnabled', true);
-		_setActiveEditor(
-			_createDocument({ content: CSV, fileName: '/mock/data.csv' }),
-		);
-		_respondToQuickPick((items) => items[0]);
-		await runExtract();
-		const withStreaming = _openedDocuments().map((d) => d.getText());
-
-		// The streaming path is an optimisation, not a different result.
-		expect(withStreaming).toEqual(withoutStreaming);
+		// Split on newlines first, the record broke in two and `2` read as a
+		// number in its own row.
+		expect(_openedDocuments().map((d) => d.getText())).toEqual(['3', '5\n6']);
 	});
 });
 
@@ -393,16 +407,6 @@ describe('extract: CSV multi-column path', () => {
 			_createDocument({ content: '1,1\n2,2\n', fileName: '/mock/n.csv' }),
 		);
 		_respondToInputBox(() => '0,1');
-		await runExtract();
-		expect(_openedDocuments().length).toBeGreaterThan(0);
-	});
-
-	it('produces the same columns with streaming enabled', async () => {
-		_setConfig('numbers-le.csv.streamingEnabled', true);
-		_setActiveEditor(
-			_createDocument({ content: HEADERLESS, fileName: '/mock/n.csv' }),
-		);
-		_respondToInputBox(() => '0,2');
 		await runExtract();
 		expect(_openedDocuments().length).toBeGreaterThan(0);
 	});

@@ -26,7 +26,6 @@ describe('config defaults parity with package.json', () => {
 	const KEY_MAP: Record<string, keyof typeof CONFIG_DEFAULTS> = {
 		'numbers-le.clipboardIncludesPositions': 'clipboardIncludesPositions',
 		'numbers-le.copyToClipboardEnabled': 'copyToClipboardEnabled',
-		'numbers-le.csv.streamingEnabled': 'csvStreamingEnabled',
 		'numbers-le.dedupeEnabled': 'dedupeEnabled',
 		'numbers-le.notificationsLevel': 'notificationsLevel',
 		'numbers-le.postProcess.openInNewFile': 'postProcessOpenInNewFile',

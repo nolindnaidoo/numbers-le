@@ -11,7 +11,6 @@ import type { Configuration, SortMode } from '../types';
 export const CONFIG_DEFAULTS = Object.freeze({
 	clipboardIncludesPositions: false,
 	copyToClipboardEnabled: false,
-	csvStreamingEnabled: false,
 	dedupeEnabled: false,
 	notificationsLevel: 'silent' as const,
 	postProcessOpenInNewFile: true,
@@ -41,11 +40,6 @@ export function readConfig(): Configuration {
 			config,
 			'copyToClipboardEnabled',
 			CONFIG_DEFAULTS.copyToClipboardEnabled,
-		),
-		csvStreamingEnabled: readBoolean(
-			config,
-			'csv.streamingEnabled',
-			CONFIG_DEFAULTS.csvStreamingEnabled,
 		),
 		dedupeEnabled: readBoolean(
 			config,

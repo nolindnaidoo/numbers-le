@@ -15,7 +15,6 @@ export async function chooseLargeOutputAction(
 		? [
 				'',
 				vscode.l10n.t('Notes:'),
-				vscode.l10n.t('• CSV streaming/editor-first (no auto‑copy)'),
 				vscode.l10n.t('• Dedupe/Sort apply to final numbers only'),
 			].join('\n')
 		: '';
