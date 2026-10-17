@@ -275,8 +275,13 @@ describe('mcp', () => {
 		]);
 	});
 
-	it('stops with exit 2 on a line that is not UTF-8', async () => {
-		const input = Readable.from([Buffer.from([0x7b, 0xff, 0x7d, 0x0a])]);
-		expect(await serve(input, () => undefined, '9.9.9')).toBe(2);
+	it('drops a line that is not UTF-8 and serves the next', async () => {
+		const written: string[] = [];
+		const input = Readable.from([
+			Buffer.from([0x7b, 0xff, 0x7d, 0x0a]),
+			Buffer.from('{"jsonrpc":"2.0","id":1,"method":"ping"}\n'),
+		]);
+		expect(await serve(input, (reply) => written.push(reply), '9.9.9')).toBe(0);
+		expect(written).toEqual(['{"jsonrpc":"2.0","id":1,"result":{}}\n']);
 	});
 });
