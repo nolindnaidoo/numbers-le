@@ -25,6 +25,10 @@ version and releases from one tag.
 
 ### Fixed
 
+- **Choosing one CSV column extracts that column.** The picker's single
+  choice, by header name or by index, was never read: the extraction returned
+  every number in the file, header row included. It now returns the chosen
+  column's numbers, below the header when the column was picked by name.
 - **Extracting several CSV columns reads a quoted field that holds a line
   break as one cell.** The document was split on newlines before parsing,
   which cut such a record in two and could read a number out of its second

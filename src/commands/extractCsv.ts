@@ -115,6 +115,20 @@ function readRecords(text: string): readonly (readonly string[])[] | undefined {
 	return csvRows(trimmed, ',');
 }
 
+/**
+ * The strict numbers in the one column the picker chose, header skipped when
+ * it named one. Undefined when a quoted field never closes.
+ */
+export function csvColumnValues(
+	text: string,
+	columnIndex: number,
+	hasHeader: boolean,
+): readonly number[] | undefined {
+	const records = readRecords(text);
+	if (records === undefined) return undefined;
+	return columnNumbersOf(hasHeader ? records.slice(1) : records, columnIndex);
+}
+
 /** The strict numbers in one column, in row order. */
 function columnNumbersOf(
 	rows: readonly (readonly string[])[],

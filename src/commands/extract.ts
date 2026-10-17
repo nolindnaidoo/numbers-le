@@ -12,7 +12,7 @@ import type { CsvPromptOptions } from '../ui/prompts';
 import { promptCsvOptionsIfNeeded, promptForFileType } from '../ui/prompts';
 import { onValues, positioned, withPosition } from '../utils/positions';
 import { dedupeNumber, sortNumber } from '../utils/sort';
-import { handleCsvMultiColumnExtraction } from './extractCsv';
+import { csvColumnValues, handleCsvMultiColumnExtraction } from './extractCsv';
 import type { CommandDependencies } from './index';
 
 // Helper function to build TextDocumentShowOptions based on config
@@ -82,6 +82,13 @@ async function handleNormalExtraction(
 ): Promise<void> {
 	const { text, fileType, config, deps } = context;
 
+	const column =
+		fileType === 'csv' ? context.csvOptions.csvColumnIndex : undefined;
+	if (column !== undefined) {
+		await handleCsvColumn(context, column, token);
+		return;
+	}
+
 	const result = extractNumber(text, fileType, context.document.fileName);
 
 	if (!result.success) {
@@ -133,6 +140,50 @@ async function handleNormalExtraction(
 		deps.statusBar.flash('Dedupe/Sort applied');
 	}
 
+	await processAndOutputResults(finalNumbers, context, token);
+}
+
+/**
+ * One CSV column, chosen in the picker. A parsed format places no number, so
+ * there are no positions to carry.
+ */
+async function handleCsvColumn(
+	context: ExtractionContext,
+	column: number,
+	token: vscode.CancellationToken,
+): Promise<void> {
+	const { text, config, deps } = context;
+	const values = csvColumnValues(
+		text,
+		column,
+		context.csvOptions.csvHasHeader === true,
+	);
+	if (values === undefined) {
+		if (config.showParseErrors) {
+			deps.notifier.error('Failed to parse CSV: quoted field is never closed');
+		}
+		return;
+	}
+	if (token.isCancellationRequested) return;
+	if (
+		(config.showPositions || config.clipboardIncludesPositions) &&
+		values.length > 0
+	) {
+		deps.notifier.warn(
+			vscode.l10n.t('Positions are not available for this file type.'),
+		);
+	}
+	const deduped = config.dedupeEnabled ? dedupeNumber(values) : values;
+	const finalNumbers = (
+		config.sortEnabled ? sortNumber(deduped, config.sortMode) : deduped
+	).map(String);
+	if (finalNumbers.length === 0) {
+		deps.notifier.info(vscode.l10n.t('No numbers found'));
+		return;
+	}
+	if (config.dedupeEnabled || config.sortEnabled) {
+		deps.statusBar.flash('Dedupe/Sort applied');
+	}
 	await processAndOutputResults(finalNumbers, context, token);
 }
 

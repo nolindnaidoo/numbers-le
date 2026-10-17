@@ -283,6 +283,31 @@ describe('extract: CSV column selection', () => {
 		expect(_openedDocuments().length).toBeGreaterThan(0);
 	});
 
+	it('extracts only the column picked by its header', async () => {
+		_setActiveEditor(
+			_createDocument({
+				content: 'year,price\n2024,10\n2025,12\n',
+				fileName: '/mock/data.csv',
+			}),
+		);
+		_respondToQuickPick((items) =>
+			items.find((item) => (item as { label?: string }).label === 'price'),
+		);
+		await runExtract();
+		const opened = _openedDocuments();
+		expect(opened[opened.length - 1]?.getText()).toBe('10\n12');
+	});
+
+	it('extracts only the one column given by index', async () => {
+		_setActiveEditor(
+			_createDocument({ content: '1,2,3\n4,5,6\n', fileName: '/mock/n.csv' }),
+		);
+		_respondToInputBox(() => '1');
+		await runExtract();
+		const opened = _openedDocuments();
+		expect(opened[opened.length - 1]?.getText()).toBe('2\n5');
+	});
+
 	it('falls back to default options when the column prompt is dismissed', async () => {
 		// Dismissing returns an empty options object rather than cancelling, so
 		// extraction proceeds over the whole file.
