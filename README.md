@@ -17,6 +17,9 @@
   <a href="https://www.npmjs.com/package/numbers-le-mcp">
     <img src="https://img.shields.io/npm/v/numbers-le-mcp?style=for-the-badge&label=MCP%20server&color=blue&logo=npm" alt="numbers-le-mcp on npm" />
   </a>
+  <a href="https://www.npmjs.com/package/numbers-le">
+    <img src="https://img.shields.io/npm/v/numbers-le?style=for-the-badge&label=npm%20CLI&color=blue&logo=npm" alt="numbers-le on npm" />
+  </a>
   <a href="https://crates.io/crates/numbers-le">
     <img src="https://img.shields.io/crates/v/numbers-le?style=for-the-badge&label=Rust%20CLI&color=blue&logo=rust" alt="numbers-le on crates.io" />
   </a>
@@ -158,6 +161,22 @@ diff before.txt after.txt        # what constants moved this release
 <p align="center">
   <img src="assets/demos/cli.gif" alt="numbers-le in a terminal" style="max-width: 100%; height: auto;" />
 </p>
+
+**Install it from npm** ([`numbers-le`](https://www.npmjs.com/package/numbers-le)) **or from crates.io** ([`numbers-le`](https://crates.io/crates/numbers-le)). Both install the same `numbers-le` command.
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/numbers-le">
+    <img src="https://img.shields.io/npm/v/numbers-le?style=for-the-badge&label=npm%20CLI&color=blue&logo=npm" alt="numbers-le on npm" />
+  </a>
+  <a href="https://crates.io/crates/numbers-le">
+    <img src="https://img.shields.io/crates/v/numbers-le?style=for-the-badge&label=Rust%20CLI&color=blue&logo=rust" alt="numbers-le on crates.io" />
+  </a>
+</p>
+
+```bash
+npm install -g numbers-le   # or run it once: npx numbers-le
+cargo install numbers-le
+```
 
 **Somebody has to verify that the rate in the code is the rate in the
 specification.** A tax percentage, a retention window, a rounding
