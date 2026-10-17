@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { readConfig } from '../config/config';
 import type { Telemetry } from '../telemetry/telemetry';
 import type { Notifier } from '../ui/notifier';
 import type { RatingPrompt } from '../ui/ratingPrompt';
@@ -31,23 +30,6 @@ export function registerCommands(
 		vscode.commands.registerCommand(
 			'numbers-le.postProcess.sort',
 			async () => await sortNumbers(deps),
-		),
-		vscode.commands.registerCommand(
-			'numbers-le.csv.toggleStreaming',
-			async () => {
-				const enabled = !readConfig().csvStreamingEnabled;
-				await vscode.workspace
-					.getConfiguration('numbers-le')
-					.update(
-						'csv.streamingEnabled',
-						enabled,
-						vscode.ConfigurationTarget.Global,
-					);
-				deps.telemetry.event('command', { name: 'csv.toggleStreaming' });
-				deps.statusBar.flash(
-					enabled ? 'CSV streaming on' : 'CSV streaming off',
-				);
-			},
 		),
 	];
 

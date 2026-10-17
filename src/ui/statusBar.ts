@@ -24,19 +24,13 @@ export function createStatusBar(context: vscode.ExtensionContext): StatusBar {
 			item.hide();
 		}
 
-		const csvStreaming = readConfig().csvStreamingEnabled;
-		item.text = csvStreaming
-			? '$(symbol-number) Numbers-LE (CSV Streaming)'
-			: '$(symbol-number) Numbers-LE';
+		item.text = '$(symbol-number) Numbers-LE';
 	}
 
 	updateVisibility();
 	context.subscriptions.push(
 		vscode.workspace.onDidChangeConfiguration((e) => {
-			if (
-				e.affectsConfiguration('numbers-le.statusBar.enabled') ||
-				e.affectsConfiguration('numbers-le.csv.streamingEnabled')
-			) {
+			if (e.affectsConfiguration('numbers-le.statusBar.enabled')) {
 				updateVisibility();
 			}
 		}),
@@ -64,10 +58,7 @@ export function createStatusBar(context: vscode.ExtensionContext): StatusBar {
 				hideTimer = undefined;
 			}
 			hideTimer = setTimeout(() => {
-				const csvStreaming = readConfig().csvStreamingEnabled;
-				item.text = csvStreaming
-					? '$(symbol-number) Numbers-LE (CSV Streaming)'
-					: '$(symbol-number) Numbers-LE';
+				item.text = '$(symbol-number) Numbers-LE';
 				hideTimer = undefined;
 			}, 2000);
 		},

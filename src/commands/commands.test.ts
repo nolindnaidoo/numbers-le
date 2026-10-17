@@ -4,7 +4,6 @@ import {
 	_clipboardText,
 	_createDocument,
 	_createExtensionContext,
-	_getConfigUpdates,
 	_openedDocuments,
 	_registeredCommands,
 	_resetMockState,
@@ -300,23 +299,6 @@ describe('numbers-le.postProcess.sort', () => {
 	});
 });
 
-describe('numbers-le.csv.toggleStreaming', () => {
-	it('flips csv.streamingEnabled at the global scope', async () => {
-		const { deps, flashes } = makeDeps();
-		registerCommands(makeContext(), deps);
-		await runCommand('numbers-le.csv.toggleStreaming');
-		expect(_getConfigUpdates()[0]).toMatchObject({
-			key: 'numbers-le.csv.streamingEnabled',
-			value: true,
-		});
-		expect(flashes[0]).toBe('CSV streaming on');
-
-		await runCommand('numbers-le.csv.toggleStreaming');
-		expect(_getConfigUpdates()[1]?.value).toBe(false);
-		expect(flashes[1]).toBe('CSV streaming off');
-	});
-});
-
 describe('numbers-le.openSettings', () => {
 	it('opens the settings UI filtered to the extension prefix', async () => {
 		const { deps } = makeDeps();
@@ -338,7 +320,7 @@ describe('numbers-le.help', () => {
 		const opened = _openedDocuments();
 		const help = opened[opened.length - 1]?.getText() ?? '';
 		expect(help).toContain('# Numbers-LE Help & Documentation');
-		expect(help).toContain('Toggle CSV Streaming');
+		expect(help).not.toContain('Streaming');
 		expect(help).not.toContain('Post-Process: Analyze');
 		expect(help).toContain('github.com/nolindnaidoo/numbers-le');
 	});

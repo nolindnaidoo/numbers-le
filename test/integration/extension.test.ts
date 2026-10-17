@@ -37,7 +37,6 @@ describe('Numbers-LE integration', function () {
 			'numbers-le.extractNumbers',
 			'numbers-le.postProcess.dedupe',
 			'numbers-le.postProcess.sort',
-			'numbers-le.csv.toggleStreaming',
 			'numbers-le.openSettings',
 			'numbers-le.help',
 		]) {

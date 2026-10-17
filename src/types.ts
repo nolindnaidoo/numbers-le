@@ -81,7 +81,6 @@ export interface Configuration {
 	/** Whether the copy on the clipboard carries positions, whatever the screen shows. */
 	readonly clipboardIncludesPositions: boolean;
 	readonly copyToClipboardEnabled: boolean;
-	readonly csvStreamingEnabled: boolean;
 	readonly dedupeEnabled: boolean;
 	readonly notificationsLevel: 'all' | 'important' | 'silent';
 	readonly postProcessOpenInNewFile: boolean;

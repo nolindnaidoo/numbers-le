@@ -53,7 +53,7 @@ Conventions: factory functions + `Object.freeze` (no classes), guard clauses, de
 - Finite numbers only: NaN and ±Infinity are never extracted, even where the format can express them (YAML `.inf`, TOML `inf`).
 - String coercion is opt-in per format: on for INI/.env/CSV (values there are inherently strings), off for JSON/YAML/TOML (`"42"` is data, not a number).
 - A coerced string must be numeric **in full** — `12abc`, `1.2.3`, `1,000`, `0x1A` extract nothing.
-- CSV: no header inference; every row is data. CSV streaming is an output mode, results straight into an editor; it reads the document the same way.
+- CSV: no header inference; every row is data. Multi-column extraction reads the document as records with the shared CSV parser, never line by line: a quoted field may hold a line break.
 - Dates are leaves, not traversable objects.
 
 ## Code style

@@ -12,10 +12,7 @@ import type { CsvPromptOptions } from '../ui/prompts';
 import { promptCsvOptionsIfNeeded, promptForFileType } from '../ui/prompts';
 import { onValues, positioned, withPosition } from '../utils/positions';
 import { dedupeNumber, sortNumber } from '../utils/sort';
-import {
-	handleCsvMultiColumnExtraction,
-	handleCsvStreamingExtraction,
-} from './extractCsv';
+import { handleCsvMultiColumnExtraction } from './extractCsv';
 import type { CommandDependencies } from './index';
 
 // Helper function to build TextDocumentShowOptions based on config
@@ -155,7 +152,7 @@ async function processAndOutputResults(
 		finalNumbers.length > config.safetyLargeOutputLinesThreshold
 	) {
 		const hasPostProcess = config.dedupeEnabled || config.sortEnabled;
-		const hasContextualNotes = fileType === 'csv' || hasPostProcess;
+		const hasContextualNotes = hasPostProcess;
 
 		const action = await chooseLargeOutputAction(
 			finalNumbers.length,
@@ -280,7 +277,6 @@ export async function extractNumbers(deps: CommandDependencies): Promise<void> {
 
 			// Step 3: Route to appropriate handler
 			if (await handleCsvMultiColumnExtraction(context, token)) return;
-			if (await handleCsvStreamingExtraction(context, token)) return;
 			await handleNormalExtraction(context, token);
 		},
 	);

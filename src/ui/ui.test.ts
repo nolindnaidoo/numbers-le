@@ -70,18 +70,6 @@ describe('status bar', () => {
 		_fireConfigChange('numbers-le.statusBar.enabled');
 	});
 
-	it('reflects CSV streaming state in its text', () => {
-		const context = _createExtensionContext();
-		createStatusBar(context as never);
-		_setConfig('numbers-le.csv.streamingEnabled', true);
-		_fireConfigChange('numbers-le.csv.streamingEnabled');
-		// flash() restores streaming-aware text after the timer
-		vi.useFakeTimers();
-		const statusBar = createStatusBar(_createExtensionContext() as never);
-		statusBar.flash('Extracted 3');
-		vi.advanceTimersByTime(2001);
-	});
-
 	it('flash is a no-op when the status bar is disabled', () => {
 		_setConfig('numbers-le.statusBar.enabled', false);
 		const statusBar = createStatusBar(_createExtensionContext() as never);

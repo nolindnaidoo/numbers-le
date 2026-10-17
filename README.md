@@ -178,7 +178,6 @@ was malformed.
 | `Numbers-LE: Extract Numbers` | Extract all numbers from the active document |
 | `Numbers-LE: Deduplicate Numbers` | Remove duplicate numbers from the results |
 | `Numbers-LE: Sort Numbers` | Sort results numerically or by magnitude |
-| `Numbers-LE: Toggle CSV Streaming` | Flip `csv.streamingEnabled` for large CSV files |
 | `Numbers-LE: Open Settings` | Open Numbers-LE settings |
 | `Numbers-LE: Help & Troubleshooting` | Built-in documentation |
 
@@ -196,7 +195,6 @@ No command is bound to a key by default. Give any of them one under **Keyboard S
 | `numbers-le.dedupeEnabled` | `false` | Deduplicate automatically during extraction |
 | `numbers-le.sortEnabled` | `false` | Sort automatically during extraction |
 | `numbers-le.sortMode` | `off` | `numeric-asc/desc`, `magnitude-asc/desc` |
-| `numbers-le.csv.streamingEnabled` | `false` | Incremental CSV parsing for large files |
 | `numbers-le.showParseErrors` | `false` | Surface parse errors as notifications |
 | `numbers-le.notificationsLevel` | `silent` | `all` = every notification, `important` = warnings + errors, `silent` = errors only |
 | `numbers-le.safety.enabled` | `true` | Guardrails for very large files/outputs |
