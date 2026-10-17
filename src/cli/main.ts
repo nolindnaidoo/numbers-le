@@ -3,6 +3,7 @@
  * extraction engine. `numbers-le mcp` serves the crate's two tools over stdio.
  */
 import { version } from '../mcp/info';
+import { exitWhenDrained } from './exit';
 import { serve } from './mcp';
 import { run } from './run';
 
@@ -12,18 +13,10 @@ async function readStdin(): Promise<Uint8Array> {
 	return Buffer.concat(chunks);
 }
 
-/**
- * Waits for stdout to drain before exiting: `process.exit` on a pipe can cut
- * off the reports still buffered, and a truncated JSON line is worse than none.
- */
-function exitWith(code: number): void {
-	process.stdout.write('', () => process.exit(code));
-}
-
 function main(args: readonly string[]): void {
 	if (args[0] === 'mcp') {
 		serve(process.stdin, (line) => process.stdout.write(line), version).then(
-			exitWith,
+			exitWhenDrained,
 		);
 		return;
 	}
@@ -33,7 +26,7 @@ function main(args: readonly string[]): void {
 		stdoutIsTerminal: process.stdout.isTTY === true,
 		readStdin,
 		version,
-	}).then(exitWith);
+	}).then(exitWhenDrained);
 }
 
 main(process.argv.slice(2));
