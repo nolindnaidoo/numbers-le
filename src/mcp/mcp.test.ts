@@ -98,6 +98,17 @@ describe('fileType: tolerant resolution', () => {
 		expect(SUPPORTED_FORMATS).toContain('json');
 		expect(SUPPORTED_FORMATS).not.toContain('unknown');
 	});
+
+	it('does not read a prototype key as a format', () => {
+		// The table was a plain object, so `ALIASES['constructor']` was Object's
+		// constructor and `ALIASES['__proto__']` was Object.prototype: both
+		// truthy, both returned as the file type.
+		for (const name of ['constructor', '__proto__', 'toString', 'valueOf']) {
+			expect(resolveFormat(name, undefined)).toBe('unknown');
+			expect(resolveFormat(undefined, name)).toBe('unknown');
+			expect(resolveFormat(undefined, `notes.${name}`)).toBe('unknown');
+		}
+	});
 });
 
 describe('tool table', () => {
