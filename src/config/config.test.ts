@@ -1,10 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { _resetMockState, _setConfig } from '../__mocks__/vscode';
 import {
 	CONFIG_DEFAULTS,
 	isValidNotificationLevel,
 	isValidSortMode,
+	readConfig,
 } from './config';
 
 /**
@@ -85,5 +87,27 @@ describe('isValidNotificationLevel', () => {
 	it('rejects anything else', () => {
 		expect(isValidNotificationLevel('verbose')).toBe(false);
 		expect(isValidNotificationLevel(null)).toBe(false);
+	});
+});
+
+describe('a number setting is read as a number', () => {
+	beforeEach(() => _resetMockState());
+
+	it('falls back to the default when the stored value is not a number', () => {
+		// `Number('')` and `Number(null)` are both 0, so a setting cleared to an
+		// empty string or null read as 0 and was clamped to the floor: a 1,000
+		// byte size guard in place of the 1,000,000 byte default.
+		for (const stored of ['', null, true, 'abc']) {
+			_resetMockState();
+			_setConfig('numbers-le.safety.fileSizeWarnBytes', stored);
+			expect(readConfig().safetyFileSizeWarnBytes, String(stored)).toBe(
+				CONFIG_DEFAULTS.safetyFileSizeWarnBytes,
+			);
+		}
+	});
+
+	it('clamps a number below the floor to the floor', () => {
+		_setConfig('numbers-le.safety.fileSizeWarnBytes', 5);
+		expect(readConfig().safetyFileSizeWarnBytes).toBe(1000);
 	});
 });
