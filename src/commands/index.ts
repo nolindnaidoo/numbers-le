@@ -5,6 +5,7 @@ import type { RatingPrompt } from '../ui/ratingPrompt';
 import type { StatusBar } from '../ui/statusBar';
 import { dedupeNumbers } from './dedupe';
 import { extractNumbers } from './extract';
+import { guarded } from './guard';
 import { sortNumbers } from './sort';
 
 export interface CommandDependencies {
@@ -21,15 +22,15 @@ export function registerCommands(
 	const commands = [
 		vscode.commands.registerCommand(
 			'numbers-le.extractNumbers',
-			async () => await extractNumbers(deps),
+			guarded(deps.notifier, async () => await extractNumbers(deps)),
 		),
 		vscode.commands.registerCommand(
 			'numbers-le.postProcess.dedupe',
-			async () => await dedupeNumbers(deps),
+			guarded(deps.notifier, async () => await dedupeNumbers(deps)),
 		),
 		vscode.commands.registerCommand(
 			'numbers-le.postProcess.sort',
-			async () => await sortNumbers(deps),
+			guarded(deps.notifier, async () => await sortNumbers(deps)),
 		),
 	];
 
