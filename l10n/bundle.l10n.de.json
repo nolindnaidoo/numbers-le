@@ -43,5 +43,6 @@
 	"No duplicate numbers found": "Es wurden keine doppelten Nummern gefunden.",
 	"Enter valid column indexes separated by commas, or leave empty": "Geben Sie gültige Spaltenindizes durch Kommas getrennt ein oder lassen Sie das Feld leer",
 	"Large file detected ({0} bytes). Extraction may take longer.": "Es wurde eine große Datei erkannt ({0}-Bytes). Das Entpacken kann etwas länger dauern.",
-	"Positions are not available for this file type.": "Für diesen Dateityp sind keine Positionen verfügbar."
+	"Positions are not available for this file type.": "Für diesen Dateityp sind keine Positionen verfügbar.",
+	"Numbers-LE could not finish: {0}": "Numbers-LE konnte nicht abschließen: {0}"
 }

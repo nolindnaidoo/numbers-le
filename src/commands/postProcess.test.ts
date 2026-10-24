@@ -99,6 +99,14 @@ describe('detectFileType', () => {
 	it('is case-insensitive about the extension', () => {
 		expect(detectFileType('A.JSON')).toBe('json');
 	});
+
+	it('does not read a prototype key as a file type', () => {
+		// The table was a plain object, so a filename ending in `.constructor`
+		// resolved to Object's constructor and was handed on as a file type.
+		for (const name of ['constructor', '__proto__', 'toString', 'valueOf']) {
+			expect(detectFileType(`a.${name}`)).toBe('unknown');
+		}
+	});
 });
 
 describe('post-process guards', () => {

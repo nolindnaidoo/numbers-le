@@ -86,40 +86,45 @@ function extractFromFallback(
  * Both a VS Code `languageId` and a file extension resolve through the
  * MCP server's ALIASES; this is the extension-only half, kept in step
  * with it and with the crate's `resolve_format`.
+ *
+ * A `Map`, not a plain object: on an object, `constructor`, `__proto__` and
+ * every other `Object.prototype` name is a hit, and a caller naming one got
+ * a function or the prototype back as its file type. A map has no inherited
+ * keys.
  */
-const EXTENSIONS: Readonly<Record<string, FileType>> = Object.freeze({
-	json: 'json',
-	jsonc: 'jsonc',
-	yaml: 'yaml',
-	yml: 'yaml',
-	csv: 'csv',
-	tsv: 'tsv',
-	toml: 'toml',
-	ini: 'ini',
-	env: 'env',
-	py: 'python',
-	rs: 'rust',
-	go: 'go',
-	java: 'java',
-	kt: 'kotlin',
-	kts: 'kotlin',
-	cs: 'csharp',
-	cpp: 'cpp',
-	cc: 'cpp',
-	cxx: 'cpp',
-	hpp: 'cpp',
-	hh: 'cpp',
-	c: 'c',
-	h: 'c',
-	js: 'javascript',
-	mjs: 'javascript',
-	cjs: 'javascript',
-	jsx: 'javascript',
-	ts: 'typescript',
-	tsx: 'typescript',
-	sql: 'sql',
-	sh: 'shellscript',
-});
+const EXTENSIONS: ReadonlyMap<string, FileType> = new Map([
+	['json', 'json'],
+	['jsonc', 'jsonc'],
+	['yaml', 'yaml'],
+	['yml', 'yaml'],
+	['csv', 'csv'],
+	['tsv', 'tsv'],
+	['toml', 'toml'],
+	['ini', 'ini'],
+	['env', 'env'],
+	['py', 'python'],
+	['rs', 'rust'],
+	['go', 'go'],
+	['java', 'java'],
+	['kt', 'kotlin'],
+	['kts', 'kotlin'],
+	['cs', 'csharp'],
+	['cpp', 'cpp'],
+	['cc', 'cpp'],
+	['cxx', 'cpp'],
+	['hpp', 'cpp'],
+	['hh', 'cpp'],
+	['c', 'c'],
+	['h', 'c'],
+	['js', 'javascript'],
+	['mjs', 'javascript'],
+	['cjs', 'javascript'],
+	['jsx', 'javascript'],
+	['ts', 'typescript'],
+	['tsx', 'typescript'],
+	['sql', 'sql'],
+	['sh', 'shellscript'],
+]);
 
 export function detectFileType(filename: string): FileType {
 	const ext = filename.split('.').pop()?.toLowerCase();
@@ -128,5 +133,5 @@ export function detectFileType(filename: string): FileType {
 		return 'unknown';
 	}
 
-	return EXTENSIONS[ext] ?? 'unknown';
+	return EXTENSIONS.get(ext) ?? 'unknown';
 }

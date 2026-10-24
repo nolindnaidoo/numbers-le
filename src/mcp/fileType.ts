@@ -16,50 +16,55 @@ import type { FileType } from '../types';
  * an agent sends whichever it has. Held byte-for-byte equal to the Rust
  * CLI's `ALIASES`: a languageId one server accepts and the other refuses
  * makes `extract_numbers` two different tools.
+ *
+ * A `Map`, not a plain object: on an object, `constructor`, `__proto__` and
+ * every other `Object.prototype` name is a hit, and a caller naming one got
+ * a function or the prototype back as its file type. A map has no inherited
+ * keys.
  */
-const ALIASES: Readonly<Record<string, FileType>> = Object.freeze({
-	json: 'json',
-	jsonc: 'jsonc',
-	yaml: 'yaml',
-	yml: 'yaml',
-	csv: 'csv',
-	tsv: 'tsv',
-	toml: 'toml',
-	ini: 'ini',
-	env: 'env',
-	dotenv: 'env',
-	python: 'python',
-	py: 'python',
-	rust: 'rust',
-	rs: 'rust',
-	go: 'go',
-	java: 'java',
-	kotlin: 'kotlin',
-	kt: 'kotlin',
-	kts: 'kotlin',
-	csharp: 'csharp',
-	cs: 'csharp',
-	cpp: 'cpp',
-	cc: 'cpp',
-	cxx: 'cpp',
-	hpp: 'cpp',
-	hh: 'cpp',
-	c: 'c',
-	h: 'c',
-	javascript: 'javascript',
-	js: 'javascript',
-	mjs: 'javascript',
-	cjs: 'javascript',
-	javascriptreact: 'javascript',
-	jsx: 'javascript',
-	typescript: 'typescript',
-	ts: 'typescript',
-	typescriptreact: 'typescript',
-	tsx: 'typescript',
-	sql: 'sql',
-	shellscript: 'shellscript',
-	sh: 'shellscript',
-});
+const ALIASES: ReadonlyMap<string, FileType> = new Map([
+	['json', 'json'],
+	['jsonc', 'jsonc'],
+	['yaml', 'yaml'],
+	['yml', 'yaml'],
+	['csv', 'csv'],
+	['tsv', 'tsv'],
+	['toml', 'toml'],
+	['ini', 'ini'],
+	['env', 'env'],
+	['dotenv', 'env'],
+	['python', 'python'],
+	['py', 'python'],
+	['rust', 'rust'],
+	['rs', 'rust'],
+	['go', 'go'],
+	['java', 'java'],
+	['kotlin', 'kotlin'],
+	['kt', 'kotlin'],
+	['kts', 'kotlin'],
+	['csharp', 'csharp'],
+	['cs', 'csharp'],
+	['cpp', 'cpp'],
+	['cc', 'cpp'],
+	['cxx', 'cpp'],
+	['hpp', 'cpp'],
+	['hh', 'cpp'],
+	['c', 'c'],
+	['h', 'c'],
+	['javascript', 'javascript'],
+	['js', 'javascript'],
+	['mjs', 'javascript'],
+	['cjs', 'javascript'],
+	['javascriptreact', 'javascript'],
+	['jsx', 'javascript'],
+	['typescript', 'typescript'],
+	['ts', 'typescript'],
+	['typescriptreact', 'typescript'],
+	['tsx', 'typescript'],
+	['sql', 'sql'],
+	['shellscript', 'shellscript'],
+	['sh', 'shellscript'],
+]);
 
 /** The formats a caller can name, for the tool schema's enum. */
 export const SUPPORTED_FORMATS: readonly string[] = Object.freeze([
@@ -101,7 +106,7 @@ export function resolveFormat(
 	filename: string | undefined,
 ): FileType {
 	if (format) {
-		const direct = ALIASES[normalise(format)];
+		const direct = ALIASES.get(normalise(format));
 		if (direct) return direct;
 	}
 
@@ -109,13 +114,13 @@ export function resolveFormat(
 		// A dotfile like `.env` has no extension to split on; its whole name is
 		// the type.
 		const bare = normalise(filename);
-		const whole = ALIASES[bare.startsWith('.') ? bare.slice(1) : bare];
+		const whole = ALIASES.get(bare.startsWith('.') ? bare.slice(1) : bare);
 		if (whole) return whole;
 
 		const extension = filename.includes('.')
 			? filename.slice(filename.lastIndexOf('.') + 1)
 			: '';
-		const inferred = ALIASES[normalise(extension)];
+		const inferred = ALIASES.get(normalise(extension));
 		if (inferred) return inferred;
 	}
 
