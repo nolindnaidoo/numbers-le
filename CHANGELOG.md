@@ -14,6 +14,12 @@ version and releases from one tag.
 
 ### Fixed
 
+- The plain-text scan read `٣5` as the number 5: its digits were ASCII, so a
+  run opening with a digit from another script lost that digit and reported
+  the rest, where the crate's server consumed the run whole and reported
+  nothing. The scan's digits are now Unicode's, and a run holding any digit
+  the parse cannot read is consumed and refused, on the shared tool and in
+  the editor alike. The corpus pins `rate ٣5 and 🎯 7`.
 - `.env.local`, `.env.production` and the rest of the dotenv family prompted
   for a file type in the editor, and the MCP server read them with the text
   scan, which has no comment rule, so a commented-out `# OFF=600` became a

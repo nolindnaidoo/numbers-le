@@ -838,5 +838,30 @@
 				"truncated": false
 			}
 		}
+	},
+	{
+		"name": "a run led by a digit from another script is consumed whole",
+		"content": "rate ٣5 and 🎯 7",
+		"arguments": {},
+		"expected": {
+			"ok": true,
+			"data": {
+				"numbers": [
+					{
+						"value": 7,
+						"notation": "decimal",
+						"line": 1,
+						"column": 16
+					}
+				],
+				"fileType": "unknown"
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_numbers",
+				"count": 1,
+				"truncated": false
+			}
+		}
 	}
 ]

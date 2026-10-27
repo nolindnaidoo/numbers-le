@@ -11,7 +11,7 @@
 import { extractNumber, isSourceLanguage } from '../extraction/extract';
 import { jsonNumberSpans } from '../extraction/formats/json';
 import { scanSourceSpanned } from '../extraction/formats/source';
-import { plainNotation } from '../extraction/heuristics';
+import { textRuns } from '../extraction/heuristics';
 import type {
 	ExtractionResult,
 	FileType,
@@ -29,14 +29,6 @@ export type Located = Readonly<{
 }>;
 
 type Spanned = Readonly<{ finding: NumberFinding; offset: number }>;
-
-/**
- * The crate's text scan. Its `\d` is Unicode's, so a run that opens with a
- * digit from another script is consumed and then refused by the parse,
- * where an ASCII-only `\d` would report the ASCII digits after it.
- */
-const TEXT_NUMBER =
-	/[+-]?(?:\p{Nd}+(?:\.\p{Nd}*)?|\.\p{Nd}+)(?:[eE][+-]?\p{Nd}+)?/gu;
 
 /** A number as JavaScript prints it, which is what the crate reproduces. */
 export function render(value: number): string {
@@ -131,25 +123,6 @@ function spanned(text: string, key: FileType): readonly Spanned[] | undefined {
 	if (key === 'unknown') return textRuns(text);
 	if (isSourceLanguage(key)) return scanSourceSpanned(text, key);
 	return undefined;
-}
-
-/**
- * Every number token of a document the parser accepts, duplicate keys
- * included, because the crate walks the syntax tree rather than the object
- * `JSON.parse` builds from it. A document it refuses has none.
- */
-function textRuns(text: string): readonly Spanned[] {
-	const runs: Spanned[] = [];
-	for (const match of text.matchAll(TEXT_NUMBER)) {
-		const value = Number(match[0]);
-		// `Number` reads only ASCII digits, as Rust's `f64` parse does.
-		if (!/^[+\-.0-9eE]+$/.test(match[0]) || !Number.isFinite(value)) continue;
-		runs.push({
-			finding: { value, notation: plainNotation(match[0]) },
-			offset: match.index,
-		});
-	}
-	return runs;
 }
 
 /** UTF-16 offset to a 1-based line and a 1-based UTF-16 column. */
