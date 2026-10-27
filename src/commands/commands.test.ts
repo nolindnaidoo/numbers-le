@@ -344,6 +344,32 @@ describe('numbers-le.postProcess.sort', () => {
 		expect(doc.getText()).toBe('-20\n-10\n3');
 	});
 
+	it('writes nothing in place when the document changed while the pick was open', async () => {
+		// The numbers were read, the quick pick awaited, and the whole document
+		// replaced with the sorted result of the text as it was: an edit made
+		// while the pick was open was overwritten without a word.
+		const { deps } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.notificationsLevel', 'all');
+		_setConfig('numbers-le.postProcess.openInNewFile', false);
+		const doc = _createDocument({ content: '3\n1\n2' });
+		_setActiveEditor(doc);
+		_respondToQuickPick((items) => {
+			doc._setText('3\n1\n2\n9');
+			return (items as Array<{ value: string }>).find(
+				(item) => item.value === 'numeric-asc',
+			);
+		});
+		await runCommand('numbers-le.postProcess.sort');
+		expect(doc.getText()).toBe('3\n1\n2\n9');
+		expect(_shownMessages().map((m) => [m.kind, m.message])).toEqual([
+			[
+				'warning',
+				'The document changed while the command was waiting, so nothing was written.',
+			],
+		]);
+	});
+
 	it('does nothing when the quick pick is dismissed', async () => {
 		const { deps } = makeDeps();
 		registerCommands(makeContext(), deps);

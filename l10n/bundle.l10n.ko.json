@@ -54,5 +54,6 @@
 	"Removed {0} duplicates ({1} unique numbers remaining)": "중복 {0}개 제거됨(고유 숫자 {1}개 남음)",
 	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "현재 편집기에서 중복 {0}개 제거됨(고유 숫자 {1}개 남음)",
 	"Each number shows its first position only.": "각 숫자는 첫 번째 위치만 표시합니다.",
-	"Sorted {0} numbers ({1}) in current editor": "현재 편집기에서 숫자 {0}개 정렬됨({1})"
+	"Sorted {0} numbers ({1}) in current editor": "현재 편집기에서 숫자 {0}개 정렬됨({1})",
+	"The document changed while the command was waiting, so nothing was written.": "명령이 대기하는 동안 문서가 변경되어 아무것도 기록되지 않았습니다."
 }

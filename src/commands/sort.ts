@@ -12,6 +12,7 @@ export async function sortNumbers(deps: CommandDependencies): Promise<void> {
 		return;
 	}
 
+	const computedFrom = editor.document.version;
 	const text = editor.document.getText();
 	const lines = text.split('\n').filter((line) => line.trim());
 	const isNumbersFile =
@@ -65,18 +66,24 @@ export async function sortNumbers(deps: CommandDependencies): Promise<void> {
 			: sortedNumbers
 	).join('\n');
 
-	await writeResult(editor, output, deps, {
-		newDocument: vscode.l10n.t(
-			'Sorted {0} numbers ({1})',
-			numbers.length,
-			selected.label,
-		),
-		inPlace: vscode.l10n.t(
-			'Sorted {0} numbers ({1}) in current editor',
-			numbers.length,
-			selected.label,
-		),
-	});
+	await writeResult(
+		editor,
+		output,
+		deps,
+		{
+			newDocument: vscode.l10n.t(
+				'Sorted {0} numbers ({1})',
+				numbers.length,
+				selected.label,
+			),
+			inPlace: vscode.l10n.t(
+				'Sorted {0} numbers ({1}) in current editor',
+				numbers.length,
+				selected.label,
+			),
+		},
+		computedFrom,
+	);
 
 	deps.telemetry.event('numbers.sorted', {
 		count: String(numbers.length),

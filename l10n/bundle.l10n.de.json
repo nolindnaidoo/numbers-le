@@ -54,5 +54,6 @@
 	"Removed {0} duplicates ({1} unique numbers remaining)": "{0} Duplikate entfernt ({1} eindeutige Zahlen verbleiben)",
 	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "{0} Duplikate im aktuellen Editor entfernt ({1} eindeutige Zahlen verbleiben)",
 	"Each number shows its first position only.": "Jede Zahl zeigt nur ihre erste Position.",
-	"Sorted {0} numbers ({1}) in current editor": "{0} Zahlen im aktuellen Editor sortiert ({1})"
+	"Sorted {0} numbers ({1}) in current editor": "{0} Zahlen im aktuellen Editor sortiert ({1})",
+	"The document changed while the command was waiting, so nothing was written.": "Das Dokument hat sich geändert, während der Befehl wartete; es wurde nichts geschrieben."
 }

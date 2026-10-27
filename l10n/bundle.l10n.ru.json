@@ -54,5 +54,6 @@
 	"Removed {0} duplicates ({1} unique numbers remaining)": "Удалено дубликатов: {0} (осталось уникальных чисел: {1})",
 	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "Удалено дубликатов в текущем редакторе: {0} (осталось уникальных чисел: {1})",
 	"Each number shows its first position only.": "Для каждого числа показана только его первая позиция.",
-	"Sorted {0} numbers ({1}) in current editor": "Отсортировано чисел в текущем редакторе: {0} ({1})"
+	"Sorted {0} numbers ({1}) in current editor": "Отсортировано чисел в текущем редакторе: {0} ({1})",
+	"The document changed while the command was waiting, so nothing was written.": "Документ изменился, пока команда ожидала, поэтому ничего не записано."
 }

@@ -54,5 +54,6 @@
 	"Removed {0} duplicates ({1} unique numbers remaining)": "{0} duplikat dihapus ({1} angka unik tersisa)",
 	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "{0} duplikat dihapus di editor saat ini ({1} angka unik tersisa)",
 	"Each number shows its first position only.": "Setiap angka hanya menampilkan posisi pertamanya.",
-	"Sorted {0} numbers ({1}) in current editor": "{0} angka diurutkan di editor saat ini ({1})"
+	"Sorted {0} numbers ({1}) in current editor": "{0} angka diurutkan di editor saat ini ({1})",
+	"The document changed while the command was waiting, so nothing was written.": "Dokumen berubah saat perintah menunggu, jadi tidak ada yang ditulis."
 }

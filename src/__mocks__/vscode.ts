@@ -83,13 +83,21 @@ export interface MockDocumentInit {
 
 export function _createDocument(init: MockDocumentInit) {
 	let content = init.content;
+	// The host bumps a document's version on every change; a command that
+	// computed a result before an await reads it back to know whether the
+	// text it is about to replace is still the text it read.
+	let version = 1;
 	const doc = {
 		get lineCount() {
 			return content.split('\n').length;
 		},
+		get version() {
+			return version;
+		},
 		getText: () => content,
 		_setText: (next: string) => {
 			content = next;
+			version += 1;
 		},
 		languageId: init.languageId ?? 'plaintext',
 		fileName: init.fileName ?? '/mock/document.txt',

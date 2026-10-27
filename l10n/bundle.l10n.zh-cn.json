@@ -54,5 +54,6 @@
 	"Removed {0} duplicates ({1} unique numbers remaining)": "已移除 {0} 个重复项（剩余 {1} 个唯一数字）",
 	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "已在当前编辑器中移除 {0} 个重复项（剩余 {1} 个唯一数字）",
 	"Each number shows its first position only.": "每个数字仅显示其第一个位置。",
-	"Sorted {0} numbers ({1}) in current editor": "已在当前编辑器中排序 {0} 个数字（{1}）"
+	"Sorted {0} numbers ({1}) in current editor": "已在当前编辑器中排序 {0} 个数字（{1}）",
+	"The document changed while the command was waiting, so nothing was written.": "命令等待期间文档已更改，因此未写入任何内容。"
 }

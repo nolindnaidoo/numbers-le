@@ -54,5 +54,6 @@
 	"Removed {0} duplicates ({1} unique numbers remaining)": "Đã xóa {0} bản trùng lặp (còn lại {1} số duy nhất)",
 	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "Đã xóa {0} bản trùng lặp trong trình soạn thảo hiện tại (còn lại {1} số duy nhất)",
 	"Each number shows its first position only.": "Mỗi số chỉ hiển thị vị trí đầu tiên của nó.",
-	"Sorted {0} numbers ({1}) in current editor": "Đã sắp xếp {0} số trong trình soạn thảo hiện tại ({1})"
+	"Sorted {0} numbers ({1}) in current editor": "Đã sắp xếp {0} số trong trình soạn thảo hiện tại ({1})",
+	"The document changed while the command was waiting, so nothing was written.": "Tài liệu đã thay đổi trong khi lệnh đang chờ, nên không có gì được ghi."
 }

@@ -12,6 +12,7 @@ export async function dedupeNumbers(deps: CommandDependencies): Promise<void> {
 		return;
 	}
 
+	const computedFrom = editor.document.version;
 	const text = editor.document.getText();
 	const lines = text.split('\n').filter((line) => line.trim());
 	const isNumbersFile =
@@ -46,18 +47,24 @@ export async function dedupeNumbers(deps: CommandDependencies): Promise<void> {
 			: dedupedNumbers
 	).join('\n');
 
-	await writeResult(editor, output, deps, {
-		newDocument: `${vscode.l10n.t(
-			'Removed {0} duplicates ({1} unique numbers remaining)',
-			duplicatesRemoved,
-			dedupedNumbers.length,
-		)}${firstOnly}`,
-		inPlace: `${vscode.l10n.t(
-			'Removed {0} duplicates ({1} unique numbers remaining) in current editor',
-			duplicatesRemoved,
-			dedupedNumbers.length,
-		)}${firstOnly}`,
-	});
+	await writeResult(
+		editor,
+		output,
+		deps,
+		{
+			newDocument: `${vscode.l10n.t(
+				'Removed {0} duplicates ({1} unique numbers remaining)',
+				duplicatesRemoved,
+				dedupedNumbers.length,
+			)}${firstOnly}`,
+			inPlace: `${vscode.l10n.t(
+				'Removed {0} duplicates ({1} unique numbers remaining) in current editor',
+				duplicatesRemoved,
+				dedupedNumbers.length,
+			)}${firstOnly}`,
+		},
+		computedFrom,
+	);
 
 	deps.telemetry.event('numbers.deduped', {
 		originalCount: String(numbers.length),

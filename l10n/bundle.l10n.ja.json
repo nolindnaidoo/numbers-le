@@ -54,5 +54,6 @@
 	"Removed {0} duplicates ({1} unique numbers remaining)": "{0} 件の重複を削除しました（残り {1} 件の一意の数値）",
 	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "現在のエディターで {0} 件の重複を削除しました（残り {1} 件の一意の数値）",
 	"Each number shows its first position only.": "各数値は最初の位置のみを表示します。",
-	"Sorted {0} numbers ({1}) in current editor": "現在のエディターで {0} 件の数値を並べ替えました（{1}）"
+	"Sorted {0} numbers ({1}) in current editor": "現在のエディターで {0} 件の数値を並べ替えました（{1}）",
+	"The document changed while the command was waiting, so nothing was written.": "コマンドの待機中にドキュメントが変更されたため、何も書き込まれませんでした。"
 }

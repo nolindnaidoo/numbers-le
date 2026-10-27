@@ -14,6 +14,10 @@ version and releases from one tag.
 
 ### Fixed
 
+- Deduplicate and Sort in place replaced the whole document with a result
+  computed from the text as it was before the sort picker opened, so an edit
+  made while the picker was open was overwritten without a word. The command
+  now compares the document version and writes nothing if it moved, saying so.
 - 155 translated values did not fit their place. A count placeholder was
   read as a format or a name in nine locales ("Detected {0} numbers" as
   "numbers of type {0}", "opening {0} documents" as "documents in format

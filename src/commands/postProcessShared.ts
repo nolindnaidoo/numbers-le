@@ -78,13 +78,16 @@ export function collectNumbers(
  * Write the result where the settings say, reporting what actually happened.
  *
  * `editor.edit` resolves false for a read-only document; announcing a count
- * over an untouched document is the defect this guards.
+ * over an untouched document is the defect this guards. `computedFrom` is the
+ * document version the result was computed from; an in-place write over a
+ * later version would replace text the result never saw.
  */
 export async function writeResult(
 	editor: vscode.TextEditor,
 	output: string,
 	deps: CommandDependencies,
 	messages: Readonly<{ newDocument: string; inPlace: string }>,
+	computedFrom: number,
 ): Promise<void> {
 	const config = readConfig();
 
@@ -100,6 +103,18 @@ export async function writeResult(
 				: {}),
 		});
 		deps.notifier.info(messages.newDocument);
+		return;
+	}
+
+	// The result was computed from the text as it was before the command
+	// awaited a pick; the whole document is replaced, so an edit the user made
+	// in between would be overwritten with a result that never saw it.
+	if (editor.document.version !== computedFrom) {
+		deps.notifier.warn(
+			vscode.l10n.t(
+				'The document changed while the command was waiting, so nothing was written.',
+			),
+		);
 		return;
 	}
 
