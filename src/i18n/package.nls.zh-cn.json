@@ -1,11 +1,11 @@
 {
-	"manifest.command.category": "数字提取器-LE",
+	"manifest.command.category": "Numbers-LE",
 	"manifest.command.extract.title": "提取数字",
 	"manifest.command.dedupe.title": "去除重复数字",
 	"manifest.command.sort.title": "排序数字",
 	"manifest.command.settings.title": "打开设置",
 	"manifest.command.help.title": "帮助与故障排除",
-	"manifest.settings.title": "数字提取器-LE设置",
+	"manifest.settings.title": "Numbers-LE 设置",
 	"manifest.settings.clipboard.positions.desc": "在剪贴板副本中包含位置。仅在复制结果时生效。",
 	"manifest.settings.copy.clipboard.desc": "自动将提取结果复制到剪贴板",
 	"manifest.settings.dedupe.desc": "启用提取数字的自动去重",

@@ -14,6 +14,16 @@ version and releases from one tag.
 
 ### Fixed
 
+- 155 translated values did not fit their place. A count placeholder was
+  read as a format or a name in nine locales ("Detected {0} numbers" as
+  "numbers of type {0}", "opening {0} documents" as "documents in format
+  {0}", "Sorted {0} numbers" likewise); "number" was the word for a phone
+  number in de, fr, ja, ko, ru, uk and id; "Column" was a newspaper column
+  in ten; "Extraction" was decompression in seven; the status bar tooltip
+  kept "Run" in English in all twelve, and es and zh-cn translated the
+  product name. French dropped the "out of range" sentence, Indonesian
+  titled the sort command "Spelling", and Vietnamese's "agent mode" was a
+  sales agent. Each reads as what it names now.
 - Eleven strings were shown in English in every display language: the
   status bar's "Extracted N", "Copied to clipboard", "Dedupe/Sort applied"
   and "CSV opened", the dedupe and sort counts, the "Failed to extract
