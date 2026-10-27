@@ -104,6 +104,33 @@ describe('fileType: tolerant resolution', () => {
 		expect(resolveFormat(undefined, '.env')).toBe('env');
 	});
 
+	it('reads every dotenv spelling as dotenv, as the crate does', () => {
+		// `.env.local` split on its last dot, asked `local` for a format and
+		// fell to the text scan, which has no comment rule: a commented-out
+		// `# OFF=600` became a finding here and not on the crate's server.
+		for (const name of [
+			'.env.local',
+			'.env.production',
+			'.env.test.local',
+			'app.env',
+			'env',
+			'.ENV.Production',
+		]) {
+			expect(resolveFormat(undefined, name), name).toBe('env');
+		}
+	});
+
+	it('leaves a source file and a direnv script alone', () => {
+		expect(resolveFormat(undefined, 'env.ts')).toBe('typescript');
+		expect(resolveFormat(undefined, 'environment.json')).toBe('json');
+		expect(resolveFormat(undefined, 'sender.env.rs')).toBe('rust');
+		expect(resolveFormat(undefined, '.envrc')).toBe('unknown');
+	});
+
+	it('drops every leading dot from a format name, as the crate does', () => {
+		expect(resolveFormat('..json', undefined)).toBe('json');
+	});
+
 	it('infers from a filename when no format is given', () => {
 		expect(resolveFormat(undefined, 'config.toml')).toBe('toml');
 	});

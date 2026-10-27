@@ -16,7 +16,8 @@ A VS Code extension that extracts numeric values from the active document into a
 extension.ts            activate(): create telemetry/notifier/statusBar -> registerCommands()
 commands/               one file per command; deps injected as a frozen bag
                         {notifier, statusBar, telemetry}
-extraction/extract.ts   dispatcher: FileType (from filename extension) -> extractor;
+extraction/extract.ts   dispatcher: FileType (the basename through mcp/fileType.ts,
+                        the one resolver) -> extractor;
                         source languages -> formats/source.ts, everything else
                         unrecognised -> the regex fallback
 extraction/heuristics.ts  THE single numeric policy: collectNumbers walker,
@@ -40,8 +41,8 @@ ui/                     notifier (window messages, gated by notificationsLevel:
 utils/                  errors (sanitizeErrorMessage), sort (sortNumber/dedupeNumber)
 config/config.ts        readConfig() snapshot; CONFIG_DEFAULTS table
 types.ts                shared types only — no logic
-cli/                    the npm command line: args, format (the crate's
-                        resolver), walk + ignoreRules (ripgrep's precedence),
+cli/                    the npm command line: args, format (mcp/fileType.ts
+                        again), walk + ignoreRules (ripgrep's precedence),
                         locate (the crate's placement), scan, run, and mcp,
                         the crate's server with both tools. No `vscode`, ever
 ```
@@ -228,6 +229,7 @@ most valuable line in the file, and it is what keeps the next person from
 - **Launching the server needs `ELECTRON_RUN_AS_NODE=1`.** In the extension host `process.execPath` is the editor binary, so without it the definition starts a second editor and fails silently. `scripts/e2e-vsix.js` spawns the installed server exactly as `provider.ts` does and asserts it answers.
 - **Manifest placeholders are checked across every contribution point**, not just command titles. A `%key%` with no catalogue entry reaches the user as literal text; the gate in `test/integration/l10n.test.ts` walks the whole `contributes` tree.
 - **A name a caller supplies is looked up on a `Map`, never a plain object.** `mcp/fileType.ts` held its alias table as an object, so `constructor` and `__proto__` were hits and the MCP server answered a function for the file type. The resolver's test tries every prototype name as a format, a filename and an extension.
+- **One resolver, the crate's rule.** `mcp/fileType.ts` resolves a format name or a file name for the extension's commands, its MCP server and the npm command line alike, as `crate/src/extract/format.rs` does: a dotenv file is `.env` and everything after it, and a name is stripped of every leading dot. A second table in `extraction/extract.ts` split `.env.local` on its last dot, so the editor prompted for a type the other two surfaces already knew, and the server reported a commented-out value the crate's server dropped. `mcp.test.ts` and `postProcess.test.ts` drive the dotenv family and its exclusions (`env.ts`, `.envrc`), and the corpus pins `.env.local` on the shared tool.
 - **A number setting is read as a number.** `Number('')` and `Number(null)` are 0, so a cleared setting clamped to its floor instead of falling back to its default; `readNumber` checks the type as `readBoolean` does. `config.test.ts` stores `''`, `null`, `true` and text.
 - **The MCP input buffer is bounded** at `MAX_FRAME_BYTES` in `mcp/transport.ts`. A frame past it is answered with a parse error and the rest of that line is dropped as it arrives, whether its newline comes late or in the same chunk. `mcp.test.ts` feeds a frame one byte over the limit and a ping after it, both ways. The file is one copy across the family, held by `letools-site`'s `check:fleet`.
 - **Every command body runs inside `commands/guard.ts`.** A rejection that escapes a command is reported by the editor in its own words, raw message and home directory included; through the guard it is one redacted, localized error after the command's own `finally` has run. `guard.test.ts` reads the source and fails on a `registerCommand` whose handler is not `guarded(...)`.

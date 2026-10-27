@@ -813,5 +813,30 @@
 				"truncated": true
 			}
 		}
+	},
+	{
+		"name": "a dotenv file is .env and everything after it",
+		"content": "POLL=500\n# OFF=600\n",
+		"arguments": {
+			"filename": ".env.local"
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"numbers": [
+					{
+						"value": 500,
+						"notation": "decimal"
+					}
+				],
+				"fileType": "env"
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_numbers",
+				"count": 1,
+				"truncated": false
+			}
+		}
 	}
 ]

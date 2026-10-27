@@ -14,6 +14,14 @@ version and releases from one tag.
 
 ### Fixed
 
+- `.env.local`, `.env.production` and the rest of the dotenv family prompted
+  for a file type in the editor, and the MCP server read them with the text
+  scan, which has no comment rule, so a commented-out `# OFF=600` became a
+  finding the crate's server, reading dotenv, never reported. The server's
+  resolver follows the crate's rule, `.env` and everything after it, and is
+  now the one resolver the extension and the npm command line read through;
+  a format name is also stripped of every leading dot, as the crate strips it.
+  The corpus pins `.env.local`.
 - The MCP server and the npm command line read `maxResults` written as an
   integer-valued float or exponent, `2.0`, `1e3` or `1E20`, differently from
   the crate's server, which refused the first two and the command line the

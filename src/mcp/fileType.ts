@@ -90,12 +90,22 @@ export const SUPPORTED_FORMATS: readonly string[] = Object.freeze([
 	'shellscript',
 ]);
 
+export const FALLBACK_FORMAT: FileType = 'unknown';
+
+/** The extractor key for an already-canonical name, or the text scan. */
+export function canonical(format: string): FileType {
+	return ALIASES.get(format) ?? FALLBACK_FORMAT;
+}
+
+/** Lower-cased, trimmed, and every leading dot dropped, as the crate's `normalise` does. */
 function normalise(value: string): string {
-	return value.trim().toLowerCase().replace(/^\./, '');
+	return value.trim().toLowerCase().replace(/^\.+/, '');
 }
 
 /**
- * Resolve a file type from an explicit format, else from a filename.
+ * Resolve a file type from an explicit format, else from a filename, as the
+ * crate's `resolve_format` does. The one resolver in this repository: the
+ * extension and the npm command line both read through it.
  *
  * Falls back to `unknown`, which the engine handles by scanning the text
  * directly — so a caller who knows nothing about the document still gets its
@@ -105,24 +115,35 @@ export function resolveFormat(
 	format: string | undefined,
 	filename: string | undefined,
 ): FileType {
-	if (format) {
-		const direct = ALIASES.get(normalise(format));
-		if (direct) return direct;
+	if (format !== undefined) {
+		const direct = canonical(normalise(format));
+		if (direct !== FALLBACK_FORMAT) return direct;
 	}
+	if (filename === undefined) return FALLBACK_FORMAT;
 
-	if (filename) {
-		// A dotfile like `.env` has no extension to split on; its whole name is
-		// the type.
-		const bare = normalise(filename);
-		const whole = ALIASES.get(bare.startsWith('.') ? bare.slice(1) : bare);
-		if (whole) return whole;
+	// A dotfile like `.env` has no extension to split on; its whole name is
+	// the type.
+	const whole = canonical(normalise(filename));
+	if (whole !== FALLBACK_FORMAT) return whole;
 
-		const extension = filename.includes('.')
-			? filename.slice(filename.lastIndexOf('.') + 1)
-			: '';
-		const inferred = ALIASES.get(normalise(extension));
-		if (inferred) return inferred;
-	}
+	// A dotenv file is `.env` and everything after it. Splitting on the last
+	// dot asked `local` for a format and sent `.env.local` to the text scan,
+	// which has no comment rule, so a commented-out `# POLL=500` became a
+	// finding here that the crate's server, reading dotenv, dropped.
+	if (isDotenv(filename.trim().toLowerCase())) return 'env';
 
-	return 'unknown';
+	const dot = filename.lastIndexOf('.');
+	if (dot === -1) return FALLBACK_FORMAT;
+	return canonical(normalise(filename.slice(dot + 1)));
+}
+
+/**
+ * `.env` and every suffix of it, and `<name>.env`. The leading dot is the
+ * signal, which is why `env.ts` stays TypeScript and `.envrc` stays a shell
+ * script.
+ */
+function isDotenv(name: string): boolean {
+	if (name === '.env' || name === 'env') return true;
+	if (name.startsWith('.env.')) return true;
+	return name.endsWith('.env') && name.length > '.env'.length;
 }

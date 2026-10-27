@@ -91,6 +91,16 @@ describe('detectFileType', () => {
 		expect(detectFileType('deploy.sh')).toBe('shellscript');
 	});
 
+	it('reads the dotenv family by the whole file name, wherever the file sits', () => {
+		// Split on the last dot, `.env.local` asked `local` for a format and
+		// prompted for a type the crate and the npm command line already knew.
+		expect(detectFileType('/home/u/app/.env.local')).toBe('env');
+		expect(detectFileType('C:\\src\\.env.production')).toBe('env');
+		expect(detectFileType('/srv/app.env')).toBe('env');
+		expect(detectFileType('/srv/env.ts')).toBe('typescript');
+		expect(detectFileType('/srv/.envrc')).toBe('unknown');
+	});
+
 	it('treats a file with no extension as unknown', () => {
 		expect(detectFileType('Makefile')).toBe('unknown');
 		expect(detectFileType('')).toBe('unknown');
