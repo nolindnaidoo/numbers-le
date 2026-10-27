@@ -3,6 +3,9 @@ import {
 	_clipboardText,
 	_createDocument,
 	_createExtensionContext,
+	_failClipboardWrite,
+	_failOpenTextDocument,
+	_failShowTextDocument,
 	_openedDocuments,
 	_registeredCommands,
 	_resetMockState,
@@ -33,29 +36,39 @@ import { registerCommands } from './index';
 
 function makeDeps() {
 	const events: string[] = [];
+	const flashes: string[] = [];
+	let successes = 0;
 	const telemetry: Telemetry = {
 		event: (name, properties) =>
 			events.push(properties ? `${name}:${JSON.stringify(properties)}` : name),
 		dispose: () => {},
 	};
-	const statusBar: StatusBar = { flash: () => {} };
+	const statusBar: StatusBar = { flash: (text) => flashes.push(text) };
 	return {
 		deps: {
 			notifier: createNotifier(),
 			statusBar,
 			telemetry,
-			ratingPrompt: { recordSuccess: async () => {} },
+			ratingPrompt: {
+				recordSuccess: async () => {
+					successes += 1;
+				},
+			},
 		},
 		events,
+		flashes,
+		successes: () => successes,
 	};
 }
 
-async function runExtract(): Promise<void> {
-	const { deps } = makeDeps();
-	registerCommands(_createExtensionContext() as never, deps);
+/** Run the command and return what it told the status bar, telemetry and the rating prompt. */
+async function runExtract() {
+	const recorded = makeDeps();
+	registerCommands(_createExtensionContext() as never, recorded.deps);
 	const handler = _registeredCommands().get('numbers-le.extractNumbers');
 	if (!handler) throw new Error('extract command not registered');
 	await handler();
+	return recorded;
 }
 
 /** A JSON array of 150 numbers — past both safety floors. */
@@ -409,5 +422,96 @@ describe('extract: CSV multi-column path', () => {
 		_respondToInputBox(() => '0,1');
 		await runExtract();
 		expect(_openedDocuments().length).toBeGreaterThan(0);
+	});
+});
+
+describe('extract: results that never reach the user', () => {
+	// The command reported success by what it had decided to do, not by what
+	// happened: a refused document still flashed `Extracted N`, logged the
+	// extraction and counted toward the rating prompt.
+	const errors = () => _shownMessages().filter((m) => m.kind === 'error');
+
+	it('reports a document the host refused to open, and nothing else', async () => {
+		_setConfig('numbers-le.copyToClipboardEnabled', false);
+		_setActiveEditor(
+			_createDocument({ content: '[1, 2, 3]', fileName: '/mock/n.json' }),
+		);
+		_failOpenTextDocument(new Error('EACCES: untitled documents are off'));
+		const run = await runExtract();
+		expect(errors().map((m) => m.message)).toEqual(['Could not open results']);
+		expect(run.flashes).toEqual([]);
+		expect(run.events.filter((e) => e.startsWith('extracted'))).toEqual([]);
+		expect(run.successes()).toBe(0);
+	});
+
+	it('reports a document the host refused to show, whatever it threw', async () => {
+		_setConfig('numbers-le.copyToClipboardEnabled', false);
+		_setActiveEditor(
+			_createDocument({ content: '[1, 2, 3]', fileName: '/mock/n.json' }),
+		);
+		_failShowTextDocument('a string, not an Error');
+		const run = await runExtract();
+		expect(errors().map((m) => m.message)).toEqual(['Could not open results']);
+		expect(run.flashes).toEqual([]);
+		expect(run.successes()).toBe(0);
+	});
+
+	it('still counts a copy that succeeded when the document did not open', async () => {
+		_setConfig('numbers-le.copyToClipboardEnabled', true);
+		_setActiveEditor(
+			_createDocument({ content: '[1, 2, 3]', fileName: '/mock/n.json' }),
+		);
+		_failOpenTextDocument(new Error('refused'));
+		const run = await runExtract();
+		expect(errors().map((m) => m.message)).toEqual(['Could not open results']);
+		expect(_clipboardText()).toBe('1\n2\n3');
+		expect(run.flashes).toEqual(['Copied to clipboard']);
+		expect(run.successes()).toBe(1);
+	});
+
+	it('warns on a clipboard the host refused and still counts the document', async () => {
+		_setConfig('numbers-le.copyToClipboardEnabled', true);
+		_setActiveEditor(
+			_createDocument({ content: '[1, 2, 3]', fileName: '/mock/n.json' }),
+		);
+		_failClipboardWrite(new Error('no clipboard on this host'));
+		const run = await runExtract();
+		expect(_shownMessages().map((m) => m.message)).toEqual([
+			'Could not copy to clipboard',
+		]);
+		expect(lastOpened()).toBe('1\n2\n3');
+		expect(run.flashes).toEqual(['Extracted 3']);
+		expect(run.successes()).toBe(1);
+	});
+
+	it('does not say the CSV opened when every column document was refused', async () => {
+		_setActiveEditor(
+			_createDocument({ content: '1,2\n3,4\n', fileName: '/mock/n.csv' }),
+		);
+		_respondToInputBox(() => '0,1');
+		_failOpenTextDocument(new Error('refused'));
+		const run = await runExtract();
+		expect(errors().map((m) => m.message)).toEqual([
+			'Could not open results',
+			'Could not open results',
+		]);
+		expect(run.flashes).toEqual([]);
+		expect(run.events.filter((e) => e.startsWith('extracted'))).toEqual([]);
+	});
+
+	it('says so when no chosen CSV column holds a number', async () => {
+		// Digits only in the first row, so the index prompt is the one asked;
+		// the chosen columns are empty in every row.
+		_setActiveEditor(
+			_createDocument({ content: '1,,\n2,,\n', fileName: '/mock/n.csv' }),
+		);
+		_respondToInputBox(() => '1,2');
+		const run = await runExtract();
+		expect(_openedDocuments()).toEqual([]);
+		expect(_shownMessages().map((m) => m.message)).toEqual([
+			'No numbers found',
+		]);
+		expect(run.flashes).toEqual([]);
+		expect(run.events.filter((e) => e.startsWith('extracted'))).toEqual([]);
 	});
 });

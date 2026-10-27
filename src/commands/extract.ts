@@ -222,6 +222,10 @@ async function processAndOutputResults(
 
 	if (token.isCancellationRequested) return;
 
+	// What reached the user, as opposed to what was asked for: a document the
+	// host refused still flashed `Extracted N`, logged an extraction and
+	// counted toward the rating prompt.
+	let opened = false;
 	if (openDoc) {
 		try {
 			const resultDocument = await vscode.workspace.openTextDocument({
@@ -232,10 +236,11 @@ async function processAndOutputResults(
 				resultDocument,
 				getShowDocumentOptions(config),
 			);
-		} catch (error: unknown) {
-			if (error instanceof Error) {
-				deps.notifier.error(vscode.l10n.t('Could not open results'));
-			}
+			opened = true;
+		} catch {
+			// Whatever the host threw. A guard on `instanceof Error` let a string
+			// through as silence.
+			deps.notifier.error(vscode.l10n.t('Could not open results'));
 		}
 	}
 
@@ -254,8 +259,8 @@ async function processAndOutputResults(
 	}
 
 	// Nothing opened and nothing copied means the results never reached the
-	// user; a clipboard failure has already been reported as a warning.
-	if (!openDoc && !clipboardSuccess) {
+	// user, and each failure has already been reported.
+	if (!opened && !clipboardSuccess) {
 		return;
 	}
 

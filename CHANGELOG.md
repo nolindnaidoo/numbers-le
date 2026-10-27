@@ -14,6 +14,14 @@ version and releases from one tag.
 
 ### Fixed
 
+- Extract reported success by what it had decided to do, not by what
+  happened. A results document the editor refused to open still flashed
+  `Extracted N` in the status bar, logged an extraction and counted toward
+  the rating prompt; the CSV fan-out said "CSV opened" when every column
+  document was refused, and said nothing at all when no chosen column held a
+  number. Each path now reports what reached the user, and a refusal the host
+  throws as something other than an `Error` is reported rather than
+  swallowed.
 - The plain-text scan read `٣5` as the number 5: its digits were ASCII, so a
   run opening with a digit from another script lost that digit and reported
   the rest, where the crate's server consumed the run whole and reported

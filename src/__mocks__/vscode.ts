@@ -210,6 +210,29 @@ export function _setFsStatSize(size: number): void {
 	fsStatSize = size;
 }
 
+/**
+ * Failure hooks: what the host throws when it refuses to open or show a
+ * document, or to write the clipboard. Nothing in a command's output path
+ * could be driven to fail without them, so every `catch` there was dead in
+ * the suite. A value, not a flag, so a test can throw something that is not
+ * an `Error` and see it reported too.
+ */
+let openTextDocumentFailure: { readonly error: unknown } | undefined;
+let showTextDocumentFailure: { readonly error: unknown } | undefined;
+let clipboardWriteFailure: { readonly error: unknown } | undefined;
+
+export function _failOpenTextDocument(error: unknown): void {
+	openTextDocumentFailure = { error };
+}
+
+export function _failShowTextDocument(error: unknown): void {
+	showTextDocumentFailure = { error };
+}
+
+export function _failClipboardWrite(error: unknown): void {
+	clipboardWriteFailure = { error };
+}
+
 export const workspace = {
 	workspaceFolders: undefined as WorkspaceFolder[] | undefined,
 	getWorkspaceFolder: (_uri: Uri) => undefined as WorkspaceFolder | undefined,
@@ -249,6 +272,7 @@ export const workspace = {
 		content?: string;
 		language?: string;
 	}) => {
+		if (openTextDocumentFailure) throw openTextDocumentFailure.error;
 		const doc = _createDocument({
 			content: options?.content ?? '',
 			languageId: options?.language ?? 'plaintext',
@@ -369,6 +393,7 @@ export const window = {
 		return value;
 	},
 	showTextDocument: async (document: unknown, options?: unknown) => {
+		if (showTextDocumentFailure) throw showTextDocumentFailure.error;
 		const editor = _createEditor(document as MockDocument);
 		shownEditors.push(editor);
 		// Recorded so tests can assert placement (openResultsSideBySide sets
@@ -454,6 +479,7 @@ export const env = {
 	appName: 'Visual Studio Code',
 	clipboard: {
 		writeText: async (text: string) => {
+			if (clipboardWriteFailure) throw clipboardWriteFailure.error;
 			clipboard.value = text;
 		},
 		readText: async () => clipboard.value,
@@ -519,6 +545,9 @@ export function _resetMockState(): void {
 	warningResponder = undefined;
 	clipboard.value = '';
 	fsStatSize = 0;
+	openTextDocumentFailure = undefined;
+	showTextDocumentFailure = undefined;
+	clipboardWriteFailure = undefined;
 	workspace.workspaceFolders = undefined;
 }
 

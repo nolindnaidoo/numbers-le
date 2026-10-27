@@ -54,27 +54,47 @@ export async function handleCsvMultiColumnExtraction(
 		if (!ok) return true; // Handled (cancelled)
 	}
 
-	await openColumnResults(context, rows, targetIndexes, token);
+	const { opened, withNumbers } = await openColumnResults(
+		context,
+		rows,
+		targetIndexes,
+		token,
+	);
+
+	// The flash said the CSV opened whether or not it had: every column empty
+	// said nothing at all, and every document refused said it anyway.
+	if (opened === 0) {
+		if (withNumbers === 0 && !token.isCancellationRequested) {
+			deps.notifier.info(vscode.l10n.t('No numbers found'));
+		}
+		return true; // Handled (each refusal already reported)
+	}
 
 	deps.telemetry.event('extracted', { count: 'multi', type: 'csv' });
 	deps.statusBar.flash('CSV opened (no auto‑copy)');
 	return true; // Handled
 }
 
-/** One results document per column, skipping a column with no numbers. */
+/**
+ * One results document per column, skipping a column with no numbers.
+ * Returns how many columns held numbers and how many documents the host
+ * opened, which is what the caller may report.
+ */
 async function openColumnResults(
 	context: ExtractionContext,
 	rows: readonly (readonly string[])[],
 	targetIndexes: readonly number[],
 	token: vscode.CancellationToken,
-): Promise<void> {
+): Promise<{ readonly opened: number; readonly withNumbers: number }> {
 	const { config, deps } = context;
 	const shouldDedupe = config.dedupeEnabled;
 	const sortEnabled = config.sortEnabled;
 	const sortMode = config.sortMode;
+	let opened = 0;
+	let withNumbers = 0;
 
 	for (const idx of targetIndexes) {
-		if (token.isCancellationRequested) return;
+		if (token.isCancellationRequested) break;
 
 		const columnNumbers = columnNumbersOf(rows, idx);
 		const deduped = shouldDedupe ? dedupeNumber(columnNumbers) : columnNumbers;
@@ -83,6 +103,7 @@ async function openColumnResults(
 			: deduped;
 
 		if (finalForColumn.length === 0) continue;
+		withNumbers += 1;
 
 		try {
 			const doc = await vscode.workspace.openTextDocument({
@@ -96,12 +117,14 @@ async function openColumnResults(
 					preserveFocus: true,
 				}),
 			);
-		} catch (error: unknown) {
-			if (error instanceof Error) {
-				deps.notifier.error(vscode.l10n.t('Could not open results'));
-			}
+			opened += 1;
+		} catch {
+			// Whatever the host threw; a guard on `instanceof Error` let a string
+			// through as silence.
+			deps.notifier.error(vscode.l10n.t('Could not open results'));
 		}
 	}
+	return { opened, withNumbers };
 }
 
 /**
