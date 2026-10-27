@@ -475,13 +475,42 @@ describe('mcp', () => {
 			call('{"path":7}'),
 			call('{"paths":[]}'),
 		]);
-		const text = (reply: string) => JSON.parse(reply).result.content[0].text;
-		expect(written.map(text)).toEqual([
-			'entry 1 of paths is not a string',
-			'entry 0 of paths is not a string',
-			'path must be a string',
-			'the list of paths was empty',
+		const refusal = (reply: string) => JSON.parse(reply).error;
+		expect(written.map(refusal)).toEqual([
+			{ code: -32602, message: 'entry 1 of paths is not a string' },
+			{ code: -32602, message: 'entry 0 of paths is not a string' },
+			{ code: -32602, message: 'path must be a string' },
+			{ code: -32602, message: 'the list of paths was empty' },
 		]);
+	});
+
+	it('refuses a wrong-typed or undeclared argument as a protocol error, and a missing path as a tool failure', async () => {
+		// A `hidden: "yes"` was read as false and a `format: 7` as absent; the
+		// schema the agent read allowed neither. A path that is not there is a
+		// fact about the filesystem, and stays the tool's own failure.
+		const call = (name: string, args: string) =>
+			`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"${name}","arguments":${args}}}`;
+		const { written } = await session([
+			call('numbers_le_scan', '{"path":".","hidden":"yes"}'),
+			call('numbers_le_scan', '{"path":".","format":7}'),
+			call('numbers_le_scan', '{"path":".","bogus":1}'),
+			call('extract_numbers', '{"content":"1","dedupe":"yes"}'),
+			call('extract_numbers', '{"content":"1","extra":true,"another":1}'),
+			call('numbers_le_scan', '{"path":"/no/such/place-xyz"}'),
+		]);
+		const replies = written.map((line) => JSON.parse(line));
+		expect(replies.slice(0, 5).map((reply) => reply.error)).toEqual([
+			{ code: -32602, message: 'hidden must be a boolean' },
+			{ code: -32602, message: 'format must be a string' },
+			{ code: -32602, message: 'unknown argument: bogus' },
+			{ code: -32602, message: 'dedupe must be a boolean' },
+			{ code: -32602, message: 'unknown arguments: another, extra' },
+		]);
+		expect(replies[5].error).toBeUndefined();
+		expect(replies[5].result.isError).toBe(true);
+		expect(replies[5].result.content[0].text).toMatch(
+			/^\/no\/such\/place-xyz: /,
+		);
 	});
 
 	it('reads a cap written as an integer-valued float or exponent, as the crate reads it', async () => {
@@ -496,10 +525,10 @@ describe('mcp', () => {
 			call('2.5'),
 		]);
 		const outcome = (reply: string) => {
-			const result = JSON.parse(reply).result;
-			return result.isError
-				? result.content[0].text
-				: `${result.structuredContent.meta.count}/${result.structuredContent.meta.truncated}`;
+			const parsed = JSON.parse(reply);
+			if (parsed.error) return parsed.error.message;
+			const result = parsed.result;
+			return `${result.structuredContent.meta.count}/${result.structuredContent.meta.truncated}`;
 		};
 		expect(written.map(outcome)).toEqual([
 			'2/true',

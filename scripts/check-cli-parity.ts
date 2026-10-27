@@ -396,6 +396,12 @@ function mcpLines(): readonly string[] {
 		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"numbers_le_scan","arguments":{"paths":[${JSON.stringify(tree)},7]}}}`,
 		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"numbers_le_scan","arguments":{"path":7}}}`,
 		extract({ content: '"42"', format: '\uFEFFjson' }),
+		// Wrong-typed and undeclared arguments: protocol errors, not silence.
+		extract({ content: '1 2', dedupe: 'yes' }),
+		extract({ content: '1 2', filename: 7 }),
+		extract({ content: '1 2', extra: true, another: 1 }),
+		call('numbers_le_scan', { path: repo, hidden: 'yes' }),
+		call('numbers_le_scan', { path: repo, bogus: 1 }),
 		extract({ content: 7 }),
 		extract({}),
 		call('extract_numbers'),

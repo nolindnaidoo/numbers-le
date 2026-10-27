@@ -6,7 +6,10 @@ import {
 	envelope,
 	MAX_MAX_RESULTS,
 	readMaxResults,
+	readOptionalBoolean,
+	readOptionalString,
 	readString,
+	refuseUnknown,
 	toDiagnostics,
 } from './envelope';
 import { resolveFormat, SUPPORTED_FORMATS } from './fileType';
@@ -42,13 +45,24 @@ const MAX_RESULTS_SCHEMA = {
 	description: `Cap on returned numbers (default ${DEFAULT_MAX_RESULTS}). meta.truncated reports whether any were dropped.`,
 };
 
+/** The schema's properties, which `additionalProperties: false` closes. */
+const EXTRACT_ARGUMENTS = [
+	'content',
+	'format',
+	'filename',
+	'dedupe',
+	'maxResults',
+] as const;
+
 function extract(args: Record<string, unknown>): Promise<unknown> {
+	refuseUnknown(args, EXTRACT_ARGUMENTS);
 	const content = readString(args, 'content');
 	const maxResults = readMaxResults(args);
-
-	const format = typeof args.format === 'string' ? args.format : undefined;
-	const filename =
-		typeof args.filename === 'string' ? args.filename : undefined;
+	// Read as the schema types them. A `format: 7` was read as absent and the
+	// text scanned, a silence the schema never allowed.
+	const format = readOptionalString(args, 'format');
+	const filename = readOptionalString(args, 'filename');
+	const dedupe = readOptionalBoolean(args, 'dedupe') === true;
 
 	// Unlike the rest of the family this never refuses: an unresolved format
 	// scans the text directly, which is a useful answer rather than an empty one.
@@ -72,14 +86,13 @@ function extract(args: Record<string, unknown>): Promise<unknown> {
 	// one number written twice, and a caller asking for the distinct
 	// numbers in a file means the distinct numbers.
 	const seen = new Set<number>();
-	const deduped =
-		args.dedupe === true
-			? numbers.filter((found) => {
-					if (seen.has(found.value)) return false;
-					seen.add(found.value);
-					return true;
-				})
-			: numbers;
+	const deduped = dedupe
+		? numbers.filter((found) => {
+				if (seen.has(found.value)) return false;
+				seen.add(found.value);
+				return true;
+			})
+		: numbers;
 
 	const { items, truncated } = capped(deduped, maxResults);
 

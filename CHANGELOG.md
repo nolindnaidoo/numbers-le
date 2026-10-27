@@ -12,6 +12,20 @@ version and releases from one tag.
 
 ## [Unreleased]
 
+### Changed
+
+- The MCP servers refuse a tool argument that does not fit the tool's
+  schema as a JSON-RPC error, `-32602`, where it was a result carrying
+  `isError`: a missing `content`, a `maxResults` that is not a whole number
+  of one or more, a `format`, `filename` or `path` that is not a string, a
+  `dedupe`, `hidden` or `ignored` that is not a boolean, and any argument
+  the schema does not declare, which `additionalProperties: false` now
+  enforces. A wrong type on an optional argument was read as absent before,
+  so `format: 7` scanned the text and `hidden: "yes"` walked nothing
+  hidden. A path that is not there stays the tool's own failure, `isError`,
+  because that is a fact about the filesystem and not the schema. All three
+  servers refuse in the same words.
+
 ### Fixed
 
 - The npm command line passed over a symbolic link in a walk without a

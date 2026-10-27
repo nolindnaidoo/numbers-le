@@ -10,6 +10,15 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **An argument that does not fit a tool's schema is a protocol error.**
+  `mcp` answers `-32602` where it answered an `isError` result, and refuses
+  a wrong-typed optional argument it used to read as absent (`format: 7`,
+  `hidden: "yes"`) and any argument the schema does not declare. A path
+  that is not there stays an `isError` result. The npm server does the
+  same, in the same words.
+
 ### Fixed
 
 - **A symbolic link the walk did not follow is counted.** `N symbolic

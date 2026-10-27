@@ -169,6 +169,13 @@ async function checkMcpExtractNumbers(): Promise<void> {
 						`mcp extract "${testCase.name}": expected error ${JSON.stringify(testCase.expectedError)}, got ${JSON.stringify(message)}`,
 					);
 				}
+				// A refusal of an argument is a protocol error on every server, so
+				// the corpus holds the code as well as the words.
+				if ((error as { code?: unknown })?.code !== -32602) {
+					fail(
+						`mcp extract "${testCase.name}": the refusal carries no -32602 code`,
+					);
+				}
 			}
 			continue;
 		}

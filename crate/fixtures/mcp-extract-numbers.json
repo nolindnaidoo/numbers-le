@@ -863,5 +863,29 @@
 				"truncated": false
 			}
 		}
+	},
+	{
+		"name": "a format that is not a string is refused, not read as absent",
+		"content": "1 2",
+		"arguments": {
+			"format": 7
+		},
+		"expectedError": "format must be a string"
+	},
+	{
+		"name": "a dedupe that is not a boolean is refused, not read as false",
+		"content": "1 2",
+		"arguments": {
+			"dedupe": "yes"
+		},
+		"expectedError": "dedupe must be a boolean"
+	},
+	{
+		"name": "an argument the schema does not declare is refused",
+		"content": "1 2",
+		"arguments": {
+			"extra": true
+		},
+		"expectedError": "unknown argument: extra"
 	}
 ]
