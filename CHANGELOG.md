@@ -14,6 +14,10 @@ version and releases from one tag.
 
 ### Fixed
 
+- The npm command line passed over a symbolic link in a walk without a
+  word. It is still never followed, by design; it is counted now, `N
+  symbolic links not followed` on stderr and `symbolicLinks` in the scan
+  tool's envelope, as binary files are counted. The crate does the same.
 - The npm command line's `numbers_le_scan` tool answered `ok: true` with
   empty `diagnostics` for a tree holding a file it could not read: the
   envelope's filter looked for a severity no report carries. A skipped file

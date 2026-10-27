@@ -12,6 +12,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A symbolic link the walk did not follow is counted.** `N symbolic
+  links not followed` on stderr and `symbolicLinks` in the MCP scan
+  envelope, beside the binary count; it was passed over without a word.
 - **The MCP scan tool names a file it could not read.** Its envelope's
   `diagnostics` filtered on a severity no report carries, so a locked or
   undecodable file left `ok: true` and an empty list; it is an `unreadable`

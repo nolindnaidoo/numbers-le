@@ -215,6 +215,25 @@ fn a_binary_file_is_counted_and_a_broken_text_file_is_reported() {
     );
 }
 
+/// A link in the tree is never followed, and the count is the reader's
+/// only sign the tree holds more than the scan read, as the binary count
+/// is.
+#[cfg(unix)]
+#[test]
+fn a_symbolic_link_is_counted_not_followed_and_not_silent() {
+    let tree = Tree::new("symlink");
+    let target = tree.write("rates.env", "VAT=0.2\n");
+    std::os::unix::fs::symlink(&target, tree.path().join("link.env")).expect("a symlink");
+    let run = run(&[&tree.path().to_string_lossy()]);
+    assert_eq!(run.code, 0, "{}", run.stderr);
+    assert_eq!(reports(&run).len(), 1, "the link produced no report line");
+    assert!(
+        run.stderr.contains("1 symbolic link not followed"),
+        "{}",
+        run.stderr
+    );
+}
+
 #[test]
 fn values_only_prints_numbers_and_no_json() {
     let tree = audit_tree("values");

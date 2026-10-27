@@ -40,6 +40,8 @@ export type Unreadable = Readonly<{ path: string; reason: string }>;
 export type Walked = Readonly<{
 	files: readonly string[];
 	unreadable: readonly Unreadable[];
+	/** Links met in a walk and not followed: counted, as binary files are, never silent. */
+	symlinks: number;
 }>;
 
 interface Walk {
@@ -47,6 +49,7 @@ interface Walk {
 	readonly repository: RepositoryRules | null;
 	readonly files: string[];
 	readonly unreadable: Unreadable[];
+	symlinks: number;
 }
 
 /** Every file to read, in a stable order. Throws a message naming the input. */
@@ -56,14 +59,17 @@ export function collect(
 ): Walked {
 	const files: string[] = [];
 	const unreadable: Unreadable[] = [];
+	let symlinks = 0;
 	for (const input of inputs) {
 		const found = filesUnder(input, options);
 		files.push(...found.files);
 		unreadable.push(...found.unreadable);
+		symlinks += found.symlinks;
 	}
 	return Object.freeze({
 		files: Object.freeze(sortAndDedupe(files)),
 		unreadable: Object.freeze(sortUnreadable(unreadable)),
+		symlinks,
 	});
 }
 
@@ -77,13 +83,14 @@ function filesUnder(input: string, options: WalkOptions): Walked {
 	} catch (error) {
 		throw new Error(`${input}: ${rustIoMessage(error)}`);
 	}
-	if (stats.isFile()) return { files: [input], unreadable: [] };
+	if (stats.isFile()) return { files: [input], unreadable: [], symlinks: 0 };
 	// A FIFO, a socket or a device named outright: never opened, since a read
 	// on a pipe with no writer never returns, and never silent.
 	if (!stats.isDirectory()) {
 		return {
 			files: [],
 			unreadable: [{ path: input, reason: NOT_A_REGULAR_FILE }],
+			symlinks: 0,
 		};
 	}
 	return walkDirectory(input, options);
@@ -97,6 +104,7 @@ function walkDirectory(root: string, options: WalkOptions): Walked {
 		repository: repoRoot ? repositoryRules(repoRoot) : null,
 		files: [],
 		unreadable: [],
+		symlinks: 0,
 	};
 	visit(walk, root, absolute, parentRules(absolute, options));
 	return walk;
@@ -162,11 +170,14 @@ function visitEntry(
 	}
 	// A link is never followed, so a link out of the tree cannot have this
 	// reading files the caller did not point it at, and the listing reports
-	// it as a link whatever it points at. Anything else, a FIFO, a socket or
-	// a device, is named rather than opened or dropped, as the crate names it.
-	if (!entry.isSymbolicLink()) {
-		walk.unreadable.push({ path: shown, reason: NOT_A_REGULAR_FILE });
+	// it as a link whatever it points at; it is counted, as the crate counts
+	// it. Anything else, a FIFO, a socket or a device, is named rather than
+	// opened or dropped, as the crate names it.
+	if (entry.isSymbolicLink()) {
+		walk.symlinks += 1;
+		return;
 	}
+	walk.unreadable.push({ path: shown, reason: NOT_A_REGULAR_FILE });
 }
 
 function entriesOf(

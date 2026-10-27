@@ -282,7 +282,7 @@ function scan(args: unknown): unknown {
 	const inputs = requestedPaths(args);
 	const flag = (name: string): boolean => field(args, name) === true;
 	const format = stringField(args, 'format');
-	const { reports, binary } = readTree(inputs, {
+	const { reports, binary, symlinks } = readTree(inputs, {
 		scan: {
 			dedupe: flag('dedupe'),
 			format: format === undefined ? null : resolveFormat(format, undefined),
@@ -320,6 +320,7 @@ function scan(args: unknown): unknown {
 			reports,
 			numbers,
 			binaryFiles: binary,
+			symbolicLinks: symlinks,
 		}),
 		reports.length,
 		diagnostics,

@@ -50,6 +50,11 @@ pub(crate) struct Walked {
     /// order. Both surfaces turn these into `skipped` reports: named on
     /// stderr, carried in the JSON, failing `--strict`, never silent.
     pub(crate) unreadable: Vec<(PathBuf, String)>,
+    /// Links met in a walk and not followed. Never followed by design: a
+    /// link out of the tree would have this reading files the caller did
+    /// not point it at. Counted, as binary files are, because a reader has
+    /// to know the tree holds more than the scan read.
+    pub(crate) symlinks: usize,
 }
 
 impl Default for WalkOptions {
@@ -91,6 +96,7 @@ pub(crate) fn collect(inputs: &[PathBuf], options: &WalkOptions) -> Result<Walke
         let found = walk_directory(input, options);
         walked.files.extend(found.files);
         walked.unreadable.extend(found.unreadable);
+        walked.symlinks += found.symlinks;
     }
 
     walked.files.sort();
@@ -119,9 +125,11 @@ fn walk_directory(root: &StdPath, options: &WalkOptions) -> Walked {
         match entry {
             Ok(entry) => match entry.file_type() {
                 Some(kind) if kind.is_file() => walked.files.push(entry.into_path()),
-                // A directory the walker descends; a link it reports as a
-                // link whatever it points at, and a link is never followed.
-                Some(kind) if kind.is_dir() || kind.is_symlink() => {}
+                // A directory the walker descends.
+                Some(kind) if kind.is_dir() => {}
+                // A link the walker reports as a link whatever it points at,
+                // and never follows; counted so that it is not silent.
+                Some(kind) if kind.is_symlink() => walked.symlinks += 1,
                 // A FIFO, a socket or a device under a name the walk reads:
                 // named rather than opened or dropped.
                 _ => walked
@@ -264,6 +272,22 @@ mod tests {
         let file = tree.write(".hidden.json", "{}");
         let walked = collect(&[file], &WalkOptions::default()).expect("walks");
         assert_eq!(names(&walked), [".hidden.json"]);
+    }
+
+    /// Never followed, by design: a link out of the tree would have the
+    /// walk reading files the caller did not point it at. Never silent
+    /// either, now: it was passed over without a line, so a reader could
+    /// not tell the tree held more than the scan read.
+    #[cfg(unix)]
+    #[test]
+    fn a_symbolic_link_is_counted_and_never_followed() {
+        let tree = TempTree::new("walk-symlink");
+        let target = tree.write("a.env", "A=1\n");
+        std::os::unix::fs::symlink(&target, tree.path().join("link.env")).expect("a symlink");
+        let walked = collect(&[tree.path().to_path_buf()], &WalkOptions::default()).expect("walks");
+        assert_eq!(names(&walked), ["a.env"]);
+        assert_eq!(walked.symlinks, 1);
+        assert!(walked.unreadable.is_empty());
     }
 
     #[test]

@@ -110,8 +110,8 @@ pub(crate) fn run() -> ExitCode {
 
 fn execute(args: &[String]) -> Result<u8, String> {
     let options = parse(args)?;
-    let (reports, binary) = if options.stdin {
-        (vec![scan_stdin(&options)?], 0)
+    let (reports, binary, symlinks) = if options.stdin {
+        (vec![scan_stdin(&options)?], 0, 0)
     } else {
         let walked = walk::collect(&options.inputs, &options.walk)?;
         let scanned = walked
@@ -129,7 +129,7 @@ fn execute(args: &[String]) -> Result<u8, String> {
                 .iter()
                 .map(|(path, reason)| scan::unreadable(path, reason)),
         );
-        (reports, binary)
+        (reports, binary, walked.symlinks)
     };
 
     let stdout = std::io::stdout();
@@ -147,6 +147,7 @@ fn execute(args: &[String]) -> Result<u8, String> {
         &mut std::io::stderr().lock(),
         &reports,
         binary,
+        symlinks,
         options.values_only,
     );
     Ok(scan::exit_code(&reports, options.strict))
@@ -252,8 +253,8 @@ fn parse(args: &[String]) -> Result<Cli, String> {
 }
 
 /// The human half. Every line restates something already on stdout —
-/// except the binary count, which is the one thing stdout cannot carry
-/// because those files produce no report line at all.
+/// except the binary count and the link count, which stdout cannot carry
+/// because those entries produce no report line at all.
 ///
 /// `values_on_stdout` is true under `--values`, which prints the numbers
 /// to stdout itself. Otherwise they are listed here, because at a
@@ -262,6 +263,7 @@ fn summarise(
     stderr: &mut impl Write,
     reports: &[FileReport],
     binary: usize,
+    symlinks: usize,
     values_on_stdout: bool,
 ) {
     let mut numbers = 0;
@@ -295,6 +297,14 @@ fn summarise(
             stderr,
             "{} skipped",
             plural(binary, "binary file", "binary files")
+        );
+    }
+    if symlinks > 0 {
+        // Never followed, by design; still not a silence.
+        let _ = writeln!(
+            stderr,
+            "{} not followed",
+            plural(symlinks, "symbolic link", "symbolic links")
         );
     }
     if unlocated > 0 {
@@ -360,14 +370,14 @@ mod tests {
     fn stderr_lists_the_numbers_unless_values_are_on_stdout() {
         let reports = sample_reports();
         let mut listed = Vec::new();
-        summarise(&mut listed, &reports, 0, false);
+        summarise(&mut listed, &reports, 0, 0, false);
         let text = String::from_utf8(listed).expect("utf-8");
         assert!(text.starts_with("a.json:"), "{text}");
         assert!(text.contains("  42\n"), "{text}");
         assert!(text.ends_with("1 number in 1 file\n"), "{text}");
 
         let mut quiet = Vec::new();
-        summarise(&mut quiet, &reports, 0, true);
+        summarise(&mut quiet, &reports, 0, 0, true);
         assert_eq!(
             String::from_utf8(quiet).expect("utf-8"),
             "1 number in 1 file\n"

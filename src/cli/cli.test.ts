@@ -5,6 +5,7 @@ import {
 	mkdtempSync,
 	readdirSync,
 	rmdirSync,
+	symlinkSync,
 	unlinkSync,
 	writeFileSync,
 } from 'node:fs';
@@ -200,6 +201,20 @@ describe('walk', () => {
 		]);
 	});
 
+	it('counts a symbolic link it does not follow', () => {
+		// Never followed, by design; it was passed over without a line, so a
+		// reader could not tell the tree held more than the scan read.
+		if (process.platform === 'win32') return;
+		const root = mkdtempSync(join(tmpdir(), 'numbers-le-symlink-'));
+		made.push(root);
+		writeFileSync(join(root, 'a.env'), 'A=1\n');
+		symlinkSync(join(root, 'a.env'), join(root, 'link.env'));
+		const walked = collect([root], DEFAULT_WALK);
+		expect(walked.files).toEqual([join(root, 'a.env')]);
+		expect(walked.symlinks).toBe(1);
+		expect(walked.unreadable).toEqual([]);
+	});
+
 	it('refuses a named path that is not there', () => {
 		// Each platform's own wording, as Rust's io::Error prints it.
 		const reason =
@@ -244,6 +259,22 @@ describe('run', () => {
 		const values = await cli(['--stdin', '--values'], '7 8', true);
 		expect(values.stdout).toBe('7\n8\n');
 		expect(values.stderr).toBe('2 numbers in 1 file\n');
+	});
+
+	it('lists a symbolic link it did not follow on stderr', async () => {
+		if (process.platform === 'win32') return;
+		const root = mkdtempSync(join(tmpdir(), 'numbers-le-run-symlink-'));
+		writeFileSync(join(root, 'rates.env'), 'VAT=0.2\n');
+		symlinkSync(join(root, 'rates.env'), join(root, 'link.env'));
+		try {
+			const { status, stderr } = await cli([root]);
+			expect(status).toBe(0);
+			expect(stderr).toContain('1 symbolic link not followed\n');
+		} finally {
+			unlinkSync(join(root, 'link.env'));
+			unlinkSync(join(root, 'rates.env'));
+			rmdirSync(root);
+		}
 	});
 
 	it('answers a malformed question with exit 2 and the crate’s words', async () => {
@@ -410,6 +441,25 @@ describe('mcp', () => {
 			chmodSync(join(root, 'closed.env'), 0o600);
 			unlinkSync(join(root, 'closed.env'));
 			unlinkSync(join(root, 'open.env'));
+			rmdirSync(root);
+		}
+	});
+
+	it('carries the symbolic links it did not follow in the envelope', async () => {
+		if (process.platform === 'win32') return;
+		const root = mkdtempSync(join(tmpdir(), 'numbers-le-mcp-symlink-'));
+		writeFileSync(join(root, 'a.json'), '{"a":1}\n');
+		symlinkSync(join(root, 'a.json'), join(root, 'link.json'));
+		try {
+			const { written } = await session([
+				`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"numbers_le_scan","arguments":{"path":${JSON.stringify(root)}}}}`,
+			]);
+			const data = JSON.parse(written[0] ?? '').result.structuredContent.data;
+			expect(data.symbolicLinks).toBe(1);
+			expect(data.reports).toHaveLength(1);
+		} finally {
+			unlinkSync(join(root, 'link.json'));
+			unlinkSync(join(root, 'a.json'));
 			rmdirSync(root);
 		}
 	});

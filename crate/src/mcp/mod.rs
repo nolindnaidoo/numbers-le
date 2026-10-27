@@ -395,7 +395,12 @@ fn scan_tool(arguments: &Value) -> Result<Envelope<Value>, String> {
     let count = reports.len();
     Ok(envelope(
         "numbers_le_scan",
-        json!({ "reports": reports, "numbers": numbers, "binaryFiles": binary }),
+        json!({
+            "reports": reports,
+            "numbers": numbers,
+            "binaryFiles": binary,
+            "symbolicLinks": walked.symlinks,
+        }),
         count,
         diagnostics,
         false,
@@ -909,6 +914,26 @@ mod tests {
                 .is_some_and(|text| text
                     .ends_with("closed.env could not be read, so this scan does not cover it")),
             "{envelope}"
+        );
+    }
+
+    /// The envelope carries the binary count for the same reason; a link
+    /// the walk did not follow was not counted anywhere.
+    #[cfg(unix)]
+    #[test]
+    fn the_scan_tool_counts_a_symbolic_link_it_did_not_follow() {
+        let tree = TempTree::new("mcp-symlink");
+        let target = tree.write("a.json", "{\"a\":1}\n");
+        std::os::unix::fs::symlink(&target, tree.path().join("link.json")).expect("a symlink");
+        let response = call(
+            "numbers_le_scan",
+            &json!({ "path": tree.path().to_string_lossy() }),
+        );
+        let envelope = &response["result"]["structuredContent"];
+        assert_eq!(envelope["data"]["symbolicLinks"], 1);
+        assert_eq!(
+            envelope["data"]["reports"].as_array().map(Vec::len),
+            Some(1)
         );
     }
 
