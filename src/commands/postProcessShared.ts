@@ -31,11 +31,17 @@ export function collectNumbers(
 	const text = editor.document.getText();
 
 	if (isNumbersFile) {
+		// Blank lines are dropped before the conversion, the way the caller
+		// decided the file was a numbers file: `Number('')` is 0, so the empty
+		// last line of a document ending in a newline joined the numbers as a
+		// 0 the file never held, and the count reported it.
 		const numbers = Object.freeze(
 			text
-				.split('\n')
-				.map((line) => Number(bareValue(line.trim())))
-				.filter((n) => !Number.isNaN(n) && Number.isFinite(n)),
+				.split(/\r?\n/)
+				.map((line) => line.trim())
+				.filter((line) => line !== '')
+				.map((line) => Number(bareValue(line)))
+				.filter((n) => Number.isFinite(n)),
 		);
 		if (numbers.length === 0) {
 			deps.notifier.info(

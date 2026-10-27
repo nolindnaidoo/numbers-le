@@ -226,6 +226,27 @@ describe('numbers-le.postProcess.dedupe', () => {
 		expect(doc.getText()).toBe('5\n6');
 	});
 
+	it('does not read a trailing newline, a blank line or CRLF as the number 0', async () => {
+		// `Number('')` is 0, so the empty last line of a document that ends in a
+		// newline joined the numbers: "1\n2\n1\n" deduped to 1, 2 and a 0 the
+		// file never held, and the count said three unique numbers.
+		for (const content of ['1\n2\n1\n', '1\r\n2\r\n1\r\n', '1\n\n2\n1']) {
+			_resetMockState();
+			registerCommands(makeContext(), makeDeps().deps);
+			_setConfig('numbers-le.notificationsLevel', 'all');
+			_setActiveEditor(_createDocument({ content }));
+			await runCommand('numbers-le.postProcess.dedupe');
+			const opened = _openedDocuments();
+			expect(
+				opened[opened.length - 1]?.getText(),
+				JSON.stringify(content),
+			).toBe('1\n2');
+			expect(_shownMessages()[0]?.message, JSON.stringify(content)).toBe(
+				'Removed 1 duplicates (2 unique numbers remaining)',
+			);
+		}
+	});
+
 	it('reports when there are no duplicates', async () => {
 		const { deps } = makeDeps();
 		registerCommands(makeContext(), deps);
@@ -269,6 +290,24 @@ describe('numbers-le.postProcess.sort', () => {
 		const opened = _openedDocuments();
 		expect(opened[opened.length - 1]?.getText()).toBe(
 			'2:1\t10\n10:1\t20\n1:1\t30',
+		);
+	});
+
+	it('does not sort a trailing newline in as the number 0', async () => {
+		const { deps } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.notificationsLevel', 'all');
+		_setActiveEditor(_createDocument({ content: '3\n1\n2\n' }));
+		_respondToQuickPick((items) =>
+			(items as Array<{ value: string }>).find(
+				(item) => item.value === 'numeric-asc',
+			),
+		);
+		await runCommand('numbers-le.postProcess.sort');
+		const opened = _openedDocuments();
+		expect(opened[opened.length - 1]?.getText()).toBe('1\n2\n3');
+		expect(_shownMessages()[0]?.message).toBe(
+			'Sorted 3 numbers (Numeric Ascending)',
 		);
 	});
 

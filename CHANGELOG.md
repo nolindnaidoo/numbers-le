@@ -14,6 +14,10 @@ version and releases from one tag.
 
 ### Fixed
 
+- Deduplicate and Sort read the empty last line of a document that ends in a
+  newline, a blank line and a CRLF line ending as the number 0, so a list of
+  three numbers deduped to the three and a 0 the file never held, and the
+  count said so. Blank lines are not numbers.
 - The MCP server answered a `filename` or `format` that is an
   `Object.prototype` name, such as `constructor` or `__proto__`, with a
   function or an object for its file type. It answers as it does for any
