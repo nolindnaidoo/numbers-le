@@ -419,20 +419,44 @@ export const window = {
 			_lines: linesOut,
 		};
 	},
-	createStatusBarItem: (_alignment?: unknown, _priority?: number) => ({
-		text: '',
-		tooltip: '',
-		command: undefined as unknown,
-		visible: false,
-		show(): void {
-			(this as { visible: boolean }).visible = true;
-		},
-		hide(): void {
-			(this as { visible: boolean }).visible = false;
-		},
-		dispose: () => {},
-	}),
+	createStatusBarItem: (_alignment?: unknown, _priority?: number) => {
+		const item = {
+			text: '',
+			tooltip: '',
+			command: undefined as unknown,
+			visible: false,
+			disposed: false,
+			show(): void {
+				(this as { visible: boolean }).visible = true;
+			},
+			hide(): void {
+				(this as { visible: boolean }).visible = false;
+			},
+			dispose(): void {
+				(this as { disposed: boolean }).disposed = true;
+			},
+		};
+		statusBarItems.push(item);
+		return item;
+	},
 };
+
+const statusBarItems: Array<{
+	text: string;
+	command: unknown;
+	visible: boolean;
+	disposed: boolean;
+}> = [];
+
+/** Every status bar item created, so a test can read what the user sees. */
+export function _statusBarItems(): ReadonlyArray<{
+	text: string;
+	command: unknown;
+	visible: boolean;
+	disposed: boolean;
+}> {
+	return statusBarItems;
+}
 
 const outputChannels: string[][] = [];
 
@@ -537,6 +561,7 @@ export function _resetMockState(): void {
 	shownDocumentOptions.length = 0;
 	openedDocuments.length = 0;
 	outputChannels.length = 0;
+	statusBarItems.length = 0;
 	executedBuiltins.length = 0;
 	registeredCommands.clear();
 	activeTextEditor = undefined;
