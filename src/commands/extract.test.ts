@@ -260,6 +260,22 @@ describe('extract: unknown file type', () => {
 		expect(lastOpened()).toBe('1\n2');
 	});
 
+	it('reports a type prompt the host threw out of as what it was', async () => {
+		// The prompt ran inside the try that guards reading the document, so a
+		// dialog the host tore down was reported as "Document is no longer
+		// valid", which was false, and the real reason was lost.
+		_setActiveEditor(
+			_createDocument({ content: 'a 1 b 2', fileName: '/mock/notes.xyz' }),
+		);
+		_respondToQuickPick(() => {
+			throw new Error('the dialog went away');
+		});
+		await runExtract();
+		expect(_shownMessages().map((m) => m.message)).toEqual([
+			'Numbers-LE could not finish: the dialog went away',
+		]);
+	});
+
 	it('does nothing when the type prompt is dismissed', async () => {
 		_setActiveEditor(
 			_createDocument({ content: 'a 1 b 2', fileName: '/mock/notes.xyz' }),

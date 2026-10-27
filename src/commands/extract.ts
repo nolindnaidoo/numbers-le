@@ -52,28 +52,31 @@ async function validateAndPrepareExtraction(
 	// Capture document immediately to avoid TOCTOU issues
 	const document = editor.document;
 
-	// Validate document is still accessible
+	// Reading a document the host has closed throws; that is the one failure
+	// this message describes. The type prompt used to sit inside the same
+	// try, so a dialog the host tore down was reported as the document going
+	// away, and the real reason was lost.
+	let text: string;
 	try {
-		const text = document.getText();
-		if (text.trim().length === 0) {
-			deps.notifier.info(vscode.l10n.t('File is empty'));
-			return null;
-		}
-
-		// Infer file type from filename or prompt if unknown
-		let fileType = detectFileType(document.fileName);
-		if (fileType === 'unknown') {
-			const chosen = await promptForFileType();
-			if (!chosen) return null;
-			fileType = chosen;
-		}
-
-		return { document, text, fileType };
-	} catch (_error) {
-		// Document became invalid during access
+		text = document.getText();
+	} catch {
 		deps.notifier.error(vscode.l10n.t('Document is no longer valid'));
 		return null;
 	}
+	if (text.trim().length === 0) {
+		deps.notifier.info(vscode.l10n.t('File is empty'));
+		return null;
+	}
+
+	// Infer file type from filename or prompt if unknown
+	let fileType = detectFileType(document.fileName);
+	if (fileType === 'unknown') {
+		const chosen = await promptForFileType();
+		if (!chosen) return null;
+		fileType = chosen;
+	}
+
+	return { document, text, fileType };
 }
 
 async function handleNormalExtraction(

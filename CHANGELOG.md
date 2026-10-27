@@ -14,6 +14,9 @@ version and releases from one tag.
 
 ### Fixed
 
+- A file-type prompt the editor tore down was reported as "Document is no
+  longer valid", which was false. The prompt no longer sits inside the guard
+  that reads the document, so the failure is reported as what it was.
 - Extract reported success by what it had decided to do, not by what
   happened. A results document the editor refused to open still flashed
   `Extracted N` in the status bar, logged an extraction and counted toward
