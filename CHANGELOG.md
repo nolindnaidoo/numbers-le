@@ -14,6 +14,9 @@ version and releases from one tag.
 
 ### Fixed
 
+- `numbers-le --help` said a `.ts` or `.sql` file falls back to the text
+  scan. Since 0.2.0 a source file is read by its language for its literals;
+  the text says so, on the npm command line and the crate alike.
 - A file-type prompt the editor tore down was reported as "Document is no
   longer valid", which was false. The prompt no longer sits inside the guard
   that reads the document, so the failure is reported as what it was.

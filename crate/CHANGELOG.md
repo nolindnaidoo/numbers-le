@@ -12,6 +12,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **`--help` no longer says a source file falls back to the text scan.**
+  A `.ts` or `.sql` file has been read by its language for its literals
+  since 0.2.0; the usage text described the reader that version replaced.
 - **`maxResults` written as `2.0`, `1e3` or `1E20` is a cap.** serde reads
   those as floats and `as_u64` refused them, while the npm server answered,
   so the shared `extract_numbers` tool had two answers for one request.
