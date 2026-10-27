@@ -14,6 +14,9 @@ version and releases from one tag.
 
 ### Fixed
 
+- A CSV whose header row is written in a script without Latin letters, such
+  as Japanese or Cyrillic, was read as a file without a header and asked for
+  column indexes by number. A letter in any script makes a header.
 - Deduplicate and Sort read the empty last line of a document that ends in a
   newline, a blank line and a CRLF line ending as the number 0, so a list of
   three numbers deduped to the three and a 0 the file never held, and the

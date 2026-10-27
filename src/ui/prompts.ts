@@ -185,7 +185,9 @@ export async function promptCsvOptionsIfNeeded(
 	if (!firstLine) return Object.freeze({});
 
 	const headerCells = parseCsvLine(firstLine);
-	const looksLikeHeader = headerCells.some((cell) => /[A-Za-z]/.test(cell));
+	// Any letter, in any script: a Japanese or Cyrillic header row is a
+	// header too, and an ASCII-only test sent its user to the index prompt.
+	const looksLikeHeader = headerCells.some((cell) => /\p{L}/u.test(cell));
 
 	if (looksLikeHeader) {
 		return await handleCsvHeaderBasedSelection(headerCells);

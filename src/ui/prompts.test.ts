@@ -39,6 +39,17 @@ describe('promptCsvOptionsIfNeeded', () => {
 		expect(options).toEqual({ csvHasHeader: true, csvColumnIndex: 1 });
 	});
 
+	it('reads a header written in a non-Latin script as a header', async () => {
+		// The header test looked for an ASCII letter, so a Japanese or Cyrillic
+		// header row read as data and the user was asked for column indexes by
+		// number instead of being shown the column names.
+		_respondToQuickPick((items) =>
+			(items as Array<{ label: string }>).find((item) => item.label === '数量'),
+		);
+		const options = await promptCsvOptionsIfNeeded('csv', '金額,数量\n100,2\n');
+		expect(options).toEqual({ csvHasHeader: true, csvColumnIndex: 1 });
+	});
+
 	it('selects all columns from the header pick', async () => {
 		_respondToQuickPick((items) =>
 			(items as Array<{ label: string }>).find(
