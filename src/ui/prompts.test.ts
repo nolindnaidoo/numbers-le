@@ -3,6 +3,7 @@ import {
 	_resetMockState,
 	_respondToInputBox,
 	_respondToQuickPick,
+	_translate,
 } from '../__mocks__/vscode';
 import { promptCsvOptionsIfNeeded, promptForFileType } from './prompts';
 
@@ -47,6 +48,31 @@ describe('promptCsvOptionsIfNeeded', () => {
 			(items as Array<{ label: string }>).find((item) => item.label === '数量'),
 		);
 		const options = await promptCsvOptionsIfNeeded('csv', '金額,数量\n100,2\n');
+		expect(options).toEqual({ csvHasHeader: true, csvColumnIndex: 1 });
+	});
+
+	it('returns the index of an unnamed column picked by its generated label, in any language', async () => {
+		// The label shown was `(Column {0})` through l10n, and the pick was
+		// matched back against the English `(Column N)`: in every other
+		// language the match failed and the pick fell to all columns.
+		_translate({ '(Column {0})': '(Spalte {0})' });
+		_respondToQuickPick((items) =>
+			(items as Array<{ label: string }>).find(
+				(item) => item.label === '(Spalte 1)',
+			),
+		);
+		const options = await promptCsvOptionsIfNeeded('csv', 'id,\n1,2\n');
+		expect(options).toEqual({ csvHasHeader: true, csvColumnIndex: 1 });
+	});
+
+	it('returns the column that was picked when two headers share a name', async () => {
+		_respondToQuickPick((items) => {
+			const named = (items as Array<{ label: string }>).filter(
+				(item) => item.label === 'x',
+			);
+			return named[1];
+		});
+		const options = await promptCsvOptionsIfNeeded('csv', 'x,x\n1,2\n');
 		expect(options).toEqual({ csvHasHeader: true, csvColumnIndex: 1 });
 	});
 

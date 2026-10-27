@@ -14,6 +14,11 @@ version and releases from one tag.
 
 ### Fixed
 
+- Picking an unnamed CSV column by its generated `(Column N)` label fell to
+  all columns in every display language but English: the label shown was
+  translated and the pick was matched back against the English literal. Two
+  header columns sharing a name always picked the first. The pick carries
+  its index.
 - The three MCP servers this repository ships answered a malformed frame
   three different ways. The extension's server echoed whatever protocol
   version the client asked for, where the other two answer their own; it

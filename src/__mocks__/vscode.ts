@@ -585,6 +585,7 @@ export function _resetMockState(): void {
 	inputBoxResponder = undefined;
 	warningResponder = undefined;
 	clipboard.value = '';
+	translations = {};
 	fsStatSize = 0;
 	fsStatFailure = undefined;
 	editsRefused = false;
@@ -594,15 +595,28 @@ export function _resetMockState(): void {
 	workspace.workspaceFolders = undefined;
 }
 
+/**
+ * A bundle for the host to translate with. The real `l10n.t` looks the
+ * English up in the locale's bundle before substituting; without a table a
+ * test only ever sees English, and code that compares a shown label back
+ * against an English literal passes in every language but the user's.
+ */
+let translations: Readonly<Record<string, string>> = {};
+
+export function _translate(table: Readonly<Record<string, string>>): void {
+	translations = table;
+}
+
 export const l10n = {
 	t(message: string, ...args: unknown[]): string {
+		const template = translations[message] ?? message;
 		if (args.length === 1 && typeof args[0] === 'object' && args[0] !== null) {
 			const named = args[0] as Record<string, unknown>;
-			return message.replace(/\{(\w+)\}/g, (whole, key) =>
+			return template.replace(/\{(\w+)\}/g, (whole, key) =>
 				key in named ? String(named[key]) : whole,
 			);
 		}
-		return message.replace(/\{(\d+)\}/g, (whole, index) => {
+		return template.replace(/\{(\d+)\}/g, (whole, index) => {
 			const value = args[Number(index)];
 			return value === undefined ? whole : String(value);
 		});

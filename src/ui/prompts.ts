@@ -1,19 +1,27 @@
 import * as vscode from 'vscode';
 import { parseCsvLine } from '../extraction/formats/csv';
 
+/**
+ * The column pick carries its index. Matching the picked label back against
+ * the header text compared a translated `(Column {0})` to the English
+ * literal, so in any other language an unnamed column fell to all columns;
+ * and two headers with one name always picked the first.
+ */
+type ColumnPick = vscode.QuickPickItem & { readonly index?: number };
+
 // Helper to handle CSV header-based column selection
 async function handleCsvHeaderBasedSelection(
 	headerCells: readonly string[],
 ): Promise<CsvPromptOptions> {
-	const allLabel = vscode.l10n.t('All columns');
-	const picks: Array<vscode.QuickPickItem> = [
+	const picks: readonly ColumnPick[] = [
 		{
-			label: allLabel,
+			label: vscode.l10n.t('All columns'),
 			description: vscode.l10n.t('Extract from all columns'),
 		},
 		...headerCells.map((name, index) => ({
 			label: name || vscode.l10n.t('(Column {0})', index),
 			description: vscode.l10n.t('Index {0}', index),
+			index,
 		})),
 	];
 
@@ -25,42 +33,10 @@ async function handleCsvHeaderBasedSelection(
 	if (!selected) {
 		return Object.freeze({}); // User cancelled
 	}
-
-	if (selected.label === allLabel) {
+	if (selected.index === undefined) {
 		return Object.freeze({ csvHasHeader: true, selectAllColumns: true });
 	}
-
-	// Find column index for single selection
-	const columnIndex = findColumnIndex(headerCells, selected.label);
-	if (columnIndex >= 0) {
-		return Object.freeze({ csvHasHeader: true, csvColumnIndex: columnIndex });
-	}
-
-	// If no valid index found, default to all columns
-	return Object.freeze({ csvHasHeader: true, selectAllColumns: true });
-}
-
-// Helper to find column index by label
-function findColumnIndex(
-	headerCells: readonly string[],
-	label: string,
-): number {
-	// Try exact header text match first
-	for (let i = 0; i < headerCells.length; i++) {
-		if ((headerCells[i] || '') === label) {
-			return i;
-		}
-	}
-
-	// Fallback to default label match (Column {i})
-	for (let i = 0; i < headerCells.length; i++) {
-		const defaultLabel = `(Column ${i})`;
-		if (defaultLabel === label) {
-			return i;
-		}
-	}
-
-	return -1; // Not found
+	return Object.freeze({ csvHasHeader: true, csvColumnIndex: selected.index });
 }
 
 // Helper to handle CSV no-header index-based selection
