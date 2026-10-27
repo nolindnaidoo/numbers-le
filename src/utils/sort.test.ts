@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { dedupeNumber, filterNumber, sortNumber } from './sort';
+import { dedupeNumber, sortNumber } from './sort';
 
 describe('Sort Utils', () => {
 	describe('sortNumber', () => {
@@ -109,62 +109,6 @@ describe('Sort Utils', () => {
 			const original = [...numbers];
 			dedupeNumber(numbers);
 			expect(numbers).toEqual(original);
-		});
-	});
-
-	describe('filterNumber', () => {
-		test('should filter numbers by minimum value', () => {
-			const numbers = [1, 2, 3, 4, 5];
-			const result = filterNumber(numbers, 3);
-			expect(result).toEqual([3, 4, 5]);
-		});
-
-		test('should filter numbers by maximum value', () => {
-			const numbers = [1, 2, 3, 4, 5];
-			const result = filterNumber(numbers, undefined, 3);
-			expect(result).toEqual([1, 2, 3]);
-		});
-
-		test('should filter numbers by both min and max', () => {
-			const numbers = [1, 2, 3, 4, 5];
-			const result = filterNumber(numbers, 2, 4);
-			expect(result).toEqual([2, 3, 4]);
-		});
-
-		test('should handle empty array', () => {
-			const result = filterNumber([], 1, 5);
-			expect(result).toEqual([]);
-		});
-
-		test('should handle no filters', () => {
-			const numbers = [1, 2, 3, 4, 5];
-			const result = filterNumber(numbers);
-			expect(result).toEqual(numbers);
-		});
-
-		test('should handle negative numbers', () => {
-			const numbers = [-5, -3, -1, 0, 1, 3, 5];
-			const result = filterNumber(numbers, -2, 2);
-			expect(result).toEqual([-1, 0, 1]);
-		});
-
-		test('should handle decimal numbers', () => {
-			const numbers = [1.1, 2.2, 3.3, 4.4, 5.5];
-			const result = filterNumber(numbers, 2.0, 4.0);
-			expect(result).toEqual([2.2, 3.3]);
-		});
-
-		test('should not mutate original array', () => {
-			const numbers = [1, 2, 3, 4, 5];
-			const original = [...numbers];
-			filterNumber(numbers, 2, 4);
-			expect(numbers).toEqual(original);
-		});
-
-		test('should return empty array when no numbers match', () => {
-			const numbers = [1, 2, 3, 4, 5];
-			const result = filterNumber(numbers, 10, 20);
-			expect(result).toEqual([]);
 		});
 	});
 });

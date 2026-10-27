@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { sanitizeErrorMessage } from '../utils/errors';
+import { errorMessage, sanitizeErrorMessage } from '../utils/errors';
 
 /**
  * The outer handler every command body runs inside.
@@ -18,11 +18,10 @@ export function guarded<Args extends unknown[]>(
 		try {
 			await run(...args);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
 			notifier.error(
 				vscode.l10n.t(
 					'Numbers-LE could not finish: {0}',
-					sanitizeErrorMessage(message),
+					sanitizeErrorMessage(errorMessage(error)),
 				),
 			);
 		}

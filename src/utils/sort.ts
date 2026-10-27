@@ -39,17 +39,3 @@ export function dedupeNumber(numbers: readonly number[]): readonly number[] {
 
 	return Object.freeze(result);
 }
-
-export function filterNumber(
-	numbers: readonly number[],
-	min?: number,
-	max?: number,
-): readonly number[] {
-	return Object.freeze(
-		numbers.filter((num) => {
-			if (min !== undefined && num < min) return false;
-			if (max !== undefined && num > max) return false;
-			return true;
-		}),
-	);
-}
