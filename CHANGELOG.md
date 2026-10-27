@@ -14,6 +14,18 @@ version and releases from one tag.
 
 ### Fixed
 
+- The three MCP servers this repository ships answered a malformed frame
+  three different ways. The extension's server echoed whatever protocol
+  version the client asked for, where the other two answer their own; it
+  answered a request carrying a null id, which the other two read as a
+  notification; and the npm command line and the crate dropped a frame that
+  was not JSON, or not UTF-8, without a word, where the extension's server
+  refused it with a parse error, and held a frame of any size where the
+  extension's server refuses one over 16 MiB. All three now answer alike, in
+  the same words: `Invalid JSON`, `Not a JSON-RPC 2.0 request`, `Unknown
+  method: …`, `Unknown tool: …` and `tools/call requires a string `name``.
+  The npm command line also waits for a slow client to drain the pipe before
+  reading the next frame, as the crate's blocking write does.
 - The npm command line's `numbers_le_scan` tool dropped a `paths` entry that
   was not a string without a word, so `["dir", 7]` was answered for `dir`
   alone; the crate's server did the same. The entry is named, and a `path`

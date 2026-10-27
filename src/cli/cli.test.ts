@@ -236,11 +236,18 @@ describe('mcp', () => {
 	async function session(lines: readonly string[]) {
 		const written: string[] = [];
 		const input = Readable.from([Buffer.from(`${lines.join('\n')}\n`)]);
-		const status = await serve(input, (line) => written.push(line), '9.9.9');
+		const status = await serve(
+			input,
+			(line) => {
+				written.push(line);
+				return undefined;
+			},
+			'9.9.9',
+		);
 		return { status, written };
 	}
 
-	it('answers in serde_json’s key order and drops what it cannot answer', async () => {
+	it('answers in serde_json’s key order and refuses what it cannot answer', async () => {
 		const { status, written } = await session([
 			'{"jsonrpc":"2.0","id":1,"method":"initialize"}',
 			'{"jsonrpc":"2.0","method":"notifications/initialized"}',
@@ -250,8 +257,86 @@ describe('mcp', () => {
 		expect(status).toBe(0);
 		expect(written).toEqual([
 			'{"jsonrpc":"2.0","id":1,"result":{"capabilities":{"tools":{}},"protocolVersion":"2025-06-18","serverInfo":{"name":"numbers-le","version":"9.9.9"}}}\n',
-			'{"jsonrpc":"2.0","id":2,"error":{"code":-32601,"message":"this server does not implement nope"}}\n',
+			'{"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"Invalid JSON"}}\n',
+			'{"jsonrpc":"2.0","id":2,"error":{"code":-32601,"message":"Unknown method: nope"}}\n',
 		]);
+	});
+
+	// ERR-19: the three servers this repository ships answered a malformed
+	// frame three different ways. The words are the extension server's.
+	it('refuses malformed frames in the words the other two servers use, and a null id is a notification', async () => {
+		const { written } = await session([
+			'{"id":1,"method":"ping"}',
+			'{"jsonrpc":"1.0","id":2,"method":"ping"}',
+			'[{"jsonrpc":"2.0","id":3,"method":"ping"}]',
+			'{"jsonrpc":"2.0","id":null,"method":"ping"}',
+			'{"jsonrpc":"2.0","id":4,"method":"notifications/initialized"}',
+			'{"jsonrpc":"2.0","id":5,"method":"tools/call","params":5}',
+			'{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"nope"}}',
+			'{"jsonrpc":"2.0","id":7,"method":"initialize","params":{"protocolVersion":"1999-01-01"}}',
+		]);
+		const refused = {
+			jsonrpc: '2.0',
+			id: null,
+			error: { code: -32700, message: 'Not a JSON-RPC 2.0 request' },
+		};
+		expect(written.map((line) => JSON.parse(line))).toEqual([
+			refused,
+			refused,
+			refused,
+			{
+				jsonrpc: '2.0',
+				id: 4,
+				error: {
+					code: -32601,
+					message: 'Unknown method: notifications/initialized',
+				},
+			},
+			{
+				jsonrpc: '2.0',
+				id: 5,
+				error: { code: -32602, message: 'tools/call requires a string `name`' },
+			},
+			{
+				jsonrpc: '2.0',
+				id: 6,
+				error: { code: -32602, message: 'Unknown tool: nope' },
+			},
+			{
+				jsonrpc: '2.0',
+				id: 7,
+				result: {
+					capabilities: { tools: {} },
+					protocolVersion: '2025-06-18',
+					serverInfo: { name: 'numbers-le', version: '9.9.9' },
+				},
+			},
+		]);
+	});
+
+	it('waits for the pipe to drain before reading the next frame', async () => {
+		const lines: string[] = [];
+		let drained = 0;
+		const input = Readable.from([
+			Buffer.from(
+				'{"jsonrpc":"2.0","id":1,"method":"ping"}\n{"jsonrpc":"2.0","id":2,"method":"ping"}\n',
+			),
+		]);
+		await serve(
+			input,
+			(line) => {
+				lines.push(line);
+				return new Promise((resolve) =>
+					setTimeout(() => {
+						drained += 1;
+						resolve();
+					}, 1),
+				);
+			},
+			'9.9.9',
+		);
+		expect(lines).toHaveLength(2);
+		expect(drained).toBe(2);
 	});
 
 	it('gives the parsed formats no position and the exact ones theirs', async () => {
@@ -320,13 +405,27 @@ describe('mcp', () => {
 		]);
 	});
 
-	it('drops a line that is not UTF-8 and serves the next', async () => {
+	it('answers a line that is not UTF-8 with a parse error and serves the next', async () => {
+		// Dropped without a word before; the crate's server reads it with
+		// replacement characters now, and so does this.
 		const written: string[] = [];
 		const input = Readable.from([
 			Buffer.from([0x7b, 0xff, 0x7d, 0x0a]),
 			Buffer.from('{"jsonrpc":"2.0","id":1,"method":"ping"}\n'),
 		]);
-		expect(await serve(input, (reply) => written.push(reply), '9.9.9')).toBe(0);
-		expect(written).toEqual(['{"jsonrpc":"2.0","id":1,"result":{}}\n']);
+		expect(
+			await serve(
+				input,
+				(reply) => {
+					written.push(reply);
+					return undefined;
+				},
+				'9.9.9',
+			),
+		).toBe(0);
+		expect(written).toEqual([
+			'{"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"Invalid JSON"}}\n',
+			'{"jsonrpc":"2.0","id":1,"result":{}}\n',
+		]);
 	});
 });
