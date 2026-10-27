@@ -12,6 +12,11 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The MCP scan tool names a file it could not read.** Its envelope's
+  `diagnostics` filtered on a severity no report carries, so a locked or
+  undecodable file left `ok: true` and an empty list; it is an `unreadable`
+  warning now. The "incomplete" exit branch that same severity fed, which no
+  reader ever produced, is gone.
 - **A FIFO, a socket or a device is named, not dropped.** One met in a
   walk vanished from the report and one named outright answered "0 numbers
   in 0 files"; it is a `skipped` report now, `not a regular file`, never

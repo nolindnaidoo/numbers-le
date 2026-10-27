@@ -384,6 +384,36 @@ describe('mcp', () => {
 		]);
 	});
 
+	it('names an unreadable file in the envelope diagnostics', async () => {
+		// The filter looked for a severity no report carries, so `ok: true`
+		// with `diagnostics: []` was answered for a tree with a file in it that
+		// the scan could not read.
+		if (process.platform === 'win32' || process.getuid?.() === 0) return;
+		const root = mkdtempSync(join(tmpdir(), 'numbers-le-unreadable-'));
+		writeFileSync(join(root, 'open.env'), 'A=1\n');
+		writeFileSync(join(root, 'closed.env'), 'B=2\n');
+		chmodSync(join(root, 'closed.env'), 0o000);
+		try {
+			const { written } = await session([
+				`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"numbers_le_scan","arguments":{"path":${JSON.stringify(root)}}}}`,
+			]);
+			const envelope = JSON.parse(written[0] ?? '').result.structuredContent;
+			expect(envelope.ok).toBe(true);
+			expect(envelope.diagnostics).toEqual([
+				{
+					code: 'unreadable',
+					message: `${join(root, 'closed.env')} could not be read, so this scan does not cover it`,
+					severity: 'warning',
+				},
+			]);
+		} finally {
+			chmodSync(join(root, 'closed.env'), 0o600);
+			unlinkSync(join(root, 'closed.env'));
+			unlinkSync(join(root, 'open.env'));
+			rmdirSync(root);
+		}
+	});
+
 	it('names a path entry that is not a string rather than dropping it', async () => {
 		// `["dir", 7]` was answered for `dir` alone and the 7 vanished without a
 		// word, on this server and the crate's alike.

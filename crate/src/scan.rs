@@ -56,16 +56,6 @@ impl FileReport {
             .iter()
             .any(|diagnostic| diagnostic.code == "skipped")
     }
-
-    /// Whether the scan of this file gave up part way. Unlike a skip
-    /// this **does** fail the run: reporting no findings when a
-    /// detector stopped early would overstate coverage, which is the
-    /// one thing an audit tool must never do.
-    pub(crate) fn is_incomplete(&self) -> bool {
-        self.diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.severity == "error")
-    }
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -229,11 +219,6 @@ pub(crate) fn scan_content(
 /// user-facing copy in it is a real result and `if numbers-le src/; then`
 /// has to work.
 pub(crate) fn exit_code(reports: &[FileReport], strict: bool) -> u8 {
-    // A scan that gave up part way always fails: it would otherwise
-    // report "nothing found" for a file it never finished reading.
-    if reports.iter().any(FileReport::is_incomplete) {
-        return 2;
-    }
     if strict && reports.iter().any(FileReport::was_skipped) {
         return 2;
     }

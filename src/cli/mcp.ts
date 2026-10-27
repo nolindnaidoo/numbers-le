@@ -291,9 +291,12 @@ function scan(args: unknown): unknown {
 	});
 	const numbers = sum(reports, (report) => report.summary.numbers);
 	const unlocated = sum(reports, (report) => report.summary.unlocated);
+	// A file the scan could not read is a `skipped` report, a warning: named
+	// here as well, because an agent reads this list for whether the tree was
+	// covered. A filter on a severity no report carries left it empty.
 	const diagnostics: Diagnostic[] = reports
 		.filter((report) =>
-			report.diagnostics.some((found) => found.severity === 'error'),
+			report.diagnostics.some((found) => found.code === 'skipped'),
 		)
 		.map((report) =>
 			warning(

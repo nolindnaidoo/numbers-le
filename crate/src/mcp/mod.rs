@@ -362,12 +362,16 @@ fn scan_tool(arguments: &Value) -> Result<Envelope<Value>, String> {
         .map(|report| report["summary"]["unlocated"].as_u64().unwrap_or(0))
         .sum();
 
+    // A file the scan could not read is a `skipped` report, a warning:
+    // named here as well, because an agent reads this list for whether
+    // the tree was covered. A filter on a severity no report carries
+    // left it empty for a locked file.
     let mut diagnostics: Vec<Value> = reports
         .iter()
         .filter(|report| {
             report["diagnostics"]
                 .as_array()
-                .is_some_and(|list| list.iter().any(|d| d["severity"] == "error"))
+                .is_some_and(|list| list.iter().any(|d| d["code"] == "skipped"))
         })
         .map(|report| {
             warning(
@@ -866,6 +870,46 @@ mod tests {
         let found = &response["result"]["structuredContent"]["data"]["reports"][0]["numbers"][0];
         assert_eq!(found["value"], "8080");
         assert_eq!(found["line"], 1);
+    }
+
+    /// The envelope's `diagnostics` said nothing about a file the scan
+    /// could not read: the filter looked for a severity no report carries,
+    /// so an agent reading `ok: true` and `diagnostics: []` was told the
+    /// tree was covered when a file in it was not.
+    #[cfg(unix)]
+    #[test]
+    fn the_scan_tool_names_an_unreadable_file_in_its_diagnostics() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let tree = TempTree::new("mcp-unreadable");
+        tree.write("open.env", "A=1\n");
+        let closed = tree.write("closed.env", "B=2\n");
+        std::fs::set_permissions(&closed, std::fs::Permissions::from_mode(0o000))
+            .expect("an unreadable file");
+        if std::fs::read(&closed).is_ok() {
+            eprintln!(
+                "SKIPPED the_scan_tool_names_an_unreadable_file: this user reads a mode-000 file"
+            );
+            return;
+        }
+        let response = call(
+            "numbers_le_scan",
+            &json!({ "path": tree.path().to_string_lossy() }),
+        );
+        let _ = std::fs::set_permissions(&closed, std::fs::Permissions::from_mode(0o600));
+        let envelope = &response["result"]["structuredContent"];
+        assert_eq!(
+            envelope["ok"], true,
+            "a skipped file is a warning, not a failed scan"
+        );
+        assert_eq!(envelope["diagnostics"][0]["code"], "unreadable");
+        assert!(
+            envelope["diagnostics"][0]["message"]
+                .as_str()
+                .is_some_and(|text| text
+                    .ends_with("closed.env could not be read, so this scan does not cover it")),
+            "{envelope}"
+        );
     }
 
     #[test]

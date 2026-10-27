@@ -14,6 +14,11 @@ version and releases from one tag.
 
 ### Fixed
 
+- The npm command line's `numbers_le_scan` tool answered `ok: true` with
+  empty `diagnostics` for a tree holding a file it could not read: the
+  envelope's filter looked for a severity no report carries. A skipped file
+  is named in the envelope now, as `unreadable`, on the crate's server too.
+  The dead "incomplete" exit branch that same severity fed is gone on both.
 - The npm command line dropped a FIFO, a socket or a device without a word:
   one in a tree vanished from the report, and one named outright answered
   "0 numbers in 0 files". Each is a `skipped` report now, `not a regular
