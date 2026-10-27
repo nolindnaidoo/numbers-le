@@ -130,6 +130,17 @@ export interface RecordedEdit {
 	readonly text: string;
 }
 
+/**
+ * `editor.edit` resolves false when the host could not apply the edit, a
+ * read-only document say; set by `_refuseEdits`, the builder never runs and
+ * the document stays as it was.
+ */
+let editsRefused = false;
+
+export function _refuseEdits(): void {
+	editsRefused = true;
+}
+
 export function _createEditor(document: MockDocument) {
 	const edits: RecordedEdit[] = [];
 	return {
@@ -141,6 +152,7 @@ export function _createEditor(document: MockDocument) {
 				insert(position: Position, text: string): void;
 			}) => void,
 		) => {
+			if (editsRefused) return false;
 			callback({
 				replace: (_range: Range, text: string) => {
 					edits.push({ kind: 'replace', text });
@@ -205,9 +217,15 @@ export function _openedDocuments(): readonly MockDocument[] {
 }
 
 let fsStatSize = 0;
+let fsStatFailure: { readonly error: unknown } | undefined;
 
 export function _setFsStatSize(size: number): void {
 	fsStatSize = size;
+}
+
+/** What `workspace.fs.stat` throws: an untitled document has no file to stat. */
+export function _failFsStat(error: unknown): void {
+	fsStatFailure = { error };
 }
 
 /**
@@ -239,12 +257,10 @@ export const workspace = {
 	fs: {
 		readFile: async (_uri: Uri) => new Uint8Array(),
 		writeFile: async (_uri: Uri, _content: Uint8Array) => {},
-		stat: async (_uri: Uri) => ({
-			type: 1,
-			ctime: 0,
-			mtime: 0,
-			size: fsStatSize,
-		}),
+		stat: async (_uri: Uri) => {
+			if (fsStatFailure) throw fsStatFailure.error;
+			return { type: 1, ctime: 0, mtime: 0, size: fsStatSize };
+		},
 	},
 	getConfiguration: (section?: string) => ({
 		get: <T>(key: string, defaultValue?: T): T | undefined => {
@@ -570,6 +586,8 @@ export function _resetMockState(): void {
 	warningResponder = undefined;
 	clipboard.value = '';
 	fsStatSize = 0;
+	fsStatFailure = undefined;
+	editsRefused = false;
 	openTextDocumentFailure = undefined;
 	showTextDocumentFailure = undefined;
 	clipboardWriteFailure = undefined;

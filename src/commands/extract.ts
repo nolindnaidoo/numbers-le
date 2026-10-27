@@ -319,7 +319,8 @@ export async function extractNumbers(deps: CommandDependencies): Promise<void> {
 					);
 				}
 			} catch {
-				// ignore
+				// A document with no file behind it, an untitled one say, has
+				// nothing to stat; the size warning is the only thing skipped.
 			}
 
 			if (token.isCancellationRequested) return;

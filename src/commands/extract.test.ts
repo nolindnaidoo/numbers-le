@@ -4,6 +4,7 @@ import {
 	_createDocument,
 	_createExtensionContext,
 	_failClipboardWrite,
+	_failFsStat,
 	_failOpenTextDocument,
 	_failShowTextDocument,
 	_openedDocuments,
@@ -241,6 +242,21 @@ describe('extract: safety file-size gate', () => {
 		);
 		await runExtract();
 		expect(_shownMessages().some((m) => m.kind === 'warning')).toBe(false);
+	});
+});
+
+describe('extract: a document the host cannot stat', () => {
+	it('extracts it, skipping the size warning', async () => {
+		// An untitled document has no file behind it, so the stat for the
+		// large-file warning throws; the extraction goes on without it.
+		_setConfig('numbers-le.safety.enabled', true);
+		_setActiveEditor(
+			_createDocument({ content: '[1, 2]', fileName: '/mock/n.json' }),
+		);
+		_failFsStat(new Error('ENOENT: no such file'));
+		await runExtract();
+		expect(lastOpened()).toBe('1\n2');
+		expect(_shownMessages()).toEqual([]);
 	});
 });
 

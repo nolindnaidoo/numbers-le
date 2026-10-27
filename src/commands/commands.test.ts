@@ -5,6 +5,7 @@ import {
 	_createDocument,
 	_createExtensionContext,
 	_openedDocuments,
+	_refuseEdits,
 	_registeredCommands,
 	_resetMockState,
 	_respondToQuickPick,
@@ -224,6 +225,23 @@ describe('numbers-le.postProcess.dedupe', () => {
 
 		expect(_activeEditor()?._edits[0]?.text).toBe('5\n6');
 		expect(doc.getText()).toBe('5\n6');
+	});
+
+	it('reports an edit the host refused and does not claim the count', async () => {
+		// `editor.edit` resolves false for a read-only document; nothing in the
+		// suite could make it, so the error path never ran.
+		const { deps } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.notificationsLevel', 'all');
+		_setConfig('numbers-le.postProcess.openInNewFile', false);
+		const doc = _createDocument({ content: '5\n5\n6' });
+		_setActiveEditor(doc);
+		_refuseEdits();
+		await runCommand('numbers-le.postProcess.dedupe');
+		expect(doc.getText()).toBe('5\n5\n6');
+		expect(_shownMessages().map((m) => [m.kind, m.message])).toEqual([
+			['error', 'Failed to update the editor content'],
+		]);
 	});
 
 	it('does not read a trailing newline, a blank line or CRLF as the number 0', async () => {
