@@ -275,6 +275,31 @@ describe('mcp', () => {
 		]);
 	});
 
+	it('reads a cap written as an integer-valued float or exponent, as the crate reads it', async () => {
+		// Sent as text rather than through JSON.stringify, which would print 2.0
+		// as 2: the crate's serde reads 2.0 as a float, and refused it.
+		const call = (cap: string) =>
+			`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"extract_numbers","arguments":{"content":"1 2 3","maxResults":${cap}}}}`;
+		const { written } = await session([
+			call('2.0'),
+			call('1e3'),
+			call('1E20'),
+			call('2.5'),
+		]);
+		const outcome = (reply: string) => {
+			const result = JSON.parse(reply).result;
+			return result.isError
+				? result.content[0].text
+				: `${result.structuredContent.meta.count}/${result.structuredContent.meta.truncated}`;
+		};
+		expect(written.map(outcome)).toEqual([
+			'2/true',
+			'3/false',
+			'3/false',
+			'maxResults must be a positive integer',
+		]);
+	});
+
 	it('drops a line that is not UTF-8 and serves the next', async () => {
 		const written: string[] = [];
 		const input = Readable.from([

@@ -19,7 +19,6 @@ const INVALID_PARAMS = -32602;
 const METHOD_NOT_FOUND = -32601;
 const DEFAULT_MAX_RESULTS = 500;
 const MAX_MAX_RESULTS = 5000;
-const U64_MAX = 2 ** 64;
 
 type Handled =
 	| { readonly result: unknown }
@@ -248,16 +247,15 @@ function extract(args: unknown): unknown {
 	);
 }
 
-/** Clamp quietly, reject loudly: `as_u64`, then the floor, then the ceiling. */
+/**
+ * Clamp quietly, reject loudly. A whole number of one or more, however it
+ * was written: `2.0`, `1e3` and `1E20` are caps, as JSON Schema's `integer`
+ * reads them and as the crate's server reads them.
+ */
 function readMaxResults(args: unknown): number {
 	if (!hasField(args, 'maxResults')) return DEFAULT_MAX_RESULTS;
 	const raw = field(args, 'maxResults');
-	const unsigned =
-		typeof raw === 'number' &&
-		Number.isInteger(raw) &&
-		raw >= 0 &&
-		raw < U64_MAX;
-	if (!unsigned || raw < 1) {
+	if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 1) {
 		throw new Error('maxResults must be a positive integer');
 	}
 	return Math.min(raw, MAX_MAX_RESULTS);

@@ -386,6 +386,12 @@ function mcpLines(): readonly string[] {
 		extract({ content: '1 2 3', maxResults: 'two' }),
 		extract({ content: '1 2 3', maxResults: null }),
 		extract({ content: '1 2 3', maxResults: 999999 }),
+		// Written as text: JSON.stringify prints 2.0 as 2, and the crate's serde
+		// reads 2.0 as a float, which `as_u64` refused.
+		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"extract_numbers","arguments":{"content":"1 2 3","maxResults":2.0}}}`,
+		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"extract_numbers","arguments":{"content":"1 2 3","maxResults":1e3}}}`,
+		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"extract_numbers","arguments":{"content":"1 2 3","maxResults":1E20}}}`,
+		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"extract_numbers","arguments":{"content":"1 2 3","maxResults":2.5}}}`,
 		extract({ content: '"42"', format: '\uFEFFjson' }),
 		extract({ content: 7 }),
 		extract({}),

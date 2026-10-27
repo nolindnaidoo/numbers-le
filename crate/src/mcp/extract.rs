@@ -189,18 +189,26 @@ pub(crate) fn run(arguments: &Value) -> Result<Envelope<Extracted>, String> {
 }
 
 /// Clamp quietly, reject loudly — the npm server's asymmetry.
+///
+/// A whole number of one or more, however it was written. JSON Schema's
+/// `integer` is any number with a zero fractional part, and the npm
+/// server reads `2.0`, `1e3` and `1E20` as caps; serde reads all three as
+/// floats, so `as_u64` refused them here while the other server answered.
 fn read_max_results(arguments: &Value) -> Result<usize, String> {
     let Some(raw) = arguments.get("maxResults") else {
         return Ok(DEFAULT_MAX_RESULTS);
     };
-    let invalid = "maxResults must be a positive integer".to_string();
-    let value = raw.as_u64().ok_or(invalid.clone())?;
-    if value < 1 {
-        return Err(invalid);
+    let invalid = || "maxResults must be a positive integer".to_string();
+    let value = raw.as_f64().ok_or_else(invalid)?;
+    if !value.is_finite() || value.fract() != 0.0 || value < 1.0 {
+        return Err(invalid());
     }
-    Ok(usize::try_from(value)
-        .unwrap_or(MAX_MAX_RESULTS)
-        .min(MAX_MAX_RESULTS))
+    if value >= MAX_MAX_RESULTS as f64 {
+        return Ok(MAX_MAX_RESULTS);
+    }
+    // A whole number below the ceiling prints without a point or an
+    // exponent, so this is exact and casts nothing.
+    format!("{value}").parse::<usize>().map_err(|_| invalid())
 }
 
 #[cfg(test)]
@@ -396,6 +404,34 @@ mod tests {
         assert_eq!(result["ok"], false);
         assert_eq!(result["diagnostics"][0]["code"], "parse-error");
         assert_eq!(result["data"]["numbers"], json!([]));
+    }
+
+    /// JSON Schema's `integer` is any number with a zero fractional part,
+    /// and the npm server reads it that way. serde reads `2.0` and `1e3`
+    /// as floats, and `as_u64` refused both while the npm server
+    /// accepted them: one tool, two answers.
+    #[test]
+    fn an_integer_valued_float_is_a_cap_as_the_npm_server_reads_it() {
+        let count = |cap: &str| {
+            let arguments: Value =
+                serde_json::from_str(&format!(r#"{{"content":"1 2 3","maxResults":{cap}}}"#))
+                    .expect("valid JSON");
+            run(&arguments).map(|envelope| {
+                let text = serde_json::to_string(&envelope).expect("serializes");
+                let parsed: Value = serde_json::from_str(&text).expect("JSON");
+                (
+                    parsed["meta"]["count"].as_u64(),
+                    parsed["meta"]["truncated"].as_bool(),
+                )
+            })
+        };
+        assert_eq!(count("2.0"), Ok((Some(2), Some(true))));
+        assert_eq!(count("1e3"), Ok((Some(3), Some(false))));
+        assert_eq!(count("1E20"), Ok((Some(3), Some(false))));
+        assert_eq!(
+            count("2.5"),
+            Err("maxResults must be a positive integer".to_string())
+        );
     }
 
     #[test]

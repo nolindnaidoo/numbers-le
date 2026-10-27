@@ -61,6 +61,27 @@ describe('envelope: result cap', () => {
 	it('clamps an oversized request rather than refusing it', () => {
 		expect(readMaxResults({ maxResults: 999999 })).toBe(5000);
 	});
+
+	it('reads a cap written as an integer-valued float or exponent as the crate does', () => {
+		// JSON Schema's `integer` is any number with a zero fractional part, and
+		// the crate's server reads it with serde, where `2.0` and `1e3` are
+		// floats: it refused them while this accepted them, and it accepted
+		// `1E20` while this one and the crate refused it. The shared tool reads
+		// all three the same way: a whole number of one or more, clamped.
+		expect(readMaxResults({ maxResults: 2.0 })).toBe(2);
+		expect(readMaxResults({ maxResults: 1e3 })).toBe(1000);
+		expect(readMaxResults({ maxResults: 1e20 })).toBe(5000);
+		expect(readMaxResults({ maxResults: Number.MAX_VALUE })).toBe(5000);
+		expect(() => readMaxResults({ maxResults: 2.5 })).toThrow(
+			/positive integer/,
+		);
+		expect(() =>
+			readMaxResults({ maxResults: Number.POSITIVE_INFINITY }),
+		).toThrow(/positive integer/);
+		expect(() => readMaxResults({ maxResults: Number.NaN })).toThrow(
+			/positive integer/,
+		);
+	});
 });
 
 describe('fileType: tolerant resolution', () => {

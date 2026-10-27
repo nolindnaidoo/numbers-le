@@ -109,6 +109,9 @@ export function envelope<T>(
 export function readMaxResults(args: Record<string, unknown>): number {
 	const raw = args.maxResults;
 	if (raw === undefined) return DEFAULT_MAX_RESULTS;
+	// A whole number, however it was written: JSON Schema's `integer` is any
+	// number with a zero fractional part, so `2.0`, `1e3` and `1E20` are
+	// caps. The crate's server and the npm command line read the same rule.
 	if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 1) {
 		throw new Error('maxResults must be a positive integer');
 	}

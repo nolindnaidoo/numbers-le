@@ -780,5 +780,38 @@
 				"truncated": false
 			}
 		}
+	},
+	{
+		"name": "a cap written as an integer-valued float",
+		"content": "1 2 3",
+		"arguments": {
+			"maxResults": 2.0
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"numbers": [
+					{
+						"value": 1,
+						"notation": "decimal",
+						"line": 1,
+						"column": 1
+					},
+					{
+						"value": 2,
+						"notation": "decimal",
+						"line": 1,
+						"column": 3
+					}
+				],
+				"fileType": "unknown"
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_numbers",
+				"count": 2,
+				"truncated": true
+			}
+		}
 	}
 ]

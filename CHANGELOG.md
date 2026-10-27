@@ -14,6 +14,12 @@ version and releases from one tag.
 
 ### Fixed
 
+- The MCP server and the npm command line read `maxResults` written as an
+  integer-valued float or exponent, `2.0`, `1e3` or `1E20`, differently from
+  the crate's server, which refused the first two and the command line the
+  third. JSON Schema's `integer` is any number with a zero fractional part,
+  and all three servers now read it so: a whole number of one or more,
+  clamped at the ceiling. The corpus pins `2.0`.
 - A CSV whose header row is written in a script without Latin letters, such
   as Japanese or Cyrillic, was read as a file without a header and asked for
   column indexes by number. A letter in any script makes a header.
