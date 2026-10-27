@@ -58,7 +58,10 @@ export function collectNumbers(
 	const result = extractNumber(text, fileType, editor.document.fileName);
 	if (!result.success) {
 		deps.notifier.error(
-			`Failed to extract numbers: ${result.errors[0]?.message}`,
+			vscode.l10n.t(
+				'Failed to extract numbers: {0}',
+				result.errors[0]?.message ?? '',
+			),
 		);
 		return null;
 	}

@@ -44,5 +44,15 @@
   "Deduplicating numbers from {0} file...": "Deduplicating numbers from {0} file...",
   "No duplicate numbers found": "No duplicate numbers found",
   "Positions are not available for this file type.": "Positions are not available for this file type.",
-  "Numbers-LE could not finish: {0}": "Numbers-LE could not finish: {0}"
+  "Numbers-LE could not finish: {0}": "Numbers-LE could not finish: {0}",
+  "Failed to parse CSV: quoted field is never closed": "Failed to parse CSV: quoted field is never closed",
+  "Dedupe/Sort applied": "Dedupe/Sort applied",
+  "Copied to clipboard": "Copied to clipboard",
+  "Extracted {0}": "Extracted {0}",
+  "CSV opened (no auto-copy)": "CSV opened (no auto-copy)",
+  "Failed to extract numbers: {0}": "Failed to extract numbers: {0}",
+  "Removed {0} duplicates ({1} unique numbers remaining)": "Removed {0} duplicates ({1} unique numbers remaining)",
+  "Removed {0} duplicates ({1} unique numbers remaining) in current editor": "Removed {0} duplicates ({1} unique numbers remaining) in current editor",
+  "Each number shows its first position only.": "Each number shows its first position only.",
+  "Sorted {0} numbers ({1}) in current editor": "Sorted {0} numbers ({1}) in current editor"
 }

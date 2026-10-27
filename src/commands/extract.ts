@@ -96,7 +96,9 @@ async function handleNormalExtraction(
 
 	if (!result.success) {
 		if (config.showParseErrors) {
-			deps.notifier.error(result.errors[0]?.message || 'Extraction failed');
+			deps.notifier.error(
+				result.errors[0]?.message || vscode.l10n.t('Extraction failed'),
+			);
 		}
 		return;
 	}
@@ -140,7 +142,7 @@ async function handleNormalExtraction(
 
 	// Show post-processing info if dedupe or sort was applied
 	if (shouldDedupe || sortEnabled) {
-		deps.statusBar.flash('Dedupe/Sort applied');
+		deps.statusBar.flash(vscode.l10n.t('Dedupe/Sort applied'));
 	}
 
 	await processAndOutputResults(finalNumbers, context, token);
@@ -163,7 +165,9 @@ async function handleCsvColumn(
 	);
 	if (values === undefined) {
 		if (config.showParseErrors) {
-			deps.notifier.error('Failed to parse CSV: quoted field is never closed');
+			deps.notifier.error(
+				vscode.l10n.t('Failed to parse CSV: quoted field is never closed'),
+			);
 		}
 		return;
 	}
@@ -185,7 +189,7 @@ async function handleCsvColumn(
 		return;
 	}
 	if (config.dedupeEnabled || config.sortEnabled) {
-		deps.statusBar.flash('Dedupe/Sort applied');
+		deps.statusBar.flash(vscode.l10n.t('Dedupe/Sort applied'));
 	}
 	await processAndOutputResults(finalNumbers, context, token);
 }
@@ -277,8 +281,8 @@ async function processAndOutputResults(
 
 	deps.statusBar.flash(
 		clipboardSuccess
-			? 'Copied to clipboard'
-			: `Extracted ${finalNumbers.length}`,
+			? vscode.l10n.t('Copied to clipboard')
+			: vscode.l10n.t('Extracted {0}', finalNumbers.length),
 	);
 }
 

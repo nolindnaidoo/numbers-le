@@ -44,5 +44,15 @@
 	"Enter valid column indexes separated by commas, or leave empty": "Insira índices de coluna válidos separados por vírgulas ou deixe em branco",
 	"Large file detected ({0} bytes). Extraction may take longer.": "Foi detectado um arquivo grande ({0} bytes). A extração pode demorar mais tempo.",
 	"Positions are not available for this file type.": "As posições não estão disponíveis para este tipo de arquivo.",
-	"Numbers-LE could not finish: {0}": "O Numbers-LE não pôde concluir: {0}"
+	"Numbers-LE could not finish: {0}": "O Numbers-LE não pôde concluir: {0}",
+	"Failed to parse CSV: quoted field is never closed": "Falha ao analisar o CSV: um campo entre aspas nunca é fechado",
+	"Dedupe/Sort applied": "Deduplicação/ordenação aplicadas",
+	"Copied to clipboard": "Copiado para a área de transferência",
+	"Extracted {0}": "{0} extraídos",
+	"CSV opened (no auto-copy)": "CSV aberto (sem cópia automática)",
+	"Failed to extract numbers: {0}": "Falha ao extrair os números: {0}",
+	"Removed {0} duplicates ({1} unique numbers remaining)": "{0} duplicatas removidas ({1} números únicos restantes)",
+	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "{0} duplicatas removidas no editor atual ({1} números únicos restantes)",
+	"Each number shows its first position only.": "Cada número mostra apenas a sua primeira posição.",
+	"Sorted {0} numbers ({1}) in current editor": "{0} números ordenados no editor atual ({1})"
 }

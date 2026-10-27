@@ -14,6 +14,12 @@ version and releases from one tag.
 
 ### Fixed
 
+- Eleven strings were shown in English in every display language: the
+  status bar's "Extracted N", "Copied to clipboard", "Dedupe/Sort applied"
+  and "CSV opened", the dedupe and sort counts, the "Failed to extract
+  numbers" and unclosed-quote CSV errors. Each goes through the bundle now,
+  in all twelve locales, and a test reads the source for a literal handed to
+  a notification, the notifier or the status bar.
 - The help document claimed CSV streaming, which nothing implements, said
   results open beside the editor only when a setting is on when that is the
   default, repeated a Quick Start step, named six formats where the

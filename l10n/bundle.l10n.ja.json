@@ -44,5 +44,15 @@
 	"Enter valid column indexes separated by commas, or leave empty": "有効な列インデックスをコンマで区切って入力するか、空欄のままにしてください",
 	"Large file detected ({0} bytes). Extraction may take longer.": "大容量のファイルが検出されました（{0}バイト）。解凍に時間がかかる場合があります。",
 	"Positions are not available for this file type.": "このファイル形式では位置を表示できません。",
-	"Numbers-LE could not finish: {0}": "Numbers-LE を完了できませんでした: {0}"
+	"Numbers-LE could not finish: {0}": "Numbers-LE を完了できませんでした: {0}",
+	"Failed to parse CSV: quoted field is never closed": "CSV の解析に失敗しました: 引用符で囲まれたフィールドが閉じられていません",
+	"Dedupe/Sort applied": "重複除去/並べ替えを適用しました",
+	"Copied to clipboard": "クリップボードにコピーしました",
+	"Extracted {0}": "{0} 件を抽出しました",
+	"CSV opened (no auto-copy)": "CSV を開きました（自動コピーなし）",
+	"Failed to extract numbers: {0}": "数値を抽出できませんでした: {0}",
+	"Removed {0} duplicates ({1} unique numbers remaining)": "{0} 件の重複を削除しました（残り {1} 件の一意の数値）",
+	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "現在のエディターで {0} 件の重複を削除しました（残り {1} 件の一意の数値）",
+	"Each number shows its first position only.": "各数値は最初の位置のみを表示します。",
+	"Sorted {0} numbers ({1}) in current editor": "現在のエディターで {0} 件の数値を並べ替えました（{1}）"
 }

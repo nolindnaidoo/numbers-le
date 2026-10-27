@@ -71,7 +71,11 @@ export async function sortNumbers(deps: CommandDependencies): Promise<void> {
 			numbers.length,
 			selected.label,
 		),
-		inPlace: `Sorted ${numbers.length} numbers (${selected.label}) in current editor`,
+		inPlace: vscode.l10n.t(
+			'Sorted {0} numbers ({1}) in current editor',
+			numbers.length,
+			selected.label,
+		),
 	});
 
 	deps.telemetry.event('numbers.sorted', {

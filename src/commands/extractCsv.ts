@@ -71,7 +71,7 @@ export async function handleCsvMultiColumnExtraction(
 	}
 
 	deps.telemetry.event('extracted', { count: 'multi', type: 'csv' });
-	deps.statusBar.flash('CSV opened (no auto‑copy)');
+	deps.statusBar.flash(vscode.l10n.t('CSV opened (no auto-copy)'));
 	return true; // Handled
 }
 

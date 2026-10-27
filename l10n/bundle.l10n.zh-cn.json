@@ -44,5 +44,15 @@
 	"Enter valid column indexes separated by commas, or leave empty": "请输入以逗号分隔的有效列索引，或留空",
 	"Large file detected ({0} bytes). Extraction may take longer.": "检测到大文件（{0}字节）。解压可能需要更长时间。",
 	"Positions are not available for this file type.": "此文件类型无法提供位置。",
-	"Numbers-LE could not finish: {0}": "Numbers-LE 无法完成：{0}"
+	"Numbers-LE could not finish: {0}": "Numbers-LE 无法完成：{0}",
+	"Failed to parse CSV: quoted field is never closed": "CSV 解析失败：带引号的字段未闭合",
+	"Dedupe/Sort applied": "已应用去重/排序",
+	"Copied to clipboard": "已复制到剪贴板",
+	"Extracted {0}": "已提取 {0} 个",
+	"CSV opened (no auto-copy)": "已打开 CSV（不自动复制）",
+	"Failed to extract numbers: {0}": "提取数字失败：{0}",
+	"Removed {0} duplicates ({1} unique numbers remaining)": "已移除 {0} 个重复项（剩余 {1} 个唯一数字）",
+	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "已在当前编辑器中移除 {0} 个重复项（剩余 {1} 个唯一数字）",
+	"Each number shows its first position only.": "每个数字仅显示其第一个位置。",
+	"Sorted {0} numbers ({1}) in current editor": "已在当前编辑器中排序 {0} 个数字（{1}）"
 }

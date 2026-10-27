@@ -44,5 +44,15 @@
 	"Enter valid column indexes separated by commas, or leave empty": "Masukkan indeks kolom yang valid, dipisahkan dengan koma, atau biarkan kosong",
 	"Large file detected ({0} bytes). Extraction may take longer.": "Terdeteksi berkas berukuran besar ({0} byte). Proses ekstraksi mungkin akan memakan waktu lebih lama.",
 	"Positions are not available for this file type.": "Posisi tidak tersedia untuk jenis file ini.",
-	"Numbers-LE could not finish: {0}": "Numbers-LE tidak dapat menyelesaikan: {0}"
+	"Numbers-LE could not finish: {0}": "Numbers-LE tidak dapat menyelesaikan: {0}",
+	"Failed to parse CSV: quoted field is never closed": "Gagal mengurai CSV: bidang yang dikutip tidak pernah ditutup",
+	"Dedupe/Sort applied": "Dedupe/urutkan diterapkan",
+	"Copied to clipboard": "Disalin ke papan klip",
+	"Extracted {0}": "{0} diekstrak",
+	"CSV opened (no auto-copy)": "CSV dibuka (tanpa salin otomatis)",
+	"Failed to extract numbers: {0}": "Gagal mengekstrak angka: {0}",
+	"Removed {0} duplicates ({1} unique numbers remaining)": "{0} duplikat dihapus ({1} angka unik tersisa)",
+	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "{0} duplikat dihapus di editor saat ini ({1} angka unik tersisa)",
+	"Each number shows its first position only.": "Setiap angka hanya menampilkan posisi pertamanya.",
+	"Sorted {0} numbers ({1}) in current editor": "{0} angka diurutkan di editor saat ini ({1})"
 }

@@ -44,5 +44,15 @@
 	"Enter valid column indexes separated by commas, or leave empty": "쉼표로 구분하여 유효한 열 인덱스를 입력하거나, 비워 두십시오.",
 	"Large file detected ({0} bytes). Extraction may take longer.": "대용량 파일({0}바이트)이 감지되었습니다. 압축 해제하는 데 시간이 더 걸릴 수 있습니다.",
 	"Positions are not available for this file type.": "이 파일 형식에서는 위치를 사용할 수 없습니다.",
-	"Numbers-LE could not finish: {0}": "Numbers-LE을(를) 완료할 수 없습니다: {0}"
+	"Numbers-LE could not finish: {0}": "Numbers-LE을(를) 완료할 수 없습니다: {0}",
+	"Failed to parse CSV: quoted field is never closed": "CSV 구문 분석 실패: 따옴표로 묶인 필드가 닫히지 않았습니다",
+	"Dedupe/Sort applied": "중복 제거/정렬 적용됨",
+	"Copied to clipboard": "클립보드에 복사됨",
+	"Extracted {0}": "{0}개 추출됨",
+	"CSV opened (no auto-copy)": "CSV 열림(자동 복사 없음)",
+	"Failed to extract numbers: {0}": "숫자를 추출하지 못했습니다: {0}",
+	"Removed {0} duplicates ({1} unique numbers remaining)": "중복 {0}개 제거됨(고유 숫자 {1}개 남음)",
+	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "현재 편집기에서 중복 {0}개 제거됨(고유 숫자 {1}개 남음)",
+	"Each number shows its first position only.": "각 숫자는 첫 번째 위치만 표시합니다.",
+	"Sorted {0} numbers ({1}) in current editor": "현재 편집기에서 숫자 {0}개 정렬됨({1})"
 }

@@ -44,5 +44,15 @@
 	"Enter valid column indexes separated by commas, or leave empty": "Nhập các chỉ mục cột hợp lệ, cách nhau bằng dấu phẩy, hoặc để trống",
 	"Large file detected ({0} bytes). Extraction may take longer.": "Đã phát hiện tệp có dung lượng lớn ({0} byte). Quá trình giải nén có thể mất nhiều thời gian hơn.",
 	"Positions are not available for this file type.": "Vị trí không khả dụng cho loại tệp này.",
-	"Numbers-LE could not finish: {0}": "Numbers-LE không thể hoàn thành: {0}"
+	"Numbers-LE could not finish: {0}": "Numbers-LE không thể hoàn thành: {0}",
+	"Failed to parse CSV: quoted field is never closed": "Không thể phân tích CSV: một trường trong dấu ngoặc kép không bao giờ được đóng",
+	"Dedupe/Sort applied": "Đã áp dụng loại bỏ trùng lặp/sắp xếp",
+	"Copied to clipboard": "Đã sao chép vào bảng tạm",
+	"Extracted {0}": "Đã trích xuất {0}",
+	"CSV opened (no auto-copy)": "Đã mở CSV (không tự động sao chép)",
+	"Failed to extract numbers: {0}": "Không thể trích xuất số: {0}",
+	"Removed {0} duplicates ({1} unique numbers remaining)": "Đã xóa {0} bản trùng lặp (còn lại {1} số duy nhất)",
+	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "Đã xóa {0} bản trùng lặp trong trình soạn thảo hiện tại (còn lại {1} số duy nhất)",
+	"Each number shows its first position only.": "Mỗi số chỉ hiển thị vị trí đầu tiên của nó.",
+	"Sorted {0} numbers ({1}) in current editor": "Đã sắp xếp {0} số trong trình soạn thảo hiện tại ({1})"
 }

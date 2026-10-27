@@ -44,5 +44,15 @@
 	"Enter valid column indexes separated by commas, or leave empty": "Введите допустимые индексы столбцов, разделённые запятыми, или оставьте поле пустым",
 	"Large file detected ({0} bytes). Extraction may take longer.": "Обнаружен большой файл ({0} байт). Распаковка может занять больше времени.",
 	"Positions are not available for this file type.": "Для этого типа файлов позиции недоступны.",
-	"Numbers-LE could not finish: {0}": "Numbers-LE не удалось завершить: {0}"
+	"Numbers-LE could not finish: {0}": "Numbers-LE не удалось завершить: {0}",
+	"Failed to parse CSV: quoted field is never closed": "Не удалось разобрать CSV: поле в кавычках не закрыто",
+	"Dedupe/Sort applied": "Дедупликация/сортировка применены",
+	"Copied to clipboard": "Скопировано в буфер обмена",
+	"Extracted {0}": "Извлечено: {0}",
+	"CSV opened (no auto-copy)": "CSV открыт (без автокопирования)",
+	"Failed to extract numbers: {0}": "Не удалось извлечь числа: {0}",
+	"Removed {0} duplicates ({1} unique numbers remaining)": "Удалено дубликатов: {0} (осталось уникальных чисел: {1})",
+	"Removed {0} duplicates ({1} unique numbers remaining) in current editor": "Удалено дубликатов в текущем редакторе: {0} (осталось уникальных чисел: {1})",
+	"Each number shows its first position only.": "Для каждого числа показана только его первая позиция.",
+	"Sorted {0} numbers ({1}) in current editor": "Отсортировано чисел в текущем редакторе: {0} ({1})"
 }
