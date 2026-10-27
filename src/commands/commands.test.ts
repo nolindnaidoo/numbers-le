@@ -382,3 +382,55 @@ describe('numbers-le.help', () => {
 		expect(help).toContain('github.com/nolindnaidoo/numbers-le');
 	});
 });
+
+describe('two invocations at once', () => {
+	// Nothing serialises the commands: a second extract can start while the
+	// first is awaiting the host. Each must reach its own result with no state
+	// shared between them but the status bar, whose later flash wins.
+	it('two extracts started together each open their own results', async () => {
+		const { deps, flashes } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.notificationsLevel', 'all');
+		_setActiveEditor(
+			_createDocument({ content: '[1, 2]', fileName: '/mock/n.json' }),
+		);
+		const handler = _registeredCommands().get('numbers-le.extractNumbers');
+		if (!handler) throw new Error('extract command not registered');
+		await Promise.all([handler(), handler()]);
+		expect(_openedDocuments().map((d) => d.getText())).toEqual([
+			'1\n2',
+			'1\n2',
+		]);
+		expect(flashes).toEqual(['Extracted 2', 'Extracted 2']);
+		expect(_shownMessages()).toEqual([]);
+	});
+
+	it('a dedupe and a sort started together each write their own document', async () => {
+		const { deps } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.notificationsLevel', 'all');
+		_setActiveEditor(_createDocument({ content: '3\n1\n3' }));
+		_respondToQuickPick((items) =>
+			(items as Array<{ value: string }>).find(
+				(item) => item.value === 'numeric-asc',
+			),
+		);
+		const dedupe = _registeredCommands().get('numbers-le.postProcess.dedupe');
+		const sort = _registeredCommands().get('numbers-le.postProcess.sort');
+		if (!dedupe || !sort) throw new Error('commands not registered');
+		await Promise.all([dedupe(), sort()]);
+		expect(
+			_openedDocuments()
+				.map((d) => d.getText())
+				.sort(),
+		).toEqual(['1\n3\n3', '3\n1']);
+		expect(
+			_shownMessages()
+				.map((m) => m.message)
+				.sort(),
+		).toEqual([
+			'Removed 1 duplicates (2 unique numbers remaining)',
+			'Sorted 3 numbers (Numeric Ascending)',
+		]);
+	});
+});
