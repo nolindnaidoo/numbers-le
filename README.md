@@ -258,9 +258,9 @@ setting of its own.
 <!-- performance:start -->
 | Input | Size | Found | Time | Rate | Scan speed |
 | --- | --- | --- | --- | --- | --- |
-| JSON metrics | 2.18 MB | 120,000 | 22.32 ms | 5,376,475/sec | 97.9 MB/s |
-| CSV data | 0.93 MB | 150,000 | 51.26 ms | 2,926,066/sec | 18.2 MB/s |
-| INI config | 0.42 MB | 30,000 | 20.05 ms | 1,496,430/sec | 20.7 MB/s |
+| JSON metrics | 2.18 MB | 120,000 | 69.12 ms | 1,736,013/sec | 31.6 MB/s |
+| CSV data | 0.93 MB | 150,000 | 88.02 ms | 1,704,098/sec | 10.6 MB/s |
+| INI config | 0.42 MB | 30,000 | 23.01 ms | 1,303,868/sec | 18 MB/s |
 
 Median of 7 runs after warmup, on Apple M5 Pro, 24 GB RAM, Node 24.3.0. Inputs are generated
 by `scripts/benchmark.ts` rather than checked in, so the sizes above are

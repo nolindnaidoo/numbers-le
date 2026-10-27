@@ -3,7 +3,7 @@
 	"publisher": "nolindnaidoo",
 	"displayName": "Numbers-LE: Number Extractor",
 	"description": "Number extractor: find every hardcoded number in JSON, YAML, CSV, TOML and INI, so a person can check them",
-	"version": "2.7.1",
+	"version": "2.8.0",
 	"license": "MIT",
 	"author": {
 		"name": "nolindnaidoo",
