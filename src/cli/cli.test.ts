@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import {
 	chmodSync,
 	mkdirSync,
@@ -173,6 +174,29 @@ describe('walk', () => {
 				path: join(root, 'locked'),
 				reason: `IO error for operation on ${join(root, 'locked')}: Permission denied (os error 13)`,
 			},
+		]);
+	});
+
+	it('names a FIFO rather than opening or dropping it', () => {
+		// Reading a pipe with no writer never returns, so it was never opened;
+		// it was never named either, so it vanished from the report.
+		if (process.platform === 'win32') return;
+		const root = mkdtempSync(join(tmpdir(), 'numbers-le-fifo-'));
+		made.push(root);
+		writeFileSync(join(root, 'kept.env'), 'A=1\n');
+		const fifo = join(root, 'pipe.env');
+		try {
+			execFileSync('mkfifo', [fifo]);
+		} catch {
+			return;
+		}
+		const walked = collect([root], DEFAULT_WALK);
+		expect(walked.files).toEqual([join(root, 'kept.env')]);
+		expect(walked.unreadable).toEqual([
+			{ path: fifo, reason: 'not a regular file' },
+		]);
+		expect(collect([fifo], DEFAULT_WALK).unreadable).toEqual([
+			{ path: fifo, reason: 'not a regular file' },
 		]);
 	});
 

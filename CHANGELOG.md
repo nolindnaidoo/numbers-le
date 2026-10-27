@@ -14,6 +14,11 @@ version and releases from one tag.
 
 ### Fixed
 
+- The npm command line dropped a FIFO, a socket or a device without a word:
+  one in a tree vanished from the report, and one named outright answered
+  "0 numbers in 0 files". Each is a `skipped` report now, `not a regular
+  file`, never opened (a read on a pipe with no writer never returns), and it
+  fails `--strict` as any unread input does. The crate does the same.
 - Deduplicate and Sort in place replaced the whole document with a result
   computed from the text as it was before the sort picker opened, so an edit
   made while the picker was open was overwritten without a word. The command

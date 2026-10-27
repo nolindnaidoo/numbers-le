@@ -446,6 +446,58 @@ fn the_walk_survives_a_tree_of_filesystem_hazards() {
     }
 }
 
+/// A FIFO under a name the walk reads, or named outright. Reading one with
+/// no writer never returns, so it was never opened; it was also never
+/// named, so a pipe in a tree vanished from the report and a pipe named
+/// outright answered "0 numbers in 0 files". It is a `skipped` report
+/// now, in both places, and it fails `--strict` as any unread input does.
+#[cfg(unix)]
+#[test]
+fn a_fifo_is_named_rather_than_opened_or_dropped() {
+    let tree = Tree::new("fifo");
+    tree.write("ordinary.env", "VAT=0.2\n");
+    let fifo = tree.path().join("pipe.env");
+    let made = Command::new("mkfifo")
+        .arg(&fifo)
+        .status()
+        .is_ok_and(|status| status.success());
+    if !made {
+        skipped("a fifo", "mkfifo is not on this machine");
+        return;
+    }
+
+    let walked = execute(&[&tree.text()]);
+    assert_answered(&walked, "a fifo in a walk");
+    assert_eq!(walked.code, Some(0), "{}", walked.stderr);
+    let pipe = reports(&walked)
+        .into_iter()
+        .find(|report| {
+            report["file"]
+                .as_str()
+                .is_some_and(|file| file.ends_with("pipe.env"))
+        })
+        .expect("the fifo is named rather than dropped");
+    assert_eq!(pipe["diagnostics"][0]["code"], "skipped");
+    assert_eq!(pipe["diagnostics"][0]["message"], "not a regular file");
+    assert_eq!(execute(&["--strict", &tree.text()]).code, Some(2));
+
+    // Named outright it is the whole run: one skipped report, nothing found,
+    // which is exit 1 by grep's convention, and exit 2 under --strict.
+    let named = execute(&[&fifo.to_string_lossy()]);
+    assert_answered(&named, "a fifo named outright");
+    assert_eq!(named.code, Some(1), "{}", named.stderr);
+    assert_eq!(reports(&named)[0]["diagnostics"][0]["code"], "skipped");
+    assert_eq!(
+        execute(&["--strict", &fifo.to_string_lossy()]).code,
+        Some(2)
+    );
+    assert!(
+        named.stderr.contains("not a regular file"),
+        "{}",
+        named.stderr
+    );
+}
+
 /// A symlink loop, on its own, with nothing else in the tree to hide a
 /// hang behind. `follow_links(false)` is what makes this terminate, and
 /// nothing else asserts it.

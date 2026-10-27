@@ -12,6 +12,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A FIFO, a socket or a device is named, not dropped.** One met in a
+  walk vanished from the report and one named outright answered "0 numbers
+  in 0 files"; it is a `skipped` report now, `not a regular file`, never
+  opened, and it fails `--strict`. A symbolic link is still never followed.
 - **`mcp` refuses a malformed frame in the npm server's words.** A line
   that was not JSON, or not UTF-8, was dropped without a word, so a client
   that sent one lost every request it then waited on; it is answered with a

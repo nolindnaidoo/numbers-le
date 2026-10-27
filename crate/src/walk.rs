@@ -24,6 +24,11 @@
 
 use std::path::{Path as StdPath, PathBuf};
 
+/// The reason a FIFO, a socket or a device is skipped, in the words the
+/// npm command line uses. Reading a pipe with no writer never returns, so
+/// one is never opened; one was never named either, so it vanished.
+const NOT_A_REGULAR_FILE: &str = "not a regular file";
+
 #[derive(Debug, Clone)]
 pub(crate) struct WalkOptions {
     pub(crate) hidden: bool,
@@ -76,6 +81,12 @@ pub(crate) fn collect(inputs: &[PathBuf], options: &WalkOptions) -> Result<Walke
             walked.files.push(input.clone());
             continue;
         }
+        if !metadata.is_dir() {
+            walked
+                .unreadable
+                .push((input.clone(), NOT_A_REGULAR_FILE.to_string()));
+            continue;
+        }
 
         let found = walk_directory(input, options);
         walked.files.extend(found.files);
@@ -106,10 +117,17 @@ fn walk_directory(root: &StdPath, options: &WalkOptions) -> Walked {
     let mut walked = Walked::default();
     for entry in builder.build() {
         match entry {
-            Ok(entry) if entry.file_type().is_some_and(|kind| kind.is_file()) => {
-                walked.files.push(entry.into_path());
-            }
-            Ok(_) => {}
+            Ok(entry) => match entry.file_type() {
+                Some(kind) if kind.is_file() => walked.files.push(entry.into_path()),
+                // A directory the walker descends; a link it reports as a
+                // link whatever it points at, and a link is never followed.
+                Some(kind) if kind.is_dir() || kind.is_symlink() => {}
+                // A FIFO, a socket or a device under a name the walk reads:
+                // named rather than opened or dropped.
+                _ => walked
+                    .unreadable
+                    .push((entry.into_path(), NOT_A_REGULAR_FILE.to_string())),
+            },
             Err(error) => walked.unreadable.push(refusal(&error, root)),
         }
     }
