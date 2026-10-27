@@ -14,6 +14,10 @@ version and releases from one tag.
 
 ### Fixed
 
+- The npm command line's `numbers_le_scan` tool dropped a `paths` entry that
+  was not a string without a word, so `["dir", 7]` was answered for `dir`
+  alone; the crate's server did the same. The entry is named, and a `path`
+  that is not a string is refused as such, in the same words on both.
 - `numbers-le --help` said a `.ts` or `.sql` file falls back to the text
   scan. Since 0.2.0 a source file is read by its language for its literals;
   the text says so, on the npm command line and the crate alike.

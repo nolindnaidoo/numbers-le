@@ -392,6 +392,9 @@ function mcpLines(): readonly string[] {
 		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"extract_numbers","arguments":{"content":"1 2 3","maxResults":1e3}}}`,
 		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"extract_numbers","arguments":{"content":"1 2 3","maxResults":1E20}}}`,
 		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"extract_numbers","arguments":{"content":"1 2 3","maxResults":2.5}}}`,
+		// A scan entry that is not a string is named, not dropped.
+		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"numbers_le_scan","arguments":{"paths":[${JSON.stringify(tree)},7]}}}`,
+		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"numbers_le_scan","arguments":{"path":7}}}`,
 		extract({ content: '"42"', format: '\uFEFFjson' }),
 		extract({ content: 7 }),
 		extract({}),

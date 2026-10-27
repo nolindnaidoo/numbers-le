@@ -275,6 +275,26 @@ describe('mcp', () => {
 		]);
 	});
 
+	it('names a path entry that is not a string rather than dropping it', async () => {
+		// `["dir", 7]` was answered for `dir` alone and the 7 vanished without a
+		// word, on this server and the crate's alike.
+		const call = (args: string) =>
+			`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"numbers_le_scan","arguments":${args}}}`;
+		const { written } = await session([
+			call('{"paths":["a",7]}'),
+			call('{"paths":[null]}'),
+			call('{"path":7}'),
+			call('{"paths":[]}'),
+		]);
+		const text = (reply: string) => JSON.parse(reply).result.content[0].text;
+		expect(written.map(text)).toEqual([
+			'entry 1 of paths is not a string',
+			'entry 0 of paths is not a string',
+			'path must be a string',
+			'the list of paths was empty',
+		]);
+	});
+
 	it('reads a cap written as an integer-valued float or exponent, as the crate reads it', async () => {
 		// Sent as text rather than through JSON.stringify, which would print 2.0
 		// as 2: the crate's serde reads 2.0 as a float, and refused it.

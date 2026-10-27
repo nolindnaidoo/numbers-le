@@ -12,6 +12,11 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A `paths` entry that is not a string is named, not dropped.** The MCP
+  scan tool answered `["dir", 7]` for `dir` alone and said nothing about
+  the 7; it refuses with `entry 1 of paths is not a string`, and a `path`
+  that is not a string with `path must be a string`, as the npm command
+  line does.
 - **`--help` no longer says a source file falls back to the text scan.**
   A `.ts` or `.sql` file has been read by its language for its literals
   since 0.2.0; the usage text described the reader that version replaced.

@@ -322,15 +322,17 @@ function scan(args: unknown): unknown {
 function requestedPaths(args: unknown): readonly string[] {
 	const path = field(args, 'path');
 	if (typeof path === 'string') return [path];
+	if (path !== undefined) throw new Error('path must be a string');
 	const paths = field(args, 'paths');
 	if (!Array.isArray(paths)) {
 		throw new Error('no file or directory was supplied to read');
 	}
-	const named = paths.filter(
-		(item): item is string => typeof item === 'string',
-	);
-	if (named.length === 0) throw new Error('the list of paths was empty');
-	return named;
+	// An entry that is not a string is named rather than dropped: `["dir", 7]`
+	// was answered for `dir` alone and the 7 vanished without a word.
+	const index = paths.findIndex((item) => typeof item !== 'string');
+	if (index !== -1) throw new Error(`entry ${index} of paths is not a string`);
+	if (paths.length === 0) throw new Error('the list of paths was empty');
+	return paths as readonly string[];
 }
 
 /** The crate's `Envelope` struct, in its field order. */

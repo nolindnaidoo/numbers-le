@@ -298,14 +298,21 @@ fn scan_tool(arguments: &Value) -> Result<Envelope<Value>, String> {
 }
 
 fn requested_paths(arguments: &Value) -> Result<Vec<PathBuf>, String> {
-    if let Some(path) = arguments.get("path").and_then(Value::as_str) {
+    if let Some(path) = arguments.get("path") {
+        let path = path.as_str().ok_or("path must be a string")?;
         return Ok(vec![PathBuf::from(path)]);
     }
     if let Some(items) = arguments.get("paths").and_then(Value::as_array) {
-        let paths: Vec<PathBuf> = items
-            .iter()
-            .filter_map(|item| item.as_str().map(PathBuf::from))
-            .collect();
+        // An entry that is not a string is named rather than dropped:
+        // `["dir", 7]` was answered for `dir` alone and the 7 vanished
+        // without a word.
+        let mut paths = Vec::with_capacity(items.len());
+        for (index, item) in items.iter().enumerate() {
+            let Some(path) = item.as_str() else {
+                return Err(format!("entry {index} of paths is not a string"));
+            };
+            paths.push(PathBuf::from(path));
+        }
         if paths.is_empty() {
             return Err("the list of paths was empty".to_string());
         }
@@ -476,6 +483,32 @@ mod tests {
                 .expect("a message")
                 .contains("no file or directory")
         );
+    }
+
+    /// `["dir", 7]` was answered for `dir` alone and the 7 dropped without
+    /// a word, on this server and the npm one alike. An entry that is not
+    /// a string is named, in both servers' words.
+    #[test]
+    fn a_path_entry_that_is_not_a_string_is_named_not_dropped() {
+        for (arguments, message) in [
+            (
+                json!({ "paths": ["a", 7] }),
+                "entry 1 of paths is not a string",
+            ),
+            (
+                json!({ "paths": [null] }),
+                "entry 0 of paths is not a string",
+            ),
+            (json!({ "path": 7 }), "path must be a string"),
+            (json!({ "paths": [] }), "the list of paths was empty"),
+        ] {
+            let response = call("numbers_le_scan", &arguments);
+            assert_eq!(response["result"]["isError"], true, "{arguments}");
+            assert_eq!(
+                response["result"]["content"][0]["text"], message,
+                "{arguments}"
+            );
+        }
     }
 
     #[test]
