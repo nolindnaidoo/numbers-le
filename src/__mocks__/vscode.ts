@@ -437,11 +437,16 @@ export const window = {
 	createOutputChannel: (_name: string) => {
 		const linesOut: string[] = [];
 		outputChannels.push(linesOut);
-		return {
+		const channel = {
+			disposed: false,
 			appendLine: (line: string) => linesOut.push(line),
-			dispose: () => {},
+			dispose(): void {
+				(this as { disposed: boolean }).disposed = true;
+			},
 			_lines: linesOut,
 		};
+		outputChannelObjects.push(channel);
+		return channel;
 	},
 	createStatusBarItem: (_alignment?: unknown, _priority?: number) => {
 		const item = {
@@ -483,9 +488,20 @@ export function _statusBarItems(): ReadonlyArray<{
 }
 
 const outputChannels: string[][] = [];
+const outputChannelObjects: Array<{ disposed: boolean }> = [];
 
 export function _outputChannelLines(): readonly string[] {
 	return outputChannels.flat();
+}
+
+/** Every output channel created, so a test can read which are still live. */
+export function _outputChannels(): ReadonlyArray<{ disposed: boolean }> {
+	return outputChannelObjects;
+}
+
+/** How many configuration listeners are registered right now. */
+export function _configListenerCount(): number {
+	return configListeners.length;
 }
 
 // ---------------------------------------------------------- commands
@@ -585,6 +601,7 @@ export function _resetMockState(): void {
 	shownDocumentOptions.length = 0;
 	openedDocuments.length = 0;
 	outputChannels.length = 0;
+	outputChannelObjects.length = 0;
 	statusBarItems.length = 0;
 	executedBuiltins.length = 0;
 	registeredCommands.clear();
