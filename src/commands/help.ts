@@ -47,7 +47,7 @@ function generateHelpContent(): string {
 	lines.push('# Numbers-LE Help & Documentation');
 	lines.push('');
 	lines.push(
-		'**Zero Hassle Number Extraction from JSON, YAML, CSV, TOML, INI, and .ENV**',
+		'**Zero Hassle Number Extraction from JSON, YAML, CSV, TOML, INI, .ENV and source code**',
 	);
 	lines.push('');
 	lines.push('---');
@@ -57,14 +57,13 @@ function generateHelpContent(): string {
 	lines.push('## Quick Start');
 	lines.push('');
 	lines.push(
-		'1. Open any supported file (JSON, YAML, CSV, TOML, INI, or .ENV)',
-	);
-	lines.push('2. Run "Numbers-LE: Extract Numbers" from the command palette');
-	lines.push(
-		'3. Run **"Numbers-LE: Extract Numbers"** to extract all numeric values',
+		'1. Open any supported file (JSON, YAML, CSV, TOML, INI, .ENV, or a source file)',
 	);
 	lines.push(
-		'4. Results open in a new editor or copy to clipboard automatically',
+		'2. Run **"Numbers-LE: Extract Numbers"** from the command palette',
+	);
+	lines.push(
+		'3. Results open in a new editor beside the current one, or copy to the clipboard when that setting is on',
 	);
 	lines.push('');
 
@@ -76,9 +75,19 @@ function generateHelpContent(): string {
 		'Extracts all numeric values from the active file in document order.',
 	);
 	lines.push('');
-	lines.push('- **Supported formats:** JSON, YAML, CSV, TOML, INI, .ENV');
+	lines.push(
+		'- **Supported formats:** JSON (and JSONC), YAML, CSV (and TSV), TOML, INI, .ENV',
+	);
+	lines.push(
+		'- **Source files:** Python, Rust, Go, Java, Kotlin, C#, C, C++, JavaScript, TypeScript, SQL and shell, read for their number literals',
+	);
+	lines.push(
+		'- **Anything else:** scanned as plain text for the numbers it holds',
+	);
 	lines.push('- **Number types:** Integers, floats, scientific notation');
-	lines.push('- **CSV mode:** Stream large files or select specific columns');
+	lines.push(
+		'- **CSV mode:** Pick one column, several, or all; several open one results document each',
+	);
 	lines.push('');
 
 	lines.push('### Post-Process: Deduplicate');
@@ -110,10 +119,16 @@ function generateHelpContent(): string {
 	lines.push('### Essential Settings');
 	lines.push('');
 	lines.push(
-		'- **`numbers-le.openResultsSideBySide`** - Open results in split view (default: `false`)',
+		'- **`numbers-le.openResultsSideBySide`** - Open results in split view (default: `true`)',
 	);
 	lines.push(
 		'- **`numbers-le.copyToClipboardEnabled`** - Auto-copy results to clipboard (default: `false`)',
+	);
+	lines.push(
+		'- **`numbers-le.showPositions`** - Show the line and column of each number (default: `false`)',
+	);
+	lines.push(
+		'- **`numbers-le.clipboardIncludesPositions`** - Include each line and column in the copy on the clipboard (default: `false`)',
 	);
 	lines.push('');
 
@@ -128,6 +143,9 @@ function generateHelpContent(): string {
 	lines.push(
 		'- **`numbers-le.sortMode`** - Sort method: `numeric-asc`, `numeric-desc`, etc. (default: `"off"`)',
 	);
+	lines.push(
+		'- **`numbers-le.postProcess.openInNewFile`** - Open post-processed content in a new editor rather than in place (default: `true`)',
+	);
 	lines.push('');
 
 	lines.push('### Safety & Performance');
@@ -141,6 +159,9 @@ function generateHelpContent(): string {
 	lines.push(
 		'- **`numbers-le.safety.largeOutputLinesThreshold`** - Warn before opening large results (default: `50000`)',
 	);
+	lines.push(
+		'- **`numbers-le.safety.manyDocumentsThreshold`** - Warn before opening this many CSV column documents (default: `8`)',
+	);
 	lines.push('');
 
 	lines.push('### Notifications');
@@ -150,6 +171,12 @@ function generateHelpContent(): string {
 	);
 	lines.push(
 		'- **`numbers-le.showParseErrors`** - Show parse error notifications (default: `false`)',
+	);
+	lines.push(
+		'- **`numbers-le.statusBar.enabled`** - Show the Numbers-LE status bar entry (default: `true`)',
+	);
+	lines.push(
+		'- **`numbers-le.telemetryEnabled`** - Write local-only telemetry to the Output panel (default: `false`)',
 	);
 	lines.push('');
 

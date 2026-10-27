@@ -14,6 +14,11 @@ version and releases from one tag.
 
 ### Fixed
 
+- The help document claimed CSV streaming, which nothing implements, said
+  results open beside the editor only when a setting is on when that is the
+  default, repeated a Quick Start step, named six formats where the
+  extension reads twenty, and left six settings out. It now states every
+  setting with the default the manifest declares, and a test holds it there.
 - Picking an unnamed CSV column by its generated `(Column N)` label fell to
   all columns in every display language but English: the label shown was
   translated and the pick was matched back against the English literal. Two
