@@ -28,6 +28,10 @@ version and releases from one tag.
 
 ### Fixed
 
+- The npm command line's stdout wrapper answered nothing where the stream
+  answers whether the pipe is full, so the MCP server wrote around it to
+  wait for a slow client. It answers the stream's own boolean now, as
+  envsync-le's does, and the server waits for drain through it.
 - The help document is in the display language. Every sentence in it goes
   through the bundle now, in all twelve locales; format names, setting keys,
   defaults and links stay as they are. A German host reads it back in German
