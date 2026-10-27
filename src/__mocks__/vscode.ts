@@ -83,13 +83,21 @@ export interface MockDocumentInit {
 
 export function _createDocument(init: MockDocumentInit) {
 	let content = init.content;
+	// The host bumps a document's version on every change; a command that
+	// computed a result before an await reads it back to know whether the
+	// text it is about to replace is still the text it read.
+	let version = 1;
 	const doc = {
 		get lineCount() {
 			return content.split('\n').length;
 		},
+		get version() {
+			return version;
+		},
 		getText: () => content,
 		_setText: (next: string) => {
 			content = next;
+			version += 1;
 		},
 		languageId: init.languageId ?? 'plaintext',
 		fileName: init.fileName ?? '/mock/document.txt',
@@ -130,6 +138,17 @@ export interface RecordedEdit {
 	readonly text: string;
 }
 
+/**
+ * `editor.edit` resolves false when the host could not apply the edit, a
+ * read-only document say; set by `_refuseEdits`, the builder never runs and
+ * the document stays as it was.
+ */
+let editsRefused = false;
+
+export function _refuseEdits(): void {
+	editsRefused = true;
+}
+
 export function _createEditor(document: MockDocument) {
 	const edits: RecordedEdit[] = [];
 	return {
@@ -141,6 +160,7 @@ export function _createEditor(document: MockDocument) {
 				insert(position: Position, text: string): void;
 			}) => void,
 		) => {
+			if (editsRefused) return false;
 			callback({
 				replace: (_range: Range, text: string) => {
 					edits.push({ kind: 'replace', text });
@@ -205,9 +225,38 @@ export function _openedDocuments(): readonly MockDocument[] {
 }
 
 let fsStatSize = 0;
+let fsStatFailure: { readonly error: unknown } | undefined;
 
 export function _setFsStatSize(size: number): void {
 	fsStatSize = size;
+}
+
+/** What `workspace.fs.stat` throws: an untitled document has no file to stat. */
+export function _failFsStat(error: unknown): void {
+	fsStatFailure = { error };
+}
+
+/**
+ * Failure hooks: what the host throws when it refuses to open or show a
+ * document, or to write the clipboard. Nothing in a command's output path
+ * could be driven to fail without them, so every `catch` there was dead in
+ * the suite. A value, not a flag, so a test can throw something that is not
+ * an `Error` and see it reported too.
+ */
+let openTextDocumentFailure: { readonly error: unknown } | undefined;
+let showTextDocumentFailure: { readonly error: unknown } | undefined;
+let clipboardWriteFailure: { readonly error: unknown } | undefined;
+
+export function _failOpenTextDocument(error: unknown): void {
+	openTextDocumentFailure = { error };
+}
+
+export function _failShowTextDocument(error: unknown): void {
+	showTextDocumentFailure = { error };
+}
+
+export function _failClipboardWrite(error: unknown): void {
+	clipboardWriteFailure = { error };
 }
 
 export const workspace = {
@@ -216,12 +265,10 @@ export const workspace = {
 	fs: {
 		readFile: async (_uri: Uri) => new Uint8Array(),
 		writeFile: async (_uri: Uri, _content: Uint8Array) => {},
-		stat: async (_uri: Uri) => ({
-			type: 1,
-			ctime: 0,
-			mtime: 0,
-			size: fsStatSize,
-		}),
+		stat: async (_uri: Uri) => {
+			if (fsStatFailure) throw fsStatFailure.error;
+			return { type: 1, ctime: 0, mtime: 0, size: fsStatSize };
+		},
 	},
 	getConfiguration: (section?: string) => ({
 		get: <T>(key: string, defaultValue?: T): T | undefined => {
@@ -249,6 +296,7 @@ export const workspace = {
 		content?: string;
 		language?: string;
 	}) => {
+		if (openTextDocumentFailure) throw openTextDocumentFailure.error;
 		const doc = _createDocument({
 			content: options?.content ?? '',
 			languageId: options?.language ?? 'plaintext',
@@ -369,6 +417,7 @@ export const window = {
 		return value;
 	},
 	showTextDocument: async (document: unknown, options?: unknown) => {
+		if (showTextDocumentFailure) throw showTextDocumentFailure.error;
 		const editor = _createEditor(document as MockDocument);
 		shownEditors.push(editor);
 		// Recorded so tests can assert placement (openResultsSideBySide sets
@@ -388,31 +437,71 @@ export const window = {
 	createOutputChannel: (_name: string) => {
 		const linesOut: string[] = [];
 		outputChannels.push(linesOut);
-		return {
+		const channel = {
+			disposed: false,
 			appendLine: (line: string) => linesOut.push(line),
-			dispose: () => {},
+			dispose(): void {
+				(this as { disposed: boolean }).disposed = true;
+			},
 			_lines: linesOut,
 		};
+		outputChannelObjects.push(channel);
+		return channel;
 	},
-	createStatusBarItem: (_alignment?: unknown, _priority?: number) => ({
-		text: '',
-		tooltip: '',
-		command: undefined as unknown,
-		visible: false,
-		show(): void {
-			(this as { visible: boolean }).visible = true;
-		},
-		hide(): void {
-			(this as { visible: boolean }).visible = false;
-		},
-		dispose: () => {},
-	}),
+	createStatusBarItem: (_alignment?: unknown, _priority?: number) => {
+		const item = {
+			text: '',
+			tooltip: '',
+			command: undefined as unknown,
+			visible: false,
+			disposed: false,
+			show(): void {
+				(this as { visible: boolean }).visible = true;
+			},
+			hide(): void {
+				(this as { visible: boolean }).visible = false;
+			},
+			dispose(): void {
+				(this as { disposed: boolean }).disposed = true;
+			},
+		};
+		statusBarItems.push(item);
+		return item;
+	},
 };
 
+const statusBarItems: Array<{
+	text: string;
+	command: unknown;
+	visible: boolean;
+	disposed: boolean;
+}> = [];
+
+/** Every status bar item created, so a test can read what the user sees. */
+export function _statusBarItems(): ReadonlyArray<{
+	text: string;
+	command: unknown;
+	visible: boolean;
+	disposed: boolean;
+}> {
+	return statusBarItems;
+}
+
 const outputChannels: string[][] = [];
+const outputChannelObjects: Array<{ disposed: boolean }> = [];
 
 export function _outputChannelLines(): readonly string[] {
 	return outputChannels.flat();
+}
+
+/** Every output channel created, so a test can read which are still live. */
+export function _outputChannels(): ReadonlyArray<{ disposed: boolean }> {
+	return outputChannelObjects;
+}
+
+/** How many configuration listeners are registered right now. */
+export function _configListenerCount(): number {
+	return configListeners.length;
 }
 
 // ---------------------------------------------------------- commands
@@ -454,6 +543,7 @@ export const env = {
 	appName: 'Visual Studio Code',
 	clipboard: {
 		writeText: async (text: string) => {
+			if (clipboardWriteFailure) throw clipboardWriteFailure.error;
 			clipboard.value = text;
 		},
 		readText: async () => clipboard.value,
@@ -511,6 +601,8 @@ export function _resetMockState(): void {
 	shownDocumentOptions.length = 0;
 	openedDocuments.length = 0;
 	outputChannels.length = 0;
+	outputChannelObjects.length = 0;
+	statusBarItems.length = 0;
 	executedBuiltins.length = 0;
 	registeredCommands.clear();
 	activeTextEditor = undefined;
@@ -518,19 +610,38 @@ export function _resetMockState(): void {
 	inputBoxResponder = undefined;
 	warningResponder = undefined;
 	clipboard.value = '';
+	translations = {};
 	fsStatSize = 0;
+	fsStatFailure = undefined;
+	editsRefused = false;
+	openTextDocumentFailure = undefined;
+	showTextDocumentFailure = undefined;
+	clipboardWriteFailure = undefined;
 	workspace.workspaceFolders = undefined;
+}
+
+/**
+ * A bundle for the host to translate with. The real `l10n.t` looks the
+ * English up in the locale's bundle before substituting; without a table a
+ * test only ever sees English, and code that compares a shown label back
+ * against an English literal passes in every language but the user's.
+ */
+let translations: Readonly<Record<string, string>> = {};
+
+export function _translate(table: Readonly<Record<string, string>>): void {
+	translations = table;
 }
 
 export const l10n = {
 	t(message: string, ...args: unknown[]): string {
+		const template = translations[message] ?? message;
 		if (args.length === 1 && typeof args[0] === 'object' && args[0] !== null) {
 			const named = args[0] as Record<string, unknown>;
-			return message.replace(/\{(\w+)\}/g, (whole, key) =>
+			return template.replace(/\{(\w+)\}/g, (whole, key) =>
 				key in named ? String(named[key]) : whole,
 			);
 		}
-		return message.replace(/\{(\d+)\}/g, (whole, index) => {
+		return template.replace(/\{(\d+)\}/g, (whole, index) => {
 			const value = args[Number(index)];
 			return value === undefined ? whole : String(value);
 		});

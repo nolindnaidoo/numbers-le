@@ -31,5 +31,5 @@
 	"manifest.settings.statusbar.enabled.desc": "Показати рядок стану Numbers-LE для швидкого доступу",
 	"manifest.settings.telemetry.desc": "Увімкнути локальні журнали телеметрії у вікні виводу",
 	"manifest.capability.untrusted-workspaces.desc": "Обмежена функціональність у ненадійних робочих просторах",
-	"manifest.mcp.label": "Інструменти вилучення номерів Numbers-LE для режиму агента"
+	"manifest.mcp.label": "Інструменти вилучення чисел Numbers-LE для режиму агента"
 }

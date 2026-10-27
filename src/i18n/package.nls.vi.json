@@ -23,13 +23,13 @@
 	"manifest.settings.sort.enabled.desc": "Bật tính năng sắp xếp tự động các số đã trích xuất",
 	"manifest.settings.sort.mode.desc": "Chọn cách sắp xếp kết quả khi bật tính năng sắp xếp",
 	"manifest.settings.sort.mode.option.off": "Không sắp xếp",
-	"manifest.settings.sort.mode.option.numeric-asc": "Sắp xếp theo thứ tự tăng dần",
-	"manifest.settings.sort.mode.option.numeric-desc": "Sắp xếp theo thứ tự giảm dần",
-	"manifest.settings.sort.mode.option.magnitude-asc": "Sắp xếp theo thứ tự tăng dần của giá trị",
-	"manifest.settings.sort.mode.option.magnitude-desc": "Sắp xếp theo thứ tự giảm dần của giá trị",
+	"manifest.settings.sort.mode.option.numeric-asc": "Số tăng dần",
+	"manifest.settings.sort.mode.option.numeric-desc": "Số giảm dần",
+	"manifest.settings.sort.mode.option.magnitude-asc": "Độ lớn tăng dần",
+	"manifest.settings.sort.mode.option.magnitude-desc": "Độ lớn giảm dần",
 	"manifest.settings.show.positions.desc": "Hiển thị dòng và cột của từng kết quả",
 	"manifest.settings.statusbar.enabled.desc": "Hiển thị thanh trạng thái Numbers-LE để truy cập nhanh",
 	"manifest.settings.telemetry.desc": "Bật nhật ký telemetry cục bộ trong cửa sổ đầu ra",
 	"manifest.capability.untrusted-workspaces.desc": "Chức năng hạn chế trong không gian làm việc không tin cậy",
-	"manifest.mcp.label": "Các công cụ trích xuất số Numbers-LE dành cho chế độ đại lý"
+	"manifest.mcp.label": "Các công cụ trích xuất số Numbers-LE dành cho chế độ tác nhân"
 }

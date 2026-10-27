@@ -26,6 +26,10 @@ describe('exactPositions', () => {
 		]);
 	});
 
+	it('places a plain-text number after a run from another script', () => {
+		expect(place('٣5 then 7', 'unknown')).toEqual([{ line: 1, column: 9 }]);
+	});
+
 	it('gives a parsed format no position rather than a guess', () => {
 		expect(place('k26 = 0x1A\n', 'toml')).toBeUndefined();
 	});

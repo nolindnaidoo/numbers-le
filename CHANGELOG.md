@@ -12,8 +12,132 @@ version and releases from one tag.
 
 ## [Unreleased]
 
+### Changed
+
+- The MCP servers refuse a tool argument that does not fit the tool's
+  schema as a JSON-RPC error, `-32602`, where it was a result carrying
+  `isError`: a missing `content`, a `maxResults` that is not a whole number
+  of one or more, a `format`, `filename` or `path` that is not a string, a
+  `dedupe`, `hidden` or `ignored` that is not a boolean, and any argument
+  the schema does not declare, which `additionalProperties: false` now
+  enforces. A wrong type on an optional argument was read as absent before,
+  so `format: 7` scanned the text and `hidden: "yes"` walked nothing
+  hidden. A path that is not there stays the tool's own failure, `isError`,
+  because that is a fact about the filesystem and not the schema. All three
+  servers refuse in the same words.
+
 ### Fixed
 
+- The npm command line's stdout wrapper answered nothing where the stream
+  answers whether the pipe is full, so the MCP server wrote around it to
+  wait for a slow client. It answers the stream's own boolean now, as
+  envsync-le's does, and the server waits for drain through it.
+- The help document is in the display language. Every sentence in it goes
+  through the bundle now, in all twelve locales; format names, setting keys,
+  defaults and links stay as they are. A German host reads it back in German
+  in the integration suite, which is the first runtime string a real host
+  has shown in a language other than English.
+- The npm command line passed over a symbolic link in a walk without a
+  word. It is still never followed, by design; it is counted now, `N
+  symbolic links not followed` on stderr and `symbolicLinks` in the scan
+  tool's envelope, as binary files are counted. The crate does the same.
+- The npm command line's `numbers_le_scan` tool answered `ok: true` with
+  empty `diagnostics` for a tree holding a file it could not read: the
+  envelope's filter looked for a severity no report carries. A skipped file
+  is named in the envelope now, as `unreadable`, on the crate's server too.
+  The dead "incomplete" exit branch that same severity fed is gone on both.
+- The npm command line dropped a FIFO, a socket or a device without a word:
+  one in a tree vanished from the report, and one named outright answered
+  "0 numbers in 0 files". Each is a `skipped` report now, `not a regular
+  file`, never opened (a read on a pipe with no writer never returns), and it
+  fails `--strict` as any unread input does. The crate does the same.
+- Deduplicate and Sort in place replaced the whole document with a result
+  computed from the text as it was before the sort picker opened, so an edit
+  made while the picker was open was overwritten without a word. The command
+  now compares the document version and writes nothing if it moved, saying so.
+- 155 translated values did not fit their place. A count placeholder was
+  read as a format or a name in nine locales ("Detected {0} numbers" as
+  "numbers of type {0}", "opening {0} documents" as "documents in format
+  {0}", "Sorted {0} numbers" likewise); "number" was the word for a phone
+  number in de, fr, ja, ko, ru, uk and id; "Column" was a newspaper column
+  in ten; "Extraction" was decompression in seven; the status bar tooltip
+  kept "Run" in English in all twelve, and es and zh-cn translated the
+  product name. French dropped the "out of range" sentence, Indonesian
+  titled the sort command "Spelling", and Vietnamese's "agent mode" was a
+  sales agent. Each reads as what it names now.
+- Eleven strings were shown in English in every display language: the
+  status bar's "Extracted N", "Copied to clipboard", "Dedupe/Sort applied"
+  and "CSV opened", the dedupe and sort counts, the "Failed to extract
+  numbers" and unclosed-quote CSV errors. Each goes through the bundle now,
+  in all twelve locales, and a test reads the source for a literal handed to
+  a notification, the notifier or the status bar.
+- The help document claimed CSV streaming, which nothing implements, said
+  results open beside the editor only when a setting is on when that is the
+  default, repeated a Quick Start step, named six formats where the
+  extension reads twenty, and left six settings out. It now states every
+  setting with the default the manifest declares, and a test holds it there.
+- Picking an unnamed CSV column by its generated `(Column N)` label fell to
+  all columns in every display language but English: the label shown was
+  translated and the pick was matched back against the English literal. Two
+  header columns sharing a name always picked the first. The pick carries
+  its index.
+- The three MCP servers this repository ships answered a malformed frame
+  three different ways. The extension's server echoed whatever protocol
+  version the client asked for, where the other two answer their own; it
+  answered a request carrying a null id, which the other two read as a
+  notification; and the npm command line and the crate dropped a frame that
+  was not JSON, or not UTF-8, without a word, where the extension's server
+  refused it with a parse error, and held a frame of any size where the
+  extension's server refuses one over 16 MiB. All three now answer alike, in
+  the same words: `Invalid JSON`, `Not a JSON-RPC 2.0 request`, `Unknown
+  method: …`, `Unknown tool: …` and `tools/call requires a string `name``.
+  The npm command line also waits for a slow client to drain the pipe before
+  reading the next frame, as the crate's blocking write does.
+- The npm command line's `numbers_le_scan` tool dropped a `paths` entry that
+  was not a string without a word, so `["dir", 7]` was answered for `dir`
+  alone; the crate's server did the same. The entry is named, and a `path`
+  that is not a string is refused as such, in the same words on both.
+- `numbers-le --help` said a `.ts` or `.sql` file falls back to the text
+  scan. Since 0.2.0 a source file is read by its language for its literals;
+  the text says so, on the npm command line and the crate alike.
+- A file-type prompt the editor tore down was reported as "Document is no
+  longer valid", which was false. The prompt no longer sits inside the guard
+  that reads the document, so the failure is reported as what it was.
+- Extract reported success by what it had decided to do, not by what
+  happened. A results document the editor refused to open still flashed
+  `Extracted N` in the status bar, logged an extraction and counted toward
+  the rating prompt; the CSV fan-out said "CSV opened" when every column
+  document was refused, and said nothing at all when no chosen column held a
+  number. Each path now reports what reached the user, and a refusal the host
+  throws as something other than an `Error` is reported rather than
+  swallowed.
+- The plain-text scan read `٣5` as the number 5: its digits were ASCII, so a
+  run opening with a digit from another script lost that digit and reported
+  the rest, where the crate's server consumed the run whole and reported
+  nothing. The scan's digits are now Unicode's, and a run holding any digit
+  the parse cannot read is consumed and refused, on the shared tool and in
+  the editor alike. The corpus pins `rate ٣5 and 🎯 7`.
+- `.env.local`, `.env.production` and the rest of the dotenv family prompted
+  for a file type in the editor, and the MCP server read them with the text
+  scan, which has no comment rule, so a commented-out `# OFF=600` became a
+  finding the crate's server, reading dotenv, never reported. The server's
+  resolver follows the crate's rule, `.env` and everything after it, and is
+  now the one resolver the extension and the npm command line read through;
+  a format name is also stripped of every leading dot, as the crate strips it.
+  The corpus pins `.env.local`.
+- The MCP server and the npm command line read `maxResults` written as an
+  integer-valued float or exponent, `2.0`, `1e3` or `1E20`, differently from
+  the crate's server, which refused the first two and the command line the
+  third. JSON Schema's `integer` is any number with a zero fractional part,
+  and all three servers now read it so: a whole number of one or more,
+  clamped at the ceiling. The corpus pins `2.0`.
+- A CSV whose header row is written in a script without Latin letters, such
+  as Japanese or Cyrillic, was read as a file without a header and asked for
+  column indexes by number. A letter in any script makes a header.
+- Deduplicate and Sort read the empty last line of a document that ends in a
+  newline, a blank line and a CRLF line ending as the number 0, so a list of
+  three numbers deduped to the three and a 0 the file never held, and the
+  count said so. Blank lines are not numbers.
 - The MCP server answered a `filename` or `format` that is an
   `Object.prototype` name, such as `constructor` or `__proto__`, with a
   function or an object for its file type. It answers as it does for any

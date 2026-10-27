@@ -1,3 +1,4 @@
+import { resolveFormat } from '../mcp/fileType';
 import type { ExtractionResult, FileType, SourceLanguage } from '../types';
 import { extractFromCsv } from './formats/csv';
 import { extractFromEnv } from './formats/env';
@@ -81,57 +82,15 @@ function extractFromFallback(
 }
 
 /**
- * The file type a filename implies.
+ * The file type a filename implies: the basename, through the one resolver
+ * the MCP server and the npm command line read with. A second table here
+ * split `.env.local` on its last dot and asked `local` for a format, so a
+ * file the other two surfaces read as dotenv prompted for a type.
  *
- * Both a VS Code `languageId` and a file extension resolve through the
- * MCP server's ALIASES; this is the extension-only half, kept in step
- * with it and with the crate's `resolve_format`.
- *
- * A `Map`, not a plain object: on an object, `constructor`, `__proto__` and
- * every other `Object.prototype` name is a hit, and a caller naming one got
- * a function or the prototype back as its file type. A map has no inherited
- * keys.
+ * The basename is taken on both separators, because the editor hands a
+ * Windows path with backslashes whatever platform this runs on in a test.
  */
-const EXTENSIONS: ReadonlyMap<string, FileType> = new Map([
-	['json', 'json'],
-	['jsonc', 'jsonc'],
-	['yaml', 'yaml'],
-	['yml', 'yaml'],
-	['csv', 'csv'],
-	['tsv', 'tsv'],
-	['toml', 'toml'],
-	['ini', 'ini'],
-	['env', 'env'],
-	['py', 'python'],
-	['rs', 'rust'],
-	['go', 'go'],
-	['java', 'java'],
-	['kt', 'kotlin'],
-	['kts', 'kotlin'],
-	['cs', 'csharp'],
-	['cpp', 'cpp'],
-	['cc', 'cpp'],
-	['cxx', 'cpp'],
-	['hpp', 'cpp'],
-	['hh', 'cpp'],
-	['c', 'c'],
-	['h', 'c'],
-	['js', 'javascript'],
-	['mjs', 'javascript'],
-	['cjs', 'javascript'],
-	['jsx', 'javascript'],
-	['ts', 'typescript'],
-	['tsx', 'typescript'],
-	['sql', 'sql'],
-	['sh', 'shellscript'],
-]);
-
 export function detectFileType(filename: string): FileType {
-	const ext = filename.split('.').pop()?.toLowerCase();
-
-	if (!ext) {
-		return 'unknown';
-	}
-
-	return EXTENSIONS.get(ext) ?? 'unknown';
+	const name = filename.split(/[\\/]/).pop() ?? '';
+	return resolveFormat(undefined, name);
 }

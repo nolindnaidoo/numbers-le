@@ -13,9 +13,9 @@ export const USAGE = `usage: numbers-le [options] <file|dir>...
        numbers-le --version | --help
 
 Finds every hardcoded number in a tree and puts it where a person can
-check it: JSON, YAML, CSV, TOML, INI and dotenv are parsed, and anything
-else falls back to a text scan — so a .ts or .sql file yields its
-constants rather than nothing.
+check it: JSON, YAML, CSV, TOML, INI and dotenv are parsed, a source
+file such as .ts or .sql is read by its language for its literals, and
+anything else falls back to a text scan rather than nothing.
 
 Numbers are printed exactly as JavaScript prints them, which is what
 keeps this and the editor extension answering the same.

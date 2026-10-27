@@ -780,5 +780,112 @@
 				"truncated": false
 			}
 		}
+	},
+	{
+		"name": "a cap written as an integer-valued float",
+		"content": "1 2 3",
+		"arguments": {
+			"maxResults": 2.0
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"numbers": [
+					{
+						"value": 1,
+						"notation": "decimal",
+						"line": 1,
+						"column": 1
+					},
+					{
+						"value": 2,
+						"notation": "decimal",
+						"line": 1,
+						"column": 3
+					}
+				],
+				"fileType": "unknown"
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_numbers",
+				"count": 2,
+				"truncated": true
+			}
+		}
+	},
+	{
+		"name": "a dotenv file is .env and everything after it",
+		"content": "POLL=500\n# OFF=600\n",
+		"arguments": {
+			"filename": ".env.local"
+		},
+		"expected": {
+			"ok": true,
+			"data": {
+				"numbers": [
+					{
+						"value": 500,
+						"notation": "decimal"
+					}
+				],
+				"fileType": "env"
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_numbers",
+				"count": 1,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "a run led by a digit from another script is consumed whole",
+		"content": "rate ٣5 and 🎯 7",
+		"arguments": {},
+		"expected": {
+			"ok": true,
+			"data": {
+				"numbers": [
+					{
+						"value": 7,
+						"notation": "decimal",
+						"line": 1,
+						"column": 16
+					}
+				],
+				"fileType": "unknown"
+			},
+			"diagnostics": [],
+			"meta": {
+				"tool": "extract_numbers",
+				"count": 1,
+				"truncated": false
+			}
+		}
+	},
+	{
+		"name": "a format that is not a string is refused, not read as absent",
+		"content": "1 2",
+		"arguments": {
+			"format": 7
+		},
+		"expectedError": "format must be a string"
+	},
+	{
+		"name": "a dedupe that is not a boolean is refused, not read as false",
+		"content": "1 2",
+		"arguments": {
+			"dedupe": "yes"
+		},
+		"expectedError": "dedupe must be a boolean"
+	},
+	{
+		"name": "an argument the schema does not declare is refused",
+		"content": "1 2",
+		"arguments": {
+			"extra": true
+		},
+		"expectedError": "unknown argument: extra"
 	}
 ]

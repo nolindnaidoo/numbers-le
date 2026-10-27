@@ -5,6 +5,7 @@ import {
 	_createDocument,
 	_createExtensionContext,
 	_openedDocuments,
+	_refuseEdits,
 	_registeredCommands,
 	_resetMockState,
 	_respondToQuickPick,
@@ -226,6 +227,44 @@ describe('numbers-le.postProcess.dedupe', () => {
 		expect(doc.getText()).toBe('5\n6');
 	});
 
+	it('reports an edit the host refused and does not claim the count', async () => {
+		// `editor.edit` resolves false for a read-only document; nothing in the
+		// suite could make it, so the error path never ran.
+		const { deps } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.notificationsLevel', 'all');
+		_setConfig('numbers-le.postProcess.openInNewFile', false);
+		const doc = _createDocument({ content: '5\n5\n6' });
+		_setActiveEditor(doc);
+		_refuseEdits();
+		await runCommand('numbers-le.postProcess.dedupe');
+		expect(doc.getText()).toBe('5\n5\n6');
+		expect(_shownMessages().map((m) => [m.kind, m.message])).toEqual([
+			['error', 'Failed to update the editor content'],
+		]);
+	});
+
+	it('does not read a trailing newline, a blank line or CRLF as the number 0', async () => {
+		// `Number('')` is 0, so the empty last line of a document that ends in a
+		// newline joined the numbers: "1\n2\n1\n" deduped to 1, 2 and a 0 the
+		// file never held, and the count said three unique numbers.
+		for (const content of ['1\n2\n1\n', '1\r\n2\r\n1\r\n', '1\n\n2\n1']) {
+			_resetMockState();
+			registerCommands(makeContext(), makeDeps().deps);
+			_setConfig('numbers-le.notificationsLevel', 'all');
+			_setActiveEditor(_createDocument({ content }));
+			await runCommand('numbers-le.postProcess.dedupe');
+			const opened = _openedDocuments();
+			expect(
+				opened[opened.length - 1]?.getText(),
+				JSON.stringify(content),
+			).toBe('1\n2');
+			expect(_shownMessages()[0]?.message, JSON.stringify(content)).toBe(
+				'Removed 1 duplicates (2 unique numbers remaining)',
+			);
+		}
+	});
+
 	it('reports when there are no duplicates', async () => {
 		const { deps } = makeDeps();
 		registerCommands(makeContext(), deps);
@@ -272,6 +311,24 @@ describe('numbers-le.postProcess.sort', () => {
 		);
 	});
 
+	it('does not sort a trailing newline in as the number 0', async () => {
+		const { deps } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.notificationsLevel', 'all');
+		_setActiveEditor(_createDocument({ content: '3\n1\n2\n' }));
+		_respondToQuickPick((items) =>
+			(items as Array<{ value: string }>).find(
+				(item) => item.value === 'numeric-asc',
+			),
+		);
+		await runCommand('numbers-le.postProcess.sort');
+		const opened = _openedDocuments();
+		expect(opened[opened.length - 1]?.getText()).toBe('1\n2\n3');
+		expect(_shownMessages()[0]?.message).toBe(
+			'Sorted 3 numbers (Numeric Ascending)',
+		);
+	});
+
 	it('sorts by magnitude descending in place', async () => {
 		const { deps } = makeDeps();
 		registerCommands(makeContext(), deps);
@@ -285,6 +342,32 @@ describe('numbers-le.postProcess.sort', () => {
 		);
 		await runCommand('numbers-le.postProcess.sort');
 		expect(doc.getText()).toBe('-20\n-10\n3');
+	});
+
+	it('writes nothing in place when the document changed while the pick was open', async () => {
+		// The numbers were read, the quick pick awaited, and the whole document
+		// replaced with the sorted result of the text as it was: an edit made
+		// while the pick was open was overwritten without a word.
+		const { deps } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.notificationsLevel', 'all');
+		_setConfig('numbers-le.postProcess.openInNewFile', false);
+		const doc = _createDocument({ content: '3\n1\n2' });
+		_setActiveEditor(doc);
+		_respondToQuickPick((items) => {
+			doc._setText('3\n1\n2\n9');
+			return (items as Array<{ value: string }>).find(
+				(item) => item.value === 'numeric-asc',
+			);
+		});
+		await runCommand('numbers-le.postProcess.sort');
+		expect(doc.getText()).toBe('3\n1\n2\n9');
+		expect(_shownMessages().map((m) => [m.kind, m.message])).toEqual([
+			[
+				'warning',
+				'The document changed while the command was waiting, so nothing was written.',
+			],
+		]);
 	});
 
 	it('does nothing when the quick pick is dismissed', async () => {
@@ -323,5 +406,57 @@ describe('numbers-le.help', () => {
 		expect(help).not.toContain('Streaming');
 		expect(help).not.toContain('Post-Process: Analyze');
 		expect(help).toContain('github.com/nolindnaidoo/numbers-le');
+	});
+});
+
+describe('two invocations at once', () => {
+	// Nothing serialises the commands: a second extract can start while the
+	// first is awaiting the host. Each must reach its own result with no state
+	// shared between them but the status bar, whose later flash wins.
+	it('two extracts started together each open their own results', async () => {
+		const { deps, flashes } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.notificationsLevel', 'all');
+		_setActiveEditor(
+			_createDocument({ content: '[1, 2]', fileName: '/mock/n.json' }),
+		);
+		const handler = _registeredCommands().get('numbers-le.extractNumbers');
+		if (!handler) throw new Error('extract command not registered');
+		await Promise.all([handler(), handler()]);
+		expect(_openedDocuments().map((d) => d.getText())).toEqual([
+			'1\n2',
+			'1\n2',
+		]);
+		expect(flashes).toEqual(['Extracted 2', 'Extracted 2']);
+		expect(_shownMessages()).toEqual([]);
+	});
+
+	it('a dedupe and a sort started together each write their own document', async () => {
+		const { deps } = makeDeps();
+		registerCommands(makeContext(), deps);
+		_setConfig('numbers-le.notificationsLevel', 'all');
+		_setActiveEditor(_createDocument({ content: '3\n1\n3' }));
+		_respondToQuickPick((items) =>
+			(items as Array<{ value: string }>).find(
+				(item) => item.value === 'numeric-asc',
+			),
+		);
+		const dedupe = _registeredCommands().get('numbers-le.postProcess.dedupe');
+		const sort = _registeredCommands().get('numbers-le.postProcess.sort');
+		if (!dedupe || !sort) throw new Error('commands not registered');
+		await Promise.all([dedupe(), sort()]);
+		expect(
+			_openedDocuments()
+				.map((d) => d.getText())
+				.sort(),
+		).toEqual(['1\n3\n3', '3\n1']);
+		expect(
+			_shownMessages()
+				.map((m) => m.message)
+				.sort(),
+		).toEqual([
+			'Removed 1 duplicates (2 unique numbers remaining)',
+			'Sorted 3 numbers (Numeric Ascending)',
+		]);
 	});
 });

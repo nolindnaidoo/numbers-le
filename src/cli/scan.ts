@@ -111,7 +111,6 @@ export function exitCode(
 	reports: readonly FileReport[],
 	strict: boolean,
 ): number {
-	if (reports.some(isIncomplete)) return 2;
 	if (strict && reports.some(wasSkipped)) return 2;
 	return reports.some((report) => report.summary.numbers > 0) ? 0 : 1;
 }
@@ -145,12 +144,6 @@ function firstOfEachValue(found: readonly Located[]): Located[] {
 		seen.add(item.value);
 		return true;
 	});
-}
-
-function isIncomplete(report: FileReport): boolean {
-	return report.diagnostics.some(
-		(diagnostic) => diagnostic.severity === 'error',
-	);
 }
 
 function wasSkipped(report: FileReport): boolean {

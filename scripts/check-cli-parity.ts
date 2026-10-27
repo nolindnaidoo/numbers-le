@@ -386,7 +386,22 @@ function mcpLines(): readonly string[] {
 		extract({ content: '1 2 3', maxResults: 'two' }),
 		extract({ content: '1 2 3', maxResults: null }),
 		extract({ content: '1 2 3', maxResults: 999999 }),
+		// Written as text: JSON.stringify prints 2.0 as 2, and the crate's serde
+		// reads 2.0 as a float, which `as_u64` refused.
+		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"extract_numbers","arguments":{"content":"1 2 3","maxResults":2.0}}}`,
+		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"extract_numbers","arguments":{"content":"1 2 3","maxResults":1e3}}}`,
+		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"extract_numbers","arguments":{"content":"1 2 3","maxResults":1E20}}}`,
+		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"extract_numbers","arguments":{"content":"1 2 3","maxResults":2.5}}}`,
+		// A scan entry that is not a string is named, not dropped.
+		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"numbers_le_scan","arguments":{"paths":[${JSON.stringify(tree)},7]}}}`,
+		`{"jsonrpc":"2.0","id":${++id},"method":"tools/call","params":{"name":"numbers_le_scan","arguments":{"path":7}}}`,
 		extract({ content: '"42"', format: '\uFEFFjson' }),
+		// Wrong-typed and undeclared arguments: protocol errors, not silence.
+		extract({ content: '1 2', dedupe: 'yes' }),
+		extract({ content: '1 2', filename: 7 }),
+		extract({ content: '1 2', extra: true, another: 1 }),
+		call('numbers_le_scan', { path: repo, hidden: 'yes' }),
+		call('numbers_le_scan', { path: repo, bogus: 1 }),
 		extract({ content: 7 }),
 		extract({}),
 		call('extract_numbers'),

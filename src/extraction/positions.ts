@@ -1,7 +1,7 @@
 import type { FileType, NumberFinding } from '../types';
 import { jsonNumberSpans } from './formats/json';
 import { scanSourceSpanned } from './formats/source';
-import { TEXT_NUMBER_RE } from './heuristics';
+import { textRuns } from './heuristics';
 
 export type Position = Readonly<{ line: number; column: number }>;
 
@@ -48,12 +48,10 @@ function spannedValues(
 	}
 	if (fileType === 'json') return jsonNumberSpans(text, false);
 	if (fileType === 'unknown') {
-		const out: { value: number; offset: number }[] = [];
-		for (const match of text.matchAll(TEXT_NUMBER_RE)) {
-			const value = Number(match[0]);
-			if (Number.isFinite(value)) out.push({ value, offset: match.index });
-		}
-		return out;
+		return textRuns(text).map((run) => ({
+			value: run.finding.value,
+			offset: run.offset,
+		}));
 	}
 	return undefined;
 }

@@ -103,16 +103,36 @@ function walk(
  * decimal point, and exponent. "3.14.15" reads as 3.14 and 15 — the
  * fallback has no grammar to know better, which is why it is reserved
  * for prose. A source language goes to extractFromSource instead.
+ *
+ * The digits are Unicode's, as the crate's `\d` is: a run that opens with
+ * a digit from another script is consumed whole and then refused by the
+ * parse, where an ASCII-only `\d` skipped that digit and reported the
+ * ASCII digits after it — `٣5` came back as 5 here and as nothing from the
+ * crate's server, on the one tool the two must answer alike.
  */
-export const TEXT_NUMBER_RE = /[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/g;
+export const TEXT_NUMBER_RE =
+	/[+-]?(?:\p{Nd}+(?:\.\p{Nd}*)?|\.\p{Nd}+)(?:[eE][+-]?\p{Nd}+)?/gu;
+
+/** A run the text scan reports, and the UTF-16 offset it starts at. */
+export type TextRun = Readonly<{ finding: NumberFinding; offset: number }>;
+
+/** Every run of the text scan, in document order, each placed. */
+export function textRuns(text: string): readonly TextRun[] {
+	const runs: TextRun[] = [];
+	for (const match of text.matchAll(TEXT_NUMBER_RE)) {
+		// `Number` reads only ASCII digits, as Rust's `f64` parse does; a run
+		// holding any other digit is consumed and refused.
+		if (!/^[+\-.0-9eE]+$/.test(match[0])) continue;
+		const value = Number(match[0]);
+		if (!Number.isFinite(value)) continue;
+		runs.push({
+			finding: { value, notation: plainNotation(match[0]) },
+			offset: match.index,
+		});
+	}
+	return Object.freeze(runs);
+}
 
 export function scanTextForNumbers(text: string): readonly NumberFinding[] {
-	const numbers: NumberFinding[] = [];
-	for (const match of text.matchAll(TEXT_NUMBER_RE)) {
-		const value = Number(match[0]);
-		if (Number.isFinite(value)) {
-			numbers.push({ value, notation: plainNotation(match[0]) });
-		}
-	}
-	return Object.freeze(numbers);
+	return Object.freeze(textRuns(text).map((run) => run.finding));
 }

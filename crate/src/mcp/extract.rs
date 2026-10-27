@@ -13,7 +13,7 @@ use serde::Serialize;
 use serde_json::value::RawValue;
 use serde_json::{Value, json};
 
-use super::Envelope;
+use super::{Envelope, Refusal, optional_bool, optional_str, refuse_unknown};
 use crate::extract::format::{FALLBACK_FORMAT, is_source};
 use crate::extract::position::Position;
 use crate::extract::{self, Notation, Options, SUPPORTED_FORMATS, resolve_format};
@@ -121,20 +121,29 @@ fn exact_positions(
     aligned.then(|| located.into_iter().map(|found| found.position).collect())
 }
 
-pub(crate) fn run(arguments: &Value) -> Result<Envelope<Extracted>, String> {
+pub(crate) fn run(arguments: &Value) -> Result<Envelope<Extracted>, Refusal> {
+    refuse_unknown(
+        arguments,
+        &["content", "format", "filename", "dedupe", "maxResults"],
+    )?;
     let content = arguments
         .get("content")
         .and_then(Value::as_str)
-        .ok_or_else(|| "content is required and must be a string".to_string())?;
+        .ok_or_else(|| {
+            Refusal::InvalidParams("content is required and must be a string".to_string())
+        })?;
     let max_results = read_max_results(arguments)?;
 
-    // Never a refusal. An agent that knows nothing about a document
-    // still gets the numbers its text holds, which is the whole reason a format
-    // is optional here where it is required in the sibling tools.
+    // An unresolved format is never a refusal: an agent that knows nothing
+    // about a document still gets the numbers its text holds, which is the
+    // whole reason a format is optional here where it is required in the
+    // sibling tools. A format that is not a string is, though: it was read
+    // as absent, a silence the schema never allowed.
     let format = resolve_format(
-        arguments.get("format").and_then(Value::as_str),
-        arguments.get("filename").and_then(Value::as_str),
+        optional_str(arguments, "format")?,
+        optional_str(arguments, "filename")?,
     );
+    let dedupe = optional_bool(arguments, "dedupe")?;
 
     // Emitted as raw JSON tokens, not as serde numbers. A number's
     // token is the contract here: JavaScript writes 1e+21 where
@@ -164,7 +173,7 @@ pub(crate) fn run(arguments: &Value) -> Result<Envelope<Extracted>, String> {
     // Deduplication is by value, never by notation: `0xFF` and `255` are
     // one number written twice, and a caller asking for the distinct
     // numbers in a file means the distinct numbers.
-    if arguments.get("dedupe").and_then(Value::as_bool) == Some(true) {
+    if dedupe {
         let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
         values.retain(|finding| seen.insert(finding.value.get().to_string()));
     }
@@ -189,18 +198,26 @@ pub(crate) fn run(arguments: &Value) -> Result<Envelope<Extracted>, String> {
 }
 
 /// Clamp quietly, reject loudly — the npm server's asymmetry.
-fn read_max_results(arguments: &Value) -> Result<usize, String> {
+///
+/// A whole number of one or more, however it was written. JSON Schema's
+/// `integer` is any number with a zero fractional part, and the npm
+/// server reads `2.0`, `1e3` and `1E20` as caps; serde reads all three as
+/// floats, so `as_u64` refused them here while the other server answered.
+fn read_max_results(arguments: &Value) -> Result<usize, Refusal> {
     let Some(raw) = arguments.get("maxResults") else {
         return Ok(DEFAULT_MAX_RESULTS);
     };
-    let invalid = "maxResults must be a positive integer".to_string();
-    let value = raw.as_u64().ok_or(invalid.clone())?;
-    if value < 1 {
-        return Err(invalid);
+    let invalid = || Refusal::InvalidParams("maxResults must be a positive integer".to_string());
+    let value = raw.as_f64().ok_or_else(invalid)?;
+    if !value.is_finite() || value.fract() != 0.0 || value < 1.0 {
+        return Err(invalid());
     }
-    Ok(usize::try_from(value)
-        .unwrap_or(MAX_MAX_RESULTS)
-        .min(MAX_MAX_RESULTS))
+    if value >= MAX_MAX_RESULTS as f64 {
+        return Ok(MAX_MAX_RESULTS);
+    }
+    // A whole number below the ceiling prints without a point or an
+    // exponent, so this is exact and casts nothing.
+    format!("{value}").parse::<usize>().map_err(|_| invalid())
 }
 
 #[cfg(test)]
@@ -257,9 +274,11 @@ mod tests {
 
             match (case.expected, case.expected_error) {
                 (_, Some(expected)) => {
+                    // Every refusal this tool makes is of an argument against
+                    // its schema: a protocol error, in these words.
                     assert_eq!(
                         run(&arguments).err().expect(&case.name),
-                        expected,
+                        Refusal::InvalidParams(expected),
                         "{}",
                         case.name
                     );
@@ -398,11 +417,41 @@ mod tests {
         assert_eq!(result["data"]["numbers"], json!([]));
     }
 
+    /// JSON Schema's `integer` is any number with a zero fractional part,
+    /// and the npm server reads it that way. serde reads `2.0` and `1e3`
+    /// as floats, and `as_u64` refused both while the npm server
+    /// accepted them: one tool, two answers.
+    #[test]
+    fn an_integer_valued_float_is_a_cap_as_the_npm_server_reads_it() {
+        let count = |cap: &str| {
+            let arguments: Value =
+                serde_json::from_str(&format!(r#"{{"content":"1 2 3","maxResults":{cap}}}"#))
+                    .expect("valid JSON");
+            run(&arguments)
+                .map(|envelope| {
+                    let text = serde_json::to_string(&envelope).expect("serializes");
+                    let parsed: Value = serde_json::from_str(&text).expect("JSON");
+                    (
+                        parsed["meta"]["count"].as_u64(),
+                        parsed["meta"]["truncated"].as_bool(),
+                    )
+                })
+                .map_err(|refusal| refusal.message().to_string())
+        };
+        assert_eq!(count("2.0"), Ok((Some(2), Some(true))));
+        assert_eq!(count("1e3"), Ok((Some(3), Some(false))));
+        assert_eq!(count("1E20"), Ok((Some(3), Some(false))));
+        assert_eq!(
+            count("2.5"),
+            Err("maxResults must be a positive integer".to_string())
+        );
+    }
+
     #[test]
     fn a_fractional_cap_is_refused() {
         let error = run(&json!({ "content": "x", "maxResults": 1.5 }))
             .err()
             .expect("a refusal");
-        assert_eq!(error, "maxResults must be a positive integer");
+        assert_eq!(error.message(), "maxResults must be a positive integer");
     }
 }

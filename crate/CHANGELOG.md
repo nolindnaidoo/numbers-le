@@ -8,6 +8,53 @@ in this repository carries one version and releases from one tag.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **An argument that does not fit a tool's schema is a protocol error.**
+  `mcp` answers `-32602` where it answered an `isError` result, and refuses
+  a wrong-typed optional argument it used to read as absent (`format: 7`,
+  `hidden: "yes"`) and any argument the schema does not declare. A path
+  that is not there stays an `isError` result. The npm server does the
+  same, in the same words.
+
+### Fixed
+
+- **A symbolic link the walk did not follow is counted.** `N symbolic
+  links not followed` on stderr and `symbolicLinks` in the MCP scan
+  envelope, beside the binary count; it was passed over without a word.
+- **The MCP scan tool names a file it could not read.** Its envelope's
+  `diagnostics` filtered on a severity no report carries, so a locked or
+  undecodable file left `ok: true` and an empty list; it is an `unreadable`
+  warning now. The "incomplete" exit branch that same severity fed, which no
+  reader ever produced, is gone.
+- **A FIFO, a socket or a device is named, not dropped.** One met in a
+  walk vanished from the report and one named outright answered "0 numbers
+  in 0 files"; it is a `skipped` report now, `not a regular file`, never
+  opened, and it fails `--strict`. A symbolic link is still never followed.
+- **`mcp` refuses a malformed frame in the npm server's words.** A line
+  that was not JSON, or not UTF-8, was dropped without a word, so a client
+  that sent one lost every request it then waited on; it is answered with a
+  parse error, `Invalid JSON` or `Not a JSON-RPC 2.0 request`, and the next
+  line is served. A request carrying a null id is a notification, as the
+  npm server reads it. A frame over 16 MiB is refused and never held, where
+  before a line of any size was read whole. An unknown method or tool, and
+  a call that names no tool, are refused in the npm server's words.
+- **A `paths` entry that is not a string is named, not dropped.** The MCP
+  scan tool answered `["dir", 7]` for `dir` alone and said nothing about
+  the 7; it refuses with `entry 1 of paths is not a string`, and a `path`
+  that is not a string with `path must be a string`, as the npm command
+  line does.
+- **`--help` no longer says a source file falls back to the text scan.**
+  A `.ts` or `.sql` file has been read by its language for its literals
+  since 0.2.0; the usage text described the reader that version replaced.
+- **`maxResults` written as `2.0`, `1e3` or `1E20` is a cap.** serde reads
+  those as floats and `as_u64` refused them, while the npm server answered,
+  so the shared `extract_numbers` tool had two answers for one request.
+  JSON Schema's `integer` is any number with a zero fractional part; a
+  whole number of one or more is read, and clamped at the ceiling.
+
 ## [2.7.1] - 2026-10-18
 
 ### Changed

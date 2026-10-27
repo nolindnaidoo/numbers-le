@@ -28,7 +28,11 @@ export interface RunIo {
 	readonly version: string;
 }
 
-export type Read = Readonly<{ reports: readonly FileReport[]; binary: number }>;
+export type Read = Readonly<{
+	reports: readonly FileReport[];
+	binary: number;
+	symlinks: number;
+}>;
 
 export async function run(args: readonly string[], io: RunIo): Promise<number> {
 	const first = args[0];
@@ -53,8 +57,8 @@ export async function run(args: readonly string[], io: RunIo): Promise<number> {
 
 async function execute(args: readonly string[], io: RunIo): Promise<number> {
 	const options = parse(args);
-	const { reports, binary } = options.stdin
-		? { reports: [await scanStdin(options, io)], binary: 0 }
+	const { reports, binary, symlinks } = options.stdin
+		? { reports: [await scanStdin(options, io)], binary: 0, symlinks: 0 }
 		: readTree(options.inputs, options);
 
 	io.stdout(
@@ -62,7 +66,7 @@ async function execute(args: readonly string[], io: RunIo): Promise<number> {
 			? values(reports)
 			: jsonLines(reports, io.stdoutIsTerminal),
 	);
-	io.stderr(summary(reports, binary, options.valuesOnly));
+	io.stderr(summary(reports, binary, symlinks, options.valuesOnly));
 	return exitCode(reports, options.strict);
 }
 
@@ -90,7 +94,7 @@ export function readTree(
 	for (const refused of walked.unreadable) {
 		reports.push(unreadable(refused.path, refused.reason));
 	}
-	return { reports, binary };
+	return { reports, binary, symlinks: walked.symlinks };
 }
 
 /**
@@ -122,12 +126,13 @@ function values(reports: readonly FileReport[]): string {
 
 /**
  * The human half. Every line restates something already on stdout, except the
- * binary count, the one fact stdout cannot carry. Under `--values` the
- * numbers are on stdout already, so they are not repeated here.
+ * binary count and the link count, which stdout cannot carry. Under `--values`
+ * the numbers are on stdout already, so they are not repeated here.
  */
 function summary(
 	reports: readonly FileReport[],
 	binary: number,
+	symlinks: number,
 	valuesOnStdout: boolean,
 ): string {
 	const lines: string[] = [];
@@ -146,6 +151,12 @@ function summary(
 	);
 	if (binary > 0) {
 		lines.push(`${plural(binary, 'binary file', 'binary files')} skipped`);
+	}
+	if (symlinks > 0) {
+		// Never followed, by design; still not a silence.
+		lines.push(
+			`${plural(symlinks, 'symbolic link', 'symbolic links')} not followed`,
+		);
 	}
 	if (unlocated > 0) {
 		lines.push(

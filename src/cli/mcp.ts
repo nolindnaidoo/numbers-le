@@ -4,26 +4,38 @@
  * `extract_numbers`, answers in the crate's words, and writes its replies in
  * serde_json's key order: a struct keeps its field order, and anything the
  * crate builds as a `serde_json::Value` has its keys sorted, because the crate
- * builds without `preserve_order`.
+ * builds without `preserve_order`. The protocol around the tools refuses a
+ * malformed frame in the extension server's words, so a client cannot tell
+ * the three servers apart by what it sent.
  */
 
 import { isSourceLanguage } from '../extraction/extract';
 import { SUPPORTED_FORMATS } from '../mcp/fileType';
 import { resolveFormat } from './format';
-import { requests } from './frames';
+import { type Frame, frames, type Request } from './frames';
 import { examine } from './locate';
 import { readTree, sum } from './run';
 
 const PROTOCOL_VERSION = '2025-06-18';
+const PARSE_ERROR = -32700;
 const INVALID_PARAMS = -32602;
 const METHOD_NOT_FOUND = -32601;
 const DEFAULT_MAX_RESULTS = 500;
 const MAX_MAX_RESULTS = 5000;
-const U64_MAX = 2 ** 64;
 
 type Handled =
 	| { readonly result: unknown }
 	| { readonly error: { readonly code: number; readonly message: string } };
+
+/**
+ * An argument that does not fit the tool's schema: a protocol error,
+ * `-32602`, in the words the extension's server and the crate's use. A tool
+ * that fails on what it was given at run time, a path that is not there,
+ * throws a plain `Error` and is an `isError` result.
+ */
+class InvalidParams extends Error {
+	override readonly name = 'InvalidParams';
+}
 
 type Diagnostic = Readonly<{ code: string; message: string; severity: string }>;
 
@@ -98,6 +110,7 @@ const SCAN_DEFINITION = sorted({
 				description: 'Walk files excluded by .gitignore too.',
 			},
 		},
+		additionalProperties: false,
 	},
 });
 
@@ -107,14 +120,26 @@ const SCAN_DEFINITION = sorted({
  */
 export async function serve(
 	input: AsyncIterable<Uint8Array>,
-	write: (line: string) => void,
+	write: (line: string) => Promise<void> | undefined,
 	version: string,
 ): Promise<number> {
-	for await (const request of requests(input)) {
-		const response = handle(request, version);
-		if (response !== undefined) write(`${response}\n`);
+	for await (const frame of frames(input)) {
+		const response = respond(frame, version);
+		if (response !== undefined) await write(`${response}\n`);
 	}
 	return 0;
+}
+
+/** A malformed frame is answered in the extension server's words, so a client that sent one learns what happened. */
+function respond(frame: Frame, version: string): string | undefined {
+	if ('refusal' in frame) {
+		return JSON.stringify({
+			jsonrpc: '2.0',
+			id: null,
+			error: { code: PARSE_ERROR, message: frame.refusal },
+		});
+	}
+	return handle(frame.request, version);
 }
 
 function field(value: unknown, name: string): unknown {
@@ -126,16 +151,14 @@ function field(value: unknown, name: string): unknown {
 		: undefined;
 }
 
-function handle(request: unknown, version: string): string | undefined {
+function handle(request: Request, version: string): string | undefined {
 	const id = field(request, 'id');
-	const method = field(request, 'method');
-	if (typeof method !== 'string') return undefined;
-	// A notification carries no id and gets no reply.
-	if (id === undefined) return undefined;
+	// A notification carries no id, or a null one, and gets no reply.
+	if (id === undefined || id === null) return undefined;
 
 	// The id is echoed as the `serde_json::Value` it was parsed into.
 	const echoed = sorted(id);
-	const handled = dispatch(method, field(request, 'params'), version);
+	const handled = dispatch(request.method, field(request, 'params'), version);
 	if ('error' in handled) {
 		return JSON.stringify({ jsonrpc: '2.0', id: echoed, error: handled.error });
 	}
@@ -158,10 +181,7 @@ function dispatch(method: string, params: unknown, version: string): Handled {
 	if (method === 'tools/call') return callTool(params);
 	if (method === 'ping') return { result: {} };
 	return {
-		error: {
-			code: METHOD_NOT_FOUND,
-			message: `this server does not implement ${method}`,
-		},
+		error: { code: METHOD_NOT_FOUND, message: `Unknown method: ${method}` },
 	};
 }
 
@@ -171,54 +191,95 @@ function dispatch(method: string, params: unknown, version: string): Handled {
  * concluding the server is broken.
  */
 function callTool(params: unknown): Handled {
-	if (params === undefined) {
-		return {
-			error: { code: INVALID_PARAMS, message: 'no tool call was supplied' },
-		};
-	}
 	const name = field(params, 'name');
 	if (typeof name !== 'string') {
 		return {
-			error: { code: INVALID_PARAMS, message: 'the tool call named no tool' },
+			error: {
+				code: INVALID_PARAMS,
+				message: 'tools/call requires a string `name`',
+			},
 		};
 	}
 	const args = field(params, 'arguments') ?? {};
-	if (name === 'extract_numbers')
-		return { result: outcome(() => extract(args)) };
-	if (name === 'numbers_le_scan') return { result: outcome(() => scan(args)) };
+	if (name === 'extract_numbers') return outcome(() => extract(args));
+	if (name === 'numbers_le_scan') return outcome(() => scan(args));
 	return {
-		error: {
-			code: INVALID_PARAMS,
-			message: `this server offers no tool named ${name}`,
-		},
+		error: { code: INVALID_PARAMS, message: `Unknown tool: ${name}` },
 	};
 }
 
-function outcome(tool: () => unknown): unknown {
+function outcome(tool: () => unknown): Handled {
 	let envelope: unknown;
 	try {
 		envelope = tool();
 	} catch (error) {
+		if (error instanceof InvalidParams) {
+			return { error: { code: INVALID_PARAMS, message: error.message } };
+		}
 		const message = error instanceof Error ? error.message : String(error);
-		return { content: [{ text: message, type: 'text' }], isError: true };
+		return {
+			result: { content: [{ text: message, type: 'text' }], isError: true },
+		};
 	}
 	return {
-		content: [{ type: 'text', text: JSON.stringify(envelope, null, 2) }],
-		structuredContent: envelope,
-		isError: false,
+		result: {
+			content: [{ type: 'text', text: JSON.stringify(envelope, null, 2) }],
+			structuredContent: envelope,
+			isError: false,
+		},
 	};
 }
 
+/** The arguments a tool's schema declares; `additionalProperties: false` closes it. */
+function refuseUnknown(args: unknown, known: readonly string[]): void {
+	if (typeof args !== 'object' || args === null || Array.isArray(args)) return;
+	const unknown = Object.keys(args)
+		.filter((key) => !known.includes(key))
+		.sort();
+	if (unknown.length === 1) {
+		throw new InvalidParams(`unknown argument: ${unknown[0]}`);
+	}
+	if (unknown.length > 1) {
+		throw new InvalidParams(`unknown arguments: ${unknown.join(', ')}`);
+	}
+}
+
+function optionalString(args: unknown, name: string): string | undefined {
+	if (!hasField(args, name)) return undefined;
+	const value = field(args, name);
+	if (typeof value !== 'string') {
+		throw new InvalidParams(`${name} must be a string`);
+	}
+	return value;
+}
+
+function optionalBoolean(args: unknown, name: string): boolean {
+	if (!hasField(args, name)) return false;
+	const value = field(args, name);
+	if (typeof value !== 'boolean') {
+		throw new InvalidParams(`${name} must be a boolean`);
+	}
+	return value;
+}
+
 function extract(args: unknown): unknown {
+	refuseUnknown(args, [
+		'content',
+		'format',
+		'filename',
+		'dedupe',
+		'maxResults',
+	]);
 	const content = field(args, 'content');
 	if (typeof content !== 'string') {
-		throw new Error('content is required and must be a string');
+		throw new InvalidParams('content is required and must be a string');
 	}
 	const maxResults = readMaxResults(args);
 	const format = resolveFormat(
-		stringField(args, 'format'),
-		stringField(args, 'filename'),
+		optionalString(args, 'format'),
+		optionalString(args, 'filename'),
 	);
+	const dedupe = optionalBoolean(args, 'dedupe');
 	const { found, parseError } = examine(content, format);
 	// Placed only where the source says exactly where a number is. The parsed
 	// formats hand over resolved values, and placing one would be a search
@@ -232,7 +293,7 @@ function extract(args: unknown): unknown {
 	});
 	// Deduplication is by value, never by notation: `0xFF` and `255` are one
 	// number written twice.
-	const kept = field(args, 'dedupe') === true ? firstOfEach(numbers) : numbers;
+	const kept = dedupe ? firstOfEach(numbers) : numbers;
 	const truncated = kept.length > maxResults;
 	const items = kept.slice(0, maxResults);
 	const diagnostics: Diagnostic[] =
@@ -248,17 +309,16 @@ function extract(args: unknown): unknown {
 	);
 }
 
-/** Clamp quietly, reject loudly: `as_u64`, then the floor, then the ceiling. */
+/**
+ * Clamp quietly, reject loudly. A whole number of one or more, however it
+ * was written: `2.0`, `1e3` and `1E20` are caps, as JSON Schema's `integer`
+ * reads them and as the crate's server reads them.
+ */
 function readMaxResults(args: unknown): number {
 	if (!hasField(args, 'maxResults')) return DEFAULT_MAX_RESULTS;
 	const raw = field(args, 'maxResults');
-	const unsigned =
-		typeof raw === 'number' &&
-		Number.isInteger(raw) &&
-		raw >= 0 &&
-		raw < U64_MAX;
-	if (!unsigned || raw < 1) {
-		throw new Error('maxResults must be a positive integer');
+	if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 1) {
+		throw new InvalidParams('maxResults must be a positive integer');
 	}
 	return Math.min(raw, MAX_MAX_RESULTS);
 }
@@ -276,21 +336,34 @@ function firstOfEach<T extends { readonly value: number }>(
 }
 
 function scan(args: unknown): unknown {
+	refuseUnknown(args, [
+		'path',
+		'paths',
+		'format',
+		'dedupe',
+		'hidden',
+		'ignored',
+	]);
 	const inputs = requestedPaths(args);
-	const flag = (name: string): boolean => field(args, name) === true;
-	const format = stringField(args, 'format');
-	const { reports, binary } = readTree(inputs, {
+	const format = optionalString(args, 'format');
+	const { reports, binary, symlinks } = readTree(inputs, {
 		scan: {
-			dedupe: flag('dedupe'),
+			dedupe: optionalBoolean(args, 'dedupe'),
 			format: format === undefined ? null : resolveFormat(format, undefined),
 		},
-		walk: { hidden: flag('hidden'), respectIgnore: !flag('ignored') },
+		walk: {
+			hidden: optionalBoolean(args, 'hidden'),
+			respectIgnore: !optionalBoolean(args, 'ignored'),
+		},
 	});
 	const numbers = sum(reports, (report) => report.summary.numbers);
 	const unlocated = sum(reports, (report) => report.summary.unlocated);
+	// A file the scan could not read is a `skipped` report, a warning: named
+	// here as well, because an agent reads this list for whether the tree was
+	// covered. A filter on a severity no report carries left it empty.
 	const diagnostics: Diagnostic[] = reports
 		.filter((report) =>
-			report.diagnostics.some((found) => found.severity === 'error'),
+			report.diagnostics.some((found) => found.code === 'skipped'),
 		)
 		.map((report) =>
 			warning(
@@ -314,6 +387,7 @@ function scan(args: unknown): unknown {
 			reports,
 			numbers,
 			binaryFiles: binary,
+			symbolicLinks: symlinks,
 		}),
 		reports.length,
 		diagnostics,
@@ -324,15 +398,20 @@ function scan(args: unknown): unknown {
 function requestedPaths(args: unknown): readonly string[] {
 	const path = field(args, 'path');
 	if (typeof path === 'string') return [path];
+	if (path !== undefined) throw new InvalidParams('path must be a string');
 	const paths = field(args, 'paths');
 	if (!Array.isArray(paths)) {
-		throw new Error('no file or directory was supplied to read');
+		throw new InvalidParams('no file or directory was supplied to read');
 	}
-	const named = paths.filter(
-		(item): item is string => typeof item === 'string',
-	);
-	if (named.length === 0) throw new Error('the list of paths was empty');
-	return named;
+	// An entry that is not a string is named rather than dropped: `["dir", 7]`
+	// was answered for `dir` alone and the 7 vanished without a word.
+	const index = paths.findIndex((item) => typeof item !== 'string');
+	if (index !== -1) {
+		throw new InvalidParams(`entry ${index} of paths is not a string`);
+	}
+	if (paths.length === 0)
+		throw new InvalidParams('the list of paths was empty');
+	return paths as readonly string[];
 }
 
 /** The crate's `Envelope` struct, in its field order. */
@@ -353,11 +432,6 @@ function envelope(
 
 function warning(code: string, message: string): Diagnostic {
 	return { code, message, severity: 'warning' };
-}
-
-function stringField(args: unknown, name: string): string | undefined {
-	const value = field(args, name);
-	return typeof value === 'string' ? value : undefined;
 }
 
 function hasField(value: unknown, name: string): boolean {

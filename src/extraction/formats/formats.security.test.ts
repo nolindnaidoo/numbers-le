@@ -365,17 +365,17 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 	});
 
 	describe('Edge Cases - Malformed Input', () => {
-		test('should handle malformed CSV gracefully', () => {
+		// These two accepted any answer: `success === true || success === false`
+		// holds for every result, so a reader that threw was the only way to
+		// fail them, and the behaviour they now pin is the one the crate has.
+		test('refuses a CSV whose quoted field never closes', () => {
 			const csv = '1,2,"unclosed quote\n3,4,5';
 			const result = extractFromCsv(csv, 'test.csv');
 
-			// Should either succeed or fail gracefully
-			expect(result.success === true || result.success === false).toBe(true);
-			if (result.success) {
-				expect(values(result).length).toBeGreaterThan(0);
-			} else {
-				expect(result.errors.length).toBeGreaterThan(0);
-			}
+			expect(result.success).toBe(false);
+			expect(result.errors.map((error) => error.message)).toEqual([
+				'Failed to parse CSV: quoted field is never closed',
+			]);
 		});
 
 		test('should handle malformed ENV gracefully', () => {
@@ -386,12 +386,12 @@ describe('CSV/ENV/INI Security & Edge Cases', () => {
 			expect(result.success).toBe(true);
 		});
 
-		test('should handle malformed INI gracefully', () => {
+		test('refuses an INI whose section header never closes', () => {
 			const ini = '[section\nkey=value\ncount=42';
 			const result = extractFromIni(ini, 'test.ini');
 
-			// ini parser should handle this
-			expect(result.success === true || result.success === false).toBe(true);
+			expect(result.success).toBe(false);
+			expect(result.errors[0]?.message).toMatch(/^Failed to parse INI: /);
 		});
 	});
 

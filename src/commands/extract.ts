@@ -52,28 +52,31 @@ async function validateAndPrepareExtraction(
 	// Capture document immediately to avoid TOCTOU issues
 	const document = editor.document;
 
-	// Validate document is still accessible
+	// Reading a document the host has closed throws; that is the one failure
+	// this message describes. The type prompt used to sit inside the same
+	// try, so a dialog the host tore down was reported as the document going
+	// away, and the real reason was lost.
+	let text: string;
 	try {
-		const text = document.getText();
-		if (text.trim().length === 0) {
-			deps.notifier.info(vscode.l10n.t('File is empty'));
-			return null;
-		}
-
-		// Infer file type from filename or prompt if unknown
-		let fileType = detectFileType(document.fileName);
-		if (fileType === 'unknown') {
-			const chosen = await promptForFileType();
-			if (!chosen) return null;
-			fileType = chosen;
-		}
-
-		return { document, text, fileType };
-	} catch (_error) {
-		// Document became invalid during access
+		text = document.getText();
+	} catch {
 		deps.notifier.error(vscode.l10n.t('Document is no longer valid'));
 		return null;
 	}
+	if (text.trim().length === 0) {
+		deps.notifier.info(vscode.l10n.t('File is empty'));
+		return null;
+	}
+
+	// Infer file type from filename or prompt if unknown
+	let fileType = detectFileType(document.fileName);
+	if (fileType === 'unknown') {
+		const chosen = await promptForFileType();
+		if (!chosen) return null;
+		fileType = chosen;
+	}
+
+	return { document, text, fileType };
 }
 
 async function handleNormalExtraction(
@@ -93,7 +96,9 @@ async function handleNormalExtraction(
 
 	if (!result.success) {
 		if (config.showParseErrors) {
-			deps.notifier.error(result.errors[0]?.message || 'Extraction failed');
+			deps.notifier.error(
+				result.errors[0]?.message || vscode.l10n.t('Extraction failed'),
+			);
 		}
 		return;
 	}
@@ -137,7 +142,7 @@ async function handleNormalExtraction(
 
 	// Show post-processing info if dedupe or sort was applied
 	if (shouldDedupe || sortEnabled) {
-		deps.statusBar.flash('Dedupe/Sort applied');
+		deps.statusBar.flash(vscode.l10n.t('Dedupe/Sort applied'));
 	}
 
 	await processAndOutputResults(finalNumbers, context, token);
@@ -160,7 +165,9 @@ async function handleCsvColumn(
 	);
 	if (values === undefined) {
 		if (config.showParseErrors) {
-			deps.notifier.error('Failed to parse CSV: quoted field is never closed');
+			deps.notifier.error(
+				vscode.l10n.t('Failed to parse CSV: quoted field is never closed'),
+			);
 		}
 		return;
 	}
@@ -182,7 +189,7 @@ async function handleCsvColumn(
 		return;
 	}
 	if (config.dedupeEnabled || config.sortEnabled) {
-		deps.statusBar.flash('Dedupe/Sort applied');
+		deps.statusBar.flash(vscode.l10n.t('Dedupe/Sort applied'));
 	}
 	await processAndOutputResults(finalNumbers, context, token);
 }
@@ -222,6 +229,10 @@ async function processAndOutputResults(
 
 	if (token.isCancellationRequested) return;
 
+	// What reached the user, as opposed to what was asked for: a document the
+	// host refused still flashed `Extracted N`, logged an extraction and
+	// counted toward the rating prompt.
+	let opened = false;
 	if (openDoc) {
 		try {
 			const resultDocument = await vscode.workspace.openTextDocument({
@@ -232,10 +243,11 @@ async function processAndOutputResults(
 				resultDocument,
 				getShowDocumentOptions(config),
 			);
-		} catch (error: unknown) {
-			if (error instanceof Error) {
-				deps.notifier.error(vscode.l10n.t('Could not open results'));
-			}
+			opened = true;
+		} catch {
+			// Whatever the host threw. A guard on `instanceof Error` let a string
+			// through as silence.
+			deps.notifier.error(vscode.l10n.t('Could not open results'));
 		}
 	}
 
@@ -254,8 +266,8 @@ async function processAndOutputResults(
 	}
 
 	// Nothing opened and nothing copied means the results never reached the
-	// user; a clipboard failure has already been reported as a warning.
-	if (!openDoc && !clipboardSuccess) {
+	// user, and each failure has already been reported.
+	if (!opened && !clipboardSuccess) {
 		return;
 	}
 
@@ -269,8 +281,8 @@ async function processAndOutputResults(
 
 	deps.statusBar.flash(
 		clipboardSuccess
-			? 'Copied to clipboard'
-			: `Extracted ${finalNumbers.length}`,
+			? vscode.l10n.t('Copied to clipboard')
+			: vscode.l10n.t('Extracted {0}', finalNumbers.length),
 	);
 }
 
@@ -311,7 +323,8 @@ export async function extractNumbers(deps: CommandDependencies): Promise<void> {
 					);
 				}
 			} catch {
-				// ignore
+				// A document with no file behind it, an untitled one say, has
+				// nothing to stat; the size warning is the only thing skipped.
 			}
 
 			if (token.isCancellationRequested) return;

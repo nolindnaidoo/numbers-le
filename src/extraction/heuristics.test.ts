@@ -117,4 +117,13 @@ describe('scanTextForNumbers', () => {
 	it('reads dotted versions as separate numbers (no grammar)', () => {
 		expect(values(scanTextForNumbers('v1.2.3'))).toEqual([1.2, 0.3]);
 	});
+
+	it('consumes a run led by a digit from another script, as the crate does', () => {
+		// The crate's `\d` is Unicode's: a run that opens with an Arabic-Indic
+		// digit is one run, and the parse refuses it. An ASCII-only `\d` here
+		// skipped the first digit and reported the 5 after it, so the shared
+		// tool answered `5, 7` from this server and `7` from the crate's.
+		expect(values(scanTextForNumbers('rate ٣5 and 7'))).toEqual([7]);
+		expect(values(scanTextForNumbers('１２ then 3'))).toEqual([3]);
+	});
 });
