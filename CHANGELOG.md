@@ -28,6 +28,11 @@ version and releases from one tag.
 
 ### Fixed
 
+- The help document is in the display language. Every sentence in it goes
+  through the bundle now, in all twelve locales; format names, setting keys,
+  defaults and links stay as they are. A German host reads it back in German
+  in the integration suite, which is the first runtime string a real host
+  has shown in a language other than English.
 - The npm command line passed over a symbolic link in a walk without a
   word. It is still never followed, by design; it is counted now, `N
   symbolic links not followed` on stderr and `symbolicLinks` in the scan

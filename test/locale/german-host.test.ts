@@ -9,13 +9,12 @@ import * as vscode from 'vscode';
  * `test/integration/l10n.test.ts` holds the catalogues complete and in parity,
  * and says why it cannot show that either mechanism loads: `vscode.l10n.t`
  * resolves against the extension that calls it, and a test file is its own
- * extension with an empty bundle. This extension's results document holds
- * numbers and nothing else, and every runtime string goes to a notification,
- * the status bar or a quick pick, none of which a test can read back — so
- * what a German host can show is narrower than for an extension that writes
- * a report: that it activates and registers every command there, that the
- * host is German, and that the German bundle sits where the host loads it
- * from, as the manifest's `l10n` field names it.
+ * extension with an empty bundle. The help command writes a document whose
+ * every sentence goes through the extension's own bundle, so that document
+ * is the one runtime string a test can read back in the host's language;
+ * the results document holds numbers only, and every other string goes to a
+ * notification, the status bar or a quick pick. A manifest string cannot be
+ * read back through the API, so that half is the catalogue parity test.
  *
  * Launched by the `german host` config in `.vscode-test.mjs`, with
  * `--locale=de` and the German language pack installed into the test profile.
@@ -41,6 +40,23 @@ describe('Numbers-LE in a German host', function () {
 		]) {
 			assert.ok(commands.includes(id), `missing command: ${id}`);
 		}
+	});
+
+	it('writes the help document in German', async () => {
+		const extension = vscode.extensions.getExtension('nolindnaidoo.numbers-le');
+		assert.ok(extension, 'extension not found');
+		await extension.activate();
+		await vscode.commands.executeCommand('numbers-le.help');
+		const text = vscode.window.activeTextEditor?.document.getText() ?? '';
+		assert.ok(
+			text.startsWith('# Numbers-LE Hilfe & Dokumentation'),
+			`the help document is not in German:\n${text.slice(0, 200)}`,
+		);
+		assert.ok(text.includes('## Schnellstart'), 'no German Quick Start heading');
+		assert.ok(
+			!text.includes('# Numbers-LE Help & Documentation'),
+			'the English heading is still there',
+		);
 	});
 
 	it('ships the German runtime bundle where the manifest tells the host to look', () => {
