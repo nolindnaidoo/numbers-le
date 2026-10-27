@@ -547,3 +547,55 @@ describe('extract: results that never reach the user', () => {
 		expect(run.events.filter((e) => e.startsWith('extracted'))).toEqual([]);
 	});
 });
+
+describe('extract: settings whose consumer had no test', () => {
+	// Both were read by the command and asserted by nothing: `config.test.ts`
+	// holds their defaults to the manifest and no test changed either.
+	it('clipboardIncludesPositions puts each line and column on the clipboard, and nowhere else', async () => {
+		_setConfig('numbers-le.copyToClipboardEnabled', true);
+		_setConfig('numbers-le.clipboardIncludesPositions', true);
+		_setActiveEditor(
+			_createDocument({ content: '[1, 2]', fileName: '/mock/n.json' }),
+		);
+		await runExtract();
+		expect(_clipboardText()).toBe('1:2\t1\n1:5\t2');
+		expect(lastOpened()).toBe('1\n2');
+	});
+
+	it('showPositions puts them in the document, and the clipboard stays bare', async () => {
+		_setConfig('numbers-le.copyToClipboardEnabled', true);
+		_setConfig('numbers-le.showPositions', true);
+		_setActiveEditor(
+			_createDocument({ content: '[1, 2]', fileName: '/mock/n.json' }),
+		);
+		await runExtract();
+		expect(lastOpened()).toBe('1:2\t1\n1:5\t2');
+		expect(_clipboardText()).toBe('1\n2');
+	});
+
+	it('safety.manyDocumentsThreshold asks before opening that many column documents, and not below it', async () => {
+		const csv = () =>
+			_setActiveEditor(
+				_createDocument({ content: '1,2,3\n4,5,6\n', fileName: '/mock/n.csv' }),
+			);
+		_setConfig('numbers-le.safety.manyDocumentsThreshold', 3);
+		csv();
+		_respondToInputBox(() => '0,1,2');
+		_respondToWarning(() => undefined);
+		await runExtract();
+		expect(_openedDocuments()).toHaveLength(0);
+		expect(_shownMessages().map((m) => m.message)).toEqual([
+			'Many results — opening 3 documents (~6 total numbers). Proceed?',
+		]);
+
+		_resetMockState();
+		_setConfig('numbers-le.notificationsLevel', 'all');
+		_setConfig('numbers-le.safety.manyDocumentsThreshold', 4);
+		csv();
+		_respondToInputBox(() => '0,1,2');
+		_respondToWarning(() => undefined);
+		await runExtract();
+		expect(_openedDocuments()).toHaveLength(3);
+		expect(_shownMessages()).toEqual([]);
+	});
+});
